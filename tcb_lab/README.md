@@ -68,3 +68,11 @@ La nouvelle [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md) définit huit **portes de
 ## Phase 3 — recherche ouverte (pas de design)
 
 [P3_EXPLORATION_PROTOCOL.md](P3_EXPLORATION_PROTOCOL.md) formalise la boucle **observation → question → hypothèses alternatives → contre-expérience → nouvelles questions**. Les résultats ne déclenchent ni refonte du scope ni choix d'abstraction. `experiments/p3_counterexperiments.py` ajoute cinq expériences couplées opposant perturbation hostile et voie de progression légitime, désormais incluses dans la CI et le registre automatique GitHub issue #2. Cela donne **64 expériences P3 codées**, plus les quatre G1. Toute interprétation doit rester conditionnelle aux traces effectivement observées.
+
+## Phase 3 — observation approfondie sur durée (9 octobre 2026)
+
+Le nouveau harnais `experiments/p3_long_horizon.py` soumet le journal de référence à **5 séquences reproductibles de 80 tentatives** (400 transitions candidates), en alternant requêtes légitimes et adversariales ; chaque séquence vérifie le refus des entrées incorrectes et la progression des intents autorisées. Ce test **ne** dispatch pas d'effet physique et ne prouve aucune garantie de liveness universelle.
+
+Le [registre Actions automatique](https://github.com/ichamafif-svg/NEW/issues/2) a publié, pour le run de laboratoire `37950062059`, **8 suites P3, 69 exercices** (8+4+30+10+7+5+5) et quatre G1, tous avec JSON analysable et zéro ID signalé. Les cinq expériences long-horizon ont effectivement été exécutées ; cela ne ferme aucun gate de la phase 3. Le [journal des questions nouvelles](findings/P3_LONG_HORIZON_QUESTIONS.md) décrit les dix expérimentations plus profondes qui restent nécessaires, en particulier les multi-hôtes, le changement de loi en cours de départ et la persistance des dettes.
+
+La règle de [P3_EXPLORATION_PROTOCOL.md](P3_EXPLORATION_PROTOCOL.md) demeure : **explorer et poser de nouvelles questions, jamais modifier le scope ou choisir une abstraction en phase 3**.
