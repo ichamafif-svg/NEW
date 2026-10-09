@@ -12,3 +12,7 @@ Elle mesure séparément la présence de cette obligation dans `open`, `escalate
 **Décision en attente :** comparer les observations avec la sémantique normative exacte du délai et des conditions de progression. Ne pas déclarer G16 prouvée ou réfutée sur une simple absence d'escalade. G08 conserve son constat local IV-H, et le scope/noyau restent inchangés.
 
 [Registre GitHub Actions](https://github.com/ichamafif-svg/NEW/issues/2).
+
+## Statut de clôture fonctionnelle (2026-10-09)
+
+Voir [FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md](../FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md) : **16/16 allocations K/T/U figées conditionnellement**, sans certification des garanties ni du déploiement. Les constatations et limites ci-dessus restent valables comme faits historiques/conditions d'audit ; elles ne constituent plus un blocage de **délimitation du noyau**. La validation physique, les preuves empiriques et les portes de sortie de P3 restent ouvertes ; G08/G16 ne doivent pas provoquer une nouvelle boucle d'audit général du produit.
