@@ -64,3 +64,7 @@ La nouvelle [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md) définit huit **portes de
 `experiments/p3_compositions.py` ajoute **sept séquences adversariales composées** sur les restrictions, les jetons, les effets inconnus, les preuves et la continuité du travail légitime. La CI inclut ces séquences. Cela porte le laboratoire à **59 exercices P3 codés**, toujours **non validés par un run observé**. Les hypothèses recensées restent au nombre de 104 ; les exercices ne correspondent pas nécessairement un-pour-un aux hypothèses.
 
 **La phase 3 demeure ouverte jusqu'à satisfaction des portes, pas jusqu'à un quota arbitraire de tests.** Le moteur d'autonomie reste extérieur au noyau constitutionnel, mais tout mécanisme autorisant ou clôturant ses effets doit être éprouvé dans la frontière de confiance.
+
+## Phase 3 — recherche ouverte (pas de design)
+
+[P3_EXPLORATION_PROTOCOL.md](P3_EXPLORATION_PROTOCOL.md) formalise la boucle **observation → question → hypothèses alternatives → contre-expérience → nouvelles questions**. Les résultats ne déclenchent ni refonte du scope ni choix d'abstraction. `experiments/p3_counterexperiments.py` ajoute cinq expériences couplées opposant perturbation hostile et voie de progression légitime, désormais incluses dans la CI et le registre automatique GitHub issue #2. Cela donne **64 expériences P3 codées**, plus les quatre G1. Toute interprétation doit rester conditionnelle aux traces effectivement observées.
