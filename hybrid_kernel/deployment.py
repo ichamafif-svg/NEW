@@ -12,7 +12,7 @@ class ProductionBlocked(RuntimeError):
     pass
 
 class GovernedDeployment:
-    """Guarded entry point; a registry is necessary but never sufficient."""
+    """Guarded entry point; NOT a production attestation authority.\n\n    Deployment callers are trusted operators. There is no secure public method\n    to set physical_enforcement_confirmed using an arbitrary boolean.\n    """
 
     def __init__(self,*,ledger_path,pin_store,genesis_pin,registry,attested_now,
                  physical_enforcement_confirmed=False):
