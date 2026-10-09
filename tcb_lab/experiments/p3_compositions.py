@@ -109,7 +109,7 @@ def sequence_repeated_failed_attempt_keeps_previous_rights():
                          op="merge",args={"pr":"42","method":"squash"})
         admitted,_,_=w.kernel.admit(w.state,entry)
         assert not admitted
-        assert w.state==original,"failed request changed state"
+        assert copy.deepcopy(w.state)==original,"failed request changed state"
     iid=w.add("intent","agent",t+12,under=grant,op="merge",
               args={"pr":"42","method":"squash"})
     return {"failed_attempts":12,"legitimate_intent_still_admitted":iid in w.state["intents"]}
