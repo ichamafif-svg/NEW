@@ -129,3 +129,7 @@ L'enjeu n'est pas seulement l'absence d'actions interdites : **Standard doit mai
 Une ligne ne passe à **CONFIRMED** qu'avec un scénario isolé ayant produit la violation dans un environnement documenté ; elle passe à **REFUTED_UNDER_ASSUMPTIONS** seulement si le test a été exécuté et son oracle a effectivement rejeté l'attaque. Les environnements CI, les mocks et un vrai service GitHub se distinguent dans le rapport. Préférer tests de propriétés, permutations d'ordre, pannes injectées et interleavings aux cas uniques.
 
 **Limites assumées :** certaines lignes concernent des domaines physiques ou organisationnels (quorum humain réel, contrôle exclusif des secrets, fournisseur, sauvegardes) non prouvables par un test purement Python. Ne jamais transformer une hypothèse externe en garantie de noyau.
+
+## Liaison profondeur × couverture
+
+Les branches d'attaques déjà recensées sont maintenant regroupées dans [l'arbre vivant](EXPERIMENT_TREE_DEPTH_COVERAGE.md). Les expériences réalisées et celles restant hypothétiques sont distinguées ; la campagne III ne constitue pas une nouvelle preuve multi-hôte, rollback ou secret physique. Voir [findings/P3_LAB_STATUS.md](findings/P3_LAB_STATUS.md).
