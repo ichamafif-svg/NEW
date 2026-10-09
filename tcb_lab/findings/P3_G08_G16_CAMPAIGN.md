@@ -26,3 +26,7 @@ Le programme [p3_ivd_g08_g16.py](../experiments/p3_ivd_g08_g16.py) exécute un v
 **G16** exige un oracle explicite : si les entrées requises restent disponibles et un chemin autorisé existe, alors **progrès observable ou escalade dans un délai borné**, même avec échec répété, sans laisser l'agent élargir ses droits. Le délai et la fairness restent à étudier, non choisis par ces tests.
 
 Les deux branches restent `OPEN_SEMANTIC` jusqu'à ce que leurs obligations d'observation soient satisfaites et soumises à revue contradictoire.
+
+## G08/G16 — lecture des résultats réels (après Actions 37964069387)
+
+Voir [l'interprétation complète](P3_G08_G16_FIRST_INTERPRETATION.md). Dans les scénarios à écart persistant, deux propositions sont retirées puis **18 cycles / 20 sans sujet live** sont observés, sans modification de main. Les obligations constitutionnelles ne peuvent pas être déduites de la seule liste `state["obligations"]` vide : **G08 reste ouvert**. **G16 reste ouvert** en attente du contrôle des escalades et de la fairness. Le prétendu contrôle sain était **invalide** (le runner `none` n'enlevait pas `vulns=found:2`) et a été rectifié dans le harnais ; ne pas citer l'ancien résultat comme témoin sain. Aucune modification du noyau ou du scope.
