@@ -50,3 +50,7 @@ Lire [P3_LAB_STATUS.md](P3_LAB_STATUS.md) puis [P3_CAMPAIGN_III.md](P3_CAMPAIGN_
 ## Campagne IV — limites et frontière effective
 
 Pour distinguer ce qui relève de la décision du noyau, de la confiance physique externe et du travail remplaçable : [TCB_BOUNDARY_MATRIX.md](../TCB_BOUNDARY_MATRIX.md), [ESTABLISHED_LIMITS.md](../ESTABLISHED_LIMITS.md), [SCOPE_FREEZE_REVIEW.md](../SCOPE_FREEZE_REVIEW.md). **Classification provisoire ≠ démonstration de garanties G01–G16**. L'objectif est la stabilisation argumentée de la frontière, sans concevoir la représentation interne.
+
+## IV-B — revue des frontières et critères de fermeture
+
+La [revue IV-B](../IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CLOSED_CONDITIONAL`, `OPEN_CRITICAL` et `OPEN_SEMANTIC` pour **G01–G16**, avec les contre-exemples et dépendances physiques. Quatre nouvelles expériences signées (effet révoqué, retry inconnu, preuve bon/mauvais sujet) sont intégrées à la CI via `p3_ivb_boundary_pairs.py`. **La classification ne constitue pas une validation de sûreté ; aucun scope ou noyau n'a été modifié.**
