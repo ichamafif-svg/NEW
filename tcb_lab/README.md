@@ -94,3 +94,7 @@ La porte d'entrée empirique est maintenant [findings/README.md](findings/README
 ## Campagne IV — délimitation empirique accélérée
 
 La [matrice des frontières K/T/U](TCB_BOUNDARY_MATRIX.md) classe les 16 garanties sans exclure de la *TCB effective* les mécanismes de confiance extérieurs. [ESTABLISHED_LIMITS.md](ESTABLISHED_LIMITS.md) distingue impossibilités logiques conditionnelles et frontières physiques encore ouvertes. [SCOPE_FREEZE_REVIEW.md](SCOPE_FREEZE_REVIEW.md) précise ce qui est figé dans le contrat sémantique existant et ce qui **n'est pas encore prouvé**. Des discriminants locaux `p3_iv_boundary_probes.py` ont été ajoutés au workflow ; leur observation réelle doit être vérifiée dans le registre [issue #2](https://github.com/ichamafif-svg/NEW/issues/2).
+
+## IV-B — revue des frontières et critères de fermeture
+
+La [revue IV-B](IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CLOSED_CONDITIONAL`, `OPEN_CRITICAL` et `OPEN_SEMANTIC` pour **G01–G16**, avec les contre-exemples et dépendances physiques. Quatre nouvelles expériences signées (effet révoqué, retry inconnu, preuve bon/mauvais sujet) sont intégrées à la CI via `p3_ivb_boundary_pairs.py`. **La classification ne constitue pas une validation de sûreté ; aucun scope ou noyau n'a été modifié.**
