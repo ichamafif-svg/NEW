@@ -20,6 +20,7 @@ Standard s'intègre à l'outillage existant lorsque ses garanties sont suffisant
 
 ## Contrats détaillés
 
+- [Contrats d'implémentation](../IMPLEMENTATION_CONTRACTS.md) : responsabilité détaillée de chaque composant, invariants et tests d'acceptation.
 - [Modèle conceptuel](KERNEL_CONCEPTUAL_MODEL.md) : objets, relations, transitions et invariants.
 - [Trusted External](TRUSTED_EXTERNAL_CONTRACTS.md) : contrats physiques et domaines de confiance.
 - [Protocole](KERNEL_EXECUTION_PROTOCOL.md) : admission, commit, effet et réconciliation.
