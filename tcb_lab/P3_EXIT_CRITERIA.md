@@ -37,3 +37,7 @@ Chaque cellule porte : `NOT_STARTED | TESTED_LOCAL | TESTED_MULTI_PROCESS | TEST
 `COVERAGE_DEPTH.md` (matrice vivante), `ATTACK_CATALOG.md`, `ATTACK_EXPANSION.md`, traces exécutées, `ROOT_CAUSE_CANDIDATES.md`, `EXTERNAL_ASSUMPTIONS.md`, `P3_EXIT_REVIEW.md`.
 
 **État actuel : OUVERT** ; rien dans la branche ne vaut satisfaction automatique de ces portes.
+
+## Mise en garde — recherche III
+
+La campagne III cible les lacunes empiriques de la phase II mais n'atteint pas les niveaux D4–D7 physiques/distribués. Les critères de clôture restent **non remplis**, quelle que soit la couleur de la CI. Interpréter les rapports avec [l'arbre vivant](EXPERIMENT_TREE_DEPTH_COVERAGE.md) et [la synthèse empirique](findings/P3_LAB_STATUS.md), sans transformer les findings en architecture.
