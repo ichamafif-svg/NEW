@@ -54,6 +54,7 @@ Les responsabilités sont réparties entre **K** (prononce les conséquences lé
 
 ## Documents normatifs de cette architecture
 
+- [Contrats d'implémentation par composant](IMPLEMENTATION_CONTRACTS.md) : prescriptions K/T/U, propriétés de refus, couverture G01–G16 et scénarios de réception.
 - [Modèle conceptuel du noyau](hybrid_kernel/KERNEL_CONCEPTUAL_MODEL.md) : objets et invariants de K.
 - [Contrats Trusted External](hybrid_kernel/TRUSTED_EXTERNAL_CONTRACTS.md) : capacités T, menaces et obligations d'intégration.
 - [Protocole d'exécution](hybrid_kernel/KERNEL_EXECUTION_PROTOCOL.md) : séquence atomique et gestion des effets.
