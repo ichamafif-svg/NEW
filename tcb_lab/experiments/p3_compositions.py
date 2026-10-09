@@ -6,6 +6,7 @@ against a single isolated decision. No physical provider is contacted.
 """
 from __future__ import annotations
 import json
+import copy
 import sys
 from pathlib import Path
 
@@ -101,14 +102,14 @@ def sequence_unknown_then_self_reconcile():
 
 def sequence_repeated_failed_attempt_keeps_previous_rights():
     w=World(); grant,t=ready(w)
-    original=canon(w.state)
+    original=copy.deepcopy(w.state)
     from tcb.kernel import Kernel
     for i in range(12):
         entry,_=w.signed("intent","agent",t+i,under="unknown",
                          op="merge",args={"pr":"42","method":"squash"})
         admitted,_,_=w.kernel.admit(w.state,entry)
         assert not admitted
-        assert canon(w.state)==original,"failed request changed state"
+        assert w.state==original,"failed request changed state"
     iid=w.add("intent","agent",t+12,under=grant,op="merge",
               args={"pr":"42","method":"squash"})
     return {"failed_attempts":12,"legitimate_intent_still_admitted":iid in w.state["intents"]}
