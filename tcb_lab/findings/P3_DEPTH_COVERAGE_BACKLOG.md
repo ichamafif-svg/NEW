@@ -23,3 +23,7 @@
 On commence par **O1/R1** parce que nous avons un signal rouge réel et des hypothèses contradictoires. En parallèle, E1 et P1 ouvrent les frontières les plus critiques mais encore peu couvertes. Les cas multi-hôtes restent bloqués jusqu'à un environnement et des modèles d'adversaires adéquats. Les tests passent d'abord d'une dimension isolée à deux ordres opposés, puis à un même sujet sur la durée.
 
 Le travail reste **Phase 3 uniquement** ; aucun changement du scope, du noyau, des abstractions ou des contrats produit.
+
+## Interprétation Midpoint II — ordre d'attaque ajusté (sans clôture)
+
+Après analyse des 31 expériences ([P3_MIDPOINT_II.md](P3_MIDPOINT_II.md)) : **O1** dix divergences de l'assertion historique après deux cycles, capturer identité et justification des deux sujets ; **E1** refus `HIST.TIME` masque la cause de redémission, refaire avec temps strictement monotone ; **P1** changer réellement les assertions signées (méthode / coverage / provenance), et non seulement le drapeau de vérité local hors message. Priorités 1–3 **toujours ouvertes**.
