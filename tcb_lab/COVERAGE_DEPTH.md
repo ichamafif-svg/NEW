@@ -32,3 +32,7 @@ Se référer à [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md). Une absence de scén
 ## Débordement empirique et prochaine lecture
 
 Le midpoint et les hypothèses à départager sont désormais dans [findings/README.md](findings/README.md), [findings/P3_MIDPOINT.md](findings/P3_MIDPOINT.md) et [findings/P3_DEPTH_COVERAGE_BACKLOG.md](findings/P3_DEPTH_COVERAGE_BACKLOG.md). Les nouvelles expériences doivent remplir les dimensions manquantes **sans attribuer automatiquement D3 à cinq longues séries D1 sur sujets distincts**.
+
+## Campagne III et matrice de couverture
+
+Voir [l'arbre vivant](EXPERIMENT_TREE_DEPTH_COVERAGE.md) pour la nouvelle convention D0–D7, et [la campagne III](findings/P3_CAMPAIGN_III.md) pour les 32 scénarios codés, sans promesse de résultats. Les mentions historiques `Coded` de cette matrice ne constituent jamais un résultat scientifique ; l'état empirique se trouve dans [P3_LAB_STATUS.md](findings/P3_LAB_STATUS.md) et les artefacts CI.
