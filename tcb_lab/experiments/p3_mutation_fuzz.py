@@ -29,7 +29,13 @@ def execute(ident, family, mutate):
     try:
         altered = mutate(copy.deepcopy(entry), w)
         accepted, reason, _ = w.kernel.admit(w.state, altered)
-        assert copy.deepcopy(w.state) == before, "admission mutated caller state"
+        current = copy.deepcopy(w.state)
+        if current != before:
+            changed = [k for k in before if current.get(k) != before[k]]
+            outcome = "VIOLATION_OBSERVED"
+            detail = "candidate changed caller state sections: " + ",".join(changed)
+            RESULTS.append({"id": ident, "family": family, "status": outcome, "observation": detail})
+            return
         if accepted:
             outcome = "VIOLATION_OBSERVED"
             detail = "malformed or forged signed entry admitted"
