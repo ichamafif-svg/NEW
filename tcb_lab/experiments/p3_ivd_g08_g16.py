@@ -12,8 +12,10 @@ from ops import lifecycle
 
 def run_scenario(name,steps,verdict,heal_at=None):
     with redirect_stdout(io.StringIO()):
-        with Sim({"vulns":"found:2"}) as sim:
+        with Sim({"vulns":"none" if name=="G16-healthy-20" else "found:2"}) as sim:
             sim.default_test=verdict
+            if name=="G16-healthy-20":
+                sim.advisories={}  # eliminate simulated vulnerable package advisories too
             base=sim.world.main_head()
             trace=[];seen=set();first_obligations={};reset_candidates=[]
             for i in range(steps):
@@ -39,6 +41,7 @@ def run_scenario(name,steps,verdict,heal_at=None):
                     (not x["live"]) and x["gap_reported"]!="none" for x in trace),
                 "obligation_keys_ever":sorted(first_obligations),
                 "trace":trace,
+                "control_configuration":{"initial_vulns": "none" if name=="G16-healthy-20" else "found:2","advisories_disabled":name=="G16-healthy-20"},
                 "caveat":"Observed legacy ops proposal lifecycle. Stable constitutional debt identity and due timestamp are not asserted by this harness."}
 
 def main():
