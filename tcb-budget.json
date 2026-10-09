@@ -1,0 +1,100 @@
+{
+  "scope": "all tcb/*.py plus trusted bootstrap.py and deployment adapters/*.py; every line is counted in exactly one budget",
+  "budgets": {
+    "safety": {
+      "max_physical_lines": 2942,
+      "modules": "every module not listed in another budget, plus bootstrap.py and adapters/*.py",
+      "guarantee": "no forbidden effect, no forbidden widening, no rewritten history: a bug here can let something through"
+    },
+    "restrict_only": {
+      "max_physical_lines": 537,
+      "modules": [
+        "invariants"
+      ],
+      "importers": [
+        "ledger",
+        "guard",
+        "worker",
+        "__init__"
+      ],
+      "guarantee": "second judge, joined by AND: it runs only after the kernel admitted, and its disagreement or failure halts. A bug here can stop the journal, never admit what the kernel refuses (tests/test_budget_classification.py)"
+    },
+    "visibility": {
+      "max_physical_lines": 500,
+      "modules": [
+        "accountability",
+        "health",
+        "worker",
+        "sandbox"
+      ],
+      "importers": [
+        "accountability",
+        "health",
+        "worker",
+        "sandbox",
+        "__init__"
+      ],
+      "guarantee": "gaps stay visible: a bug here can hide or invent a gap in health, never admit an entry or send an effect; no safety module imports it"
+    }
+  },
+  "layers": {
+    "0-kernel": [
+      "canon",
+      "crypto",
+      "shapes",
+      "policy",
+      "obligations",
+      "floor0",
+      "floors",
+      "law",
+      "kernel",
+      "release",
+      "targets"
+    ],
+    "1-integrity": [
+      "invariants",
+      "ledger",
+      "pins"
+    ],
+    "2-effect": [
+      "guard",
+      "effects",
+      "sign"
+    ],
+    "3-accountability": [
+      "accountability",
+      "health",
+      "worker",
+      "sandbox"
+    ],
+    "package": [
+      "__init__"
+    ]
+  },
+  "independent": {
+    "invariants": [
+      "kernel",
+      "policy",
+      "obligations",
+      "law",
+      "shapes"
+    ]
+  },
+  "review": "The safety ceiling is the historical 2,942 lines. The two others only move by a decision recorded here, never to pass the check by compaction. Moving code between budgets is such a decision too: a module belongs to restrict_only or visibility only while its importers guard and its test hold.",
+  "decisions": [
+    {
+      "date": "2026-10-09",
+      "budget": "restrict_only",
+      "from": 503,
+      "to": 537,
+      "why": "root-cause fixes of the V6 review: the second judge restates the effect-line automaton, the closed envelope and independent gates (docs/REVUE-V6.md)"
+    },
+    {
+      "date": "2026-10-09",
+      "budget": "visibility",
+      "from": 495,
+      "to": 500,
+      "why": "a debt follows the (resource, property) it measures, not the target's name (docs/REVUE-V6.md, finding 6)"
+    }
+  ]
+}

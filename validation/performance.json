@@ -1,0 +1,15 @@
+{
+  "method": "same host/runtime; 360 durable writes per version and 2000 pure judge+independent checks; exploratory microbenchmarks, no general throughput guarantee",
+  "v5": {
+    "median_write_ms": 1.272155499918881,
+    "p95_write_ms": 1.6480109998155967,
+    "median_judge_ms": 0.3238279998640792,
+    "p95_judge_ms": 0.5419859999165055
+  },
+  "v6": {
+    "median_write_ms": 1.4669685001535981,
+    "p95_write_ms": 2.920005999840214,
+    "median_judge_ms": 0.2910629998496006,
+    "p95_judge_ms": 0.4085049999957846
+  }
+}

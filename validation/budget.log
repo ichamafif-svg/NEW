@@ -1,0 +1,7 @@
+0-kernel            1631
+1-integrity          903
+2-effect             115
+3-accountability     495
+package               18
+TCB: 3244 physical lines (bootstrap included), budget 2942
+budget exceeded
