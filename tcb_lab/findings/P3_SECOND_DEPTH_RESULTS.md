@@ -25,3 +25,9 @@ Les essais instrumentent dix variantes identiques `found:1` sur deux cycles, tro
 Le job vert ne suffit pas pour conclure à une expérience correctement enregistrée. L'[issue #2](https://github.com/ichamafif-svg/NEW/issues/2) signalait explicitement `INVALID_JSON` pour les deux variantes O1 : ces sous-rapports ne peuvent pas compter comme couverture avec trace JSON reproductible tant que leur nouveau run n'est pas vérifié.
 
 Les trois priorités et tous les axes du [backlog de couverture](P3_DEPTH_COVERAGE_BACKLOG.md) restent ouverts. Les résultats sont utilisés pour fabriquer les **prochaines expériences plus profondes**, jamais pour présélectionner une abstraction.
+
+## Vérification ultérieure du harnais et collecte intégrale
+
+Le run [#74](https://github.com/ichamafif-svg/NEW/actions/runs/37953933593), postérieur au correctif de capture `stdout`, a publié **tous les 14 rapports `PARSED`**, avec **16 observations O1**, huit observations E1 et sept observations P1 correctement sérialisées et zéro `INCONCLUSIVE` signalé. Ce résultat corrige la limite de traçabilité du run #67 ; il ne rétrovalide pas les capacités hors fixture. Une étape CI supplémentaire impose désormais la présence et la validité JSON de *toutes* les suites pour considérer le job de laboratoire en succès (commit `61e0d169` ; verdict de ce nouveau contrôle encore à vérifier sur son propre run).
+
+La feuille O1 garde une question scientifique ouverte : dix simulations vertes sur le comportement historique attendu ne reproduisent pas l'origine de certains anciens runs rouges. Ces essais utilisent des fixtures synthétiques fraîches, pas une variation contrôlée de tous les paramètres du même SHA binaire. Ne pas confondre « erreur impossible à reproduire ici » et « erreur résolue ».
