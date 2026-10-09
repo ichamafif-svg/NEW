@@ -39,3 +39,12 @@ Commande prévue : `python3 tests/test_vnext_decision.py`. La suite historique :
 `python tools/compare_vnext.py` runs **the same 19 historical test scripts twice**: unmodified `main` behavior, then the *same scripts* with a shadow hook intercepting `Kernel.decide`. Every intercepted admitted decision compares canonical record and ordered delta; refusals compare exact refusal code. The hook returns the original decision to keep the test's behavior unchanged. It writes `validation/vnext-differential.json`. A new push-triggered workflow at `.github/workflows/vnext-parity.yml` runs both this parity gate and `tests/test_vnext_decision.py`.
 
 **Not yet measured:** neither local results nor CI results have been observed at documentation time. A passing shadow comparison would establish test-suite behavioral parity for intercepted paths, **not** independent assurance: vNext still delegates its judgement to the historical kernel and shares its trust dependencies. Other guarantees (effect isolation, provider atomicity, durable pins and deployments) require separate evaluation.
+
+## Focus: constitutional TCB, not orchestration (current iteration)
+
+- Frozen requirements and research rules are copied into `vnext/SCOPE.md` and `vnext/RESEARCH_PROTOCOL.md`.
+- `vnext/transition.py` implements a **generic, closed mutation algebra** over the canonical state, independent of permissions/agents/providers. Every instruction is shape-checked and produces a post-state digest; exhaustive equality verifies the declared state change.
+- `vnext/decision.py` compares this independent interpreter with the historical `tcb.kernel.apply` before returning any accepted result. A disagreement refuses the transition, rather than altering the legacy execution path.
+- `tests/test_vnext_transition.py` tests mutation completeness, fail-closed grammar and deterministic trace; the vNext CI script invokes it.
+
+**Important:** this is a concrete step toward a better abstraction (constitution = typed transition contract + authority/evidence predicates + controlled effect), not completion. The constitutional judge still relies on main's semantics and does not yet implement a new seven-responsibility decision model. This branch has not passed an independently observed full validation run and MUST NOT replace production admission.
