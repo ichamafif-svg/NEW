@@ -42,3 +42,7 @@ Lire [P3_PRIORITY_FIRST_RESULTS.md](P3_PRIORITY_FIRST_RESULTS.md) : les quatre t
 ## Midpoint II — interprétation des 31 nouvelles expériences
 
 [P3_MIDPOINT_II.md](P3_MIDPOINT_II.md) reprend les **sorties individuelles** des 7 preuves, 8 effets et 16 séquences de maintenance, et rectifie la lecture trompeuse du vert CI : dix divergences historiques observées, refus de deuxième redemption uniquement `HIST.TIME` (oracle anti-doublon non isolé) et qualification de preuve sans accès à la vérité externe. Ce document est maintenant la référence pour la prochaine profondeur ; ne pas conclure sur une faiblesse structurelle ou une solution.
+
+## Campagne III et arbre central
+
+Lire [P3_LAB_STATUS.md](P3_LAB_STATUS.md) puis [P3_CAMPAIGN_III.md](P3_CAMPAIGN_III.md). Le référentiel de profondeur et couverture est [EXPERIMENT_TREE_DEPTH_COVERAGE.md](../EXPERIMENT_TREE_DEPTH_COVERAGE.md) ; la campagne III interroge précisément les limites de nos oracles précédents, sans effacer les résultats antérieurs.
