@@ -48,3 +48,11 @@ Il n'existe **aucune table `type métier → handler`**. Un nouvel objet métier
 4. Soumettre aux gates de sûreté/performance, puis décider d'une promotion explicite.
 
 Le découpage de responsabilité déjà figé dans `tcb_lab/FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md` reste l'autorité normative.
+
+## Incrément 2 — Admission transactionnelle locale
+
+`hybrid_kernel/store.py` introduit `SQLiteAdmission` : genèse non réinitialisable par l'API, transactions `BEGIN IMMEDIATE`, lecture contrôlée, jugement d'une enveloppe DSSE vérifiée sur l'état le plus récent, commit atomique du checkpoint et de l'enregistrement d'admission, identifiant de demande unique et rejet des reçus périmés. Le lien au `state_head` et à la constitution évite de réutiliser un reçu après une autre transition. `tests/test_hybrid_kernel_store.py` teste genèse unique, réouverture, identité de dette après retry, replay, refus et altération locale du checkpoint.
+
+**Limite de confiance primordiale :** cette durabilité SQLite locale **ne résiste pas** à un adversaire capable de restaurer la base entière avec son journal ou de modifier simultanément checkpoint et lignes. Pas d'ancrage externe indépendant, pas de vérification d'identité physique de l'auteur sous-jacent, pas de règle de quorum complète, pas de preuve qualifiée de clôture, pas de garde fournisseur exclusif. Le jugement `ACCEPT` sur un effet **n'est pas** une autorisation physique de dispatch. N'exposer que le chemin `SQLiteAdmission.admit` derrière une API à contrôle d'accès ; `judge` et `commit` sont des primitives internes et acceptent des entrées non authentifiées si appelées hors du contrôleur.
+
+**Séparation utile :** le jugement reste sans I/O dans `core.py` ; l'infrastructure de confiance prend en charge la signature dans `trusted.py` et l'atomicité locale dans `store.py`. Les opérations métier et la maintenance restent hors du cœur. Un déploiement cloud doit remplacer / compléter SQLite par un stockage à linéarisation et ancrage anti-rollback, sans changer les verdicts déterministes.
