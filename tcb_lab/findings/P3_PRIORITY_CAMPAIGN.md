@@ -24,3 +24,7 @@
 Les trois suites nouvelles sont ajoutées au workflow `tcb-lab-p3.yml`, avec `continue-on-error` limité à la collecte complète et job final rouge si l'une échoue. Les trois rapports JSON sont joints aux artefacts et à l'[issue CI #2](https://github.com/ichamafif-svg/NEW/issues/2).
 
 **À ne pas confondre avec une couverture exhaustive :** [P3_DEPTH_COVERAGE_BACKLOG.md](P3_DEPTH_COVERAGE_BACKLOG.md) garde neuf axes ; nous traitons maintenant ses trois premiers, et les autres restent explicitement ouverts.
+
+## Première récolte — exécution observée
+
+Voir [P3_PRIORITY_FIRST_RESULTS.md](P3_PRIORITY_FIRST_RESULTS.md) : run [#59](https://github.com/ichamafif-svg/NEW/actions/runs/37952372660), log adversarial lu. **O1 : 4 variantes OBSERVED** ; **E1 : 4 variantes OBSERVED** ; **P1 : 3 variantes OBSERVED**. Ces données révèlent de nouvelles questions sur la divergence des runs rouges, la sémantique fournisseur du `failed` et l'authenticité sans vérité. Ces expériences n'achèvent aucun des trois sous-arbres.
