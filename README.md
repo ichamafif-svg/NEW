@@ -16,6 +16,9 @@ Aucun ancien journal ou ancienne genèse ne doit être réutilisé avec cette re
 n'est présumé ; la compatibilité héritée ne gouverne pas les choix.
 
 La vision produit et les choix conservés sont dans [docs/VISION.md](docs/VISION.md).
+La proposition de stabilisation du cœur issue des 18 constats V7/M2 est dans
+[docs/COEUR-STABLE.md](docs/COEUR-STABLE.md) : contrats, frontières, reprises et critères de validation.
+Elle décrit une architecture à réaliser, sans revendiquer de correction du comportement actuel.
 Le jalon M2 (maintenance autonome, sûre et conforme : `ops/`, `compliance/`, `adapters/`, `demo/`) est décrit dans
 [docs/M2.md](docs/M2.md).
 La projection du travail, sans autorité, est décrite dans [maintenance/README.md](maintenance/README.md).
