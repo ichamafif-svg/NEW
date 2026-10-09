@@ -46,3 +46,7 @@ Lire [P3_PRIORITY_FIRST_RESULTS.md](P3_PRIORITY_FIRST_RESULTS.md) : les quatre t
 ## Campagne III et arbre central
 
 Lire [P3_LAB_STATUS.md](P3_LAB_STATUS.md) puis [P3_CAMPAIGN_III.md](P3_CAMPAIGN_III.md). Le référentiel de profondeur et couverture est [EXPERIMENT_TREE_DEPTH_COVERAGE.md](../EXPERIMENT_TREE_DEPTH_COVERAGE.md) ; la campagne III interroge précisément les limites de nos oracles précédents, sans effacer les résultats antérieurs.
+
+## Campagne IV — limites et frontière effective
+
+Pour distinguer ce qui relève de la décision du noyau, de la confiance physique externe et du travail remplaçable : [TCB_BOUNDARY_MATRIX.md](../TCB_BOUNDARY_MATRIX.md), [ESTABLISHED_LIMITS.md](../ESTABLISHED_LIMITS.md), [SCOPE_FREEZE_REVIEW.md](../SCOPE_FREEZE_REVIEW.md). **Classification provisoire ≠ démonstration de garanties G01–G16**. L'objectif est la stabilisation argumentée de la frontière, sans concevoir la représentation interne.
