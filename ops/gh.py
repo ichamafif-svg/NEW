@@ -36,27 +36,38 @@ class Client:
     def get(self, path, **params):
         return self.call("GET", path + ("?" + urllib.parse.urlencode(params) if params else ""))
 
+    def pages(self, path, cap=10, **params):
+        out = []
+        for page in range(1, cap + 1):
+            rows = self.get(path, per_page=100, page=page, **params)
+            out += rows
+            if len(rows) < 100:
+                return out
+        raise GitHubError(f"{path}: more than {cap * 100} rows")
+
     def pulls(self):
-        return self.get("/pulls", state="open", per_page=100)
+        return self.pages("/pulls", state="open")
 
     def pull(self, number):
         return self.get(f"/pulls/{number}")
 
     def files(self, number):
-        return [f["filename"] for f in self.get(f"/pulls/{number}/files", per_page=100)]
+        return [f["filename"] for f in self.pages(f"/pulls/{number}/files", cap=30)]
 
     def reviews(self, number):
-        return self.get(f"/pulls/{number}/reviews", per_page=100)
+        return self.pages(f"/pulls/{number}/reviews")
+
+    def can_write(self, login):
+        try:
+            return self.get(f"/collaborators/{login}/permission").get("permission") in ("admin", "maintain", "write")
+        except GitHubError:
+            return False
 
     def check_runs(self, sha):
         return self.get(f"/commits/{sha}/check-runs", per_page=100).get("check_runs", [])
 
     def rules(self, branch):
         return self.get(f"/rules/branches/{branch}")
-
-    def latest_run(self, workflow, branch):
-        runs = self.get(f"/actions/workflows/{workflow}/runs", branch=branch, per_page=1).get("workflow_runs", [])
-        return runs[0] if runs else None
 
     def open_pull(self, head, title, body, base="main"):
         return self.call("POST", "/pulls", {"head": head, "base": base, "title": title, "body": body})

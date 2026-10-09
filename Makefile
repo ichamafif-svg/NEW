@@ -23,3 +23,4 @@ test:
 	python3 tests/test_m2.py
 	python3 tests/test_compliance.py
 	python3 tests/test_ops.py
+	python3 tests/test_m2_review.py

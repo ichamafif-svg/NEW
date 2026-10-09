@@ -44,10 +44,11 @@ def test_statuses_follow_signed_evidence():
 def test_a_dossier_is_genuine_only_if_the_journal_rebuilds_it():
     w, rows, pins, genesis, at = world()
     d = build(rows, genesis_pin=genesis, checkpoints=pins, required_at=at)
-    assert verify(d, rows, checkpoints=pins)
+    assert verify(d, rows, genesis_pin=genesis, checkpoints=pins)
     forged = copy.deepcopy(d)
     forged["measures"]["secrets"]["status"] = PROVEN
-    assert not verify(forged, rows, checkpoints=pins)
+    assert not verify(forged, rows, genesis_pin=genesis, checkpoints=pins)
+    assert not verify(d, rows, genesis_pin="sha256:" + "0" * 64, checkpoints=pins)   # the verifier's pin rules
     later = build(rows, genesis_pin=genesis, checkpoints=pins, required_at=at + 400 * 86_400_000)
     assert later["measures"]["incident"]["status"] == GAP                   # an attestation expires on its own
 

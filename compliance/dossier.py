@@ -81,9 +81,12 @@ def build(rows, *, genesis_pin: str, checkpoints: list, required_at: int) -> dic
     return {**dossier, "digest": digest(dossier)}
 
 
-def verify(dossier: dict, rows, *, checkpoints: list) -> bool:
-    """Rebuild from the journal alone; the dossier is genuine only if every byte matches."""
-    rebuilt = build(rows, genesis_pin=dossier["genesis"], checkpoints=checkpoints, required_at=dossier["required_at"])
+def verify(dossier: dict, rows, *, genesis_pin: str, checkpoints: list) -> bool:
+    """Rebuild from the journal alone, under the genesis the verifier trusts (never the one the dossier names): the
+    dossier is genuine only if every byte matches. It speaks for its own date, `required_at`, and no later."""
+    if dossier.get("genesis") != genesis_pin:
+        return False
+    rebuilt = build(rows, genesis_pin=genesis_pin, checkpoints=checkpoints, required_at=dossier["required_at"])
     return canon(rebuilt) == canon(dossier)
 
 
@@ -137,7 +140,7 @@ def main(argv=None):
     ap.add_argument("command", choices=["build", "verify"])
     ap.add_argument("--journal", required=True)
     ap.add_argument("--checkpoints", required=True, help="JSON list of retained {size, head} pins")
-    ap.add_argument("--genesis")
+    ap.add_argument("--genesis", required=True, help="the genesis pin you trust, kept outside the journal")
     ap.add_argument("--at", type=int)
     ap.add_argument("--dossier", default="dossier.json")
     ap.add_argument("--html")
@@ -150,8 +153,10 @@ def main(argv=None):
             Path(a.html).write_text(render(d))
         print(d["digest"])
         return 0
-    ok = verify(json.loads(Path(a.dossier).read_text()), rows, checkpoints=pins)
-    print("VÉRIFIÉ" if ok else "NON CONFORME AU JOURNAL")
+    dossier = json.loads(Path(a.dossier).read_text())
+    ok = verify(dossier, rows, genesis_pin=a.genesis, checkpoints=pins)
+    print(("VÉRIFIÉ, état au " if ok else "NON CONFORME AU JOURNAL, daté du ")
+          + __import__("datetime").datetime.utcfromtimestamp(dossier["required_at"] / 1000).strftime("%Y-%m-%d %H:%M UTC"))
     return 0 if ok else 1
 
 

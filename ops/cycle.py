@@ -115,11 +115,21 @@ def cmd_scan(node: Node, a):
         written += observe(node, under, resource, prop, status)
     s = node.state
     for iid, it in s["intents"].items():                     # read back: did GitHub merge exactly this commit?
-        if f"proof:{iid}" in s["obligations"] and it["op"] == "remediate":
-            pull = gh.pull(it["args"]["pr"])
-            if pull.get("merged") and pull["head"]["sha"] == it["args"]["head"]:
-                node.add("evidence", "scanner", under=under, resource=it["resource"], subject=iid, level="real")
-                written += 1
+        if it["op"] != "remediate":
+            continue
+        line = s["line"].get(iid, {}).get("state")
+        if f"proof:{iid}" not in s["obligations"] and line not in ("uncertain", "expired"):
+            continue
+        pull = gh.pull(it["args"]["pr"])
+        landed = bool(pull.get("merged")) and pull["head"]["sha"] == it["args"]["head"]
+        if line in ("uncertain", "expired"):                 # an outcome nobody knows is settled by reading back
+            node.add("reconciliation", "scanner", under=under, intent=iid,
+                     result="applied" if landed else "not_applied")
+            written += 1
+            s = node.state
+        if landed and f"proof:{iid}" in s["obligations"]:
+            node.add("evidence", "scanner", under=under, resource=it["resource"], subject=iid, level="real")
+            written += 1
     node.retain()
     print(json.dumps({"measured": measured, "written": written}))
 
@@ -127,17 +137,30 @@ def cmd_scan(node: Node, a):
 def cmd_ask(node: Node, a):
     """Ask the law to merge every commit the scanner observed ready. Fast: it runs inside the witnessed window."""
     s = node.state
-    asked = {(it["args"].get("pr"), it["args"].get("head")) for it in s["intents"].values() if it["op"] == "remediate"}
-    facts = {}
+    latest = {}                                                # (pr, head) -> its most recent intent
+    for iid, it in s["intents"].items():
+        if it["op"] == "remediate":
+            key = (it["args"]["pr"], it["args"]["head"])
+            if key not in latest or it["stmt"]["at"] >= latest[key]["stmt"]["at"]:
+                latest[key] = it
+    facts, seen_at = {}, {}
     for o in s["observations"].values():
         if "/pr/" in o["resource"] and o["author"] == "scanner":
             facts.setdefault(o["resource"], {})[o["property"]] = o["status"]
+            seen_at[o["resource"]] = max(seen_at.get(o["resource"], 0), o["at"])
     intents = []
     for resource, f in sorted(facts.items()):
         base, _, rest = resource.partition("/pr/")
         pr, head = rest.split("/")
         _, area, item = base.split(":")
-        if (pr, head) in asked or f.get("ci") != "green":
+        prior = latest.get((pr, head))
+        retry = None
+        if prior is not None:
+            # Ask again only after a definite failure (GitHub merged nothing) and a newer observation of the commit.
+            if s["line"].get(prior["id"], {}).get("state") != "failed" or seen_at[resource] <= prior["stmt"]["at"]:
+                continue
+            retry = prior["id"]
+        if f.get("ci") != "green":
             continue
         cond = "remediate-autonomous" if f.get("scope") == "dependencies" else (
             "remediate-reviewed" if f.get("review") == "approved" else None)
@@ -145,8 +168,9 @@ def cmd_ask(node: Node, a):
         if not under:
             continue
         try:
+            fields = {"retry_of": retry} if retry else {}
             node.add("intent", "agent", under=under, op="remediate",
-                         args={"area": area, "item": item, "pr": pr, "head": head, "method": "squash"})
+                     args={"area": area, "item": item, "pr": pr, "head": head, "method": "squash"}, **fields)
             intents.append(pr)
         except Refused as r:
             print(f"intent for #{pr} refused: {r.code} {r.detail}")
@@ -246,8 +270,12 @@ def main(argv=None):
     ap.add_argument("--health")
     ap.add_argument("--resource")
     ap.add_argument("--out", default="report")
+    ap.add_argument("--genesis", help="externally kept genesis pin (default: STANDARD_GENESIS)")
     a = ap.parse_args(argv)
-    node = Node(a.state, load_keys(a.keys), create=a.command == "init")
+    expected = a.genesis or os.environ.get("STANDARD_GENESIS")
+    if a.command != "init" and not expected:
+        raise SystemExit("the genesis pin must come from outside the state: --genesis or STANDARD_GENESIS")
+    node = Node(a.state, load_keys(a.keys), create=a.command == "init", expected_genesis=expected)
     try:
         globals()["cmd_" + a.command](node, a)
     finally:

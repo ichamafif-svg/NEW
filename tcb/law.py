@@ -85,8 +85,9 @@ def _stricter(section: str, field: str, base, value) -> bool:
 def _reaches(op, resource: str) -> bool:
     """Invert the bounded typed template without wildcard regex or combinatorial search."""
     parts, values = re.split(r"([:/])", op["resource"]), re.split(r"([:/])", resource)
-    if len(parts) > len(values) and parts[len(values)] == "/":
-        parts = parts[:len(values)]                   # an op on a child (repo:deps:vulns/pr/7/sha) repairs its parent
+    if (len(parts) > len(values) and parts[len(values)] == "/"
+            and any(PLACEHOLDER.search(p) for p in parts[len(values):])):
+        parts = parts[:len(values)]                   # an op on a typed child (repo:deps:vulns/pr/7/sha) repairs its parent
     if len(parts) != len(values):
         return False
     bound = {}

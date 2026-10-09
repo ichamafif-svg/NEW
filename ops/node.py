@@ -50,12 +50,16 @@ def root_of(publics: dict) -> dict:
 
 
 class Node:
-    def __init__(self, state_dir, keys: dict, *, create=False):
+    def __init__(self, state_dir, keys: dict, *, create=False, expected_genesis=None):
+        """`expected_genesis` comes from outside the state (an admin-only setting): a journal carried on a branch
+        anyone with write access could replace is accepted only if it is the genesis the humans chose."""
         self.dir = Path(state_dir)
         self.keys = keys
         self.kernel = Kernel()
         meta = self.dir / "genesis.json"
         self.genesis = json.loads(meta.read_text())["pin"] if meta.exists() else None
+        if not create and (expected_genesis is None or self.genesis != expected_genesis):
+            raise ValueError("the state is not the externally pinned genesis")
         self.pins = SQLitePins(self.dir / "pins" / "pins.sqlite3", create=create)
         from tcb import Auditor
         self.journal = Journal(self.dir / "journal" / "journal.sqlite3", self.kernel, genesis_pin=self.genesis,

@@ -1,4 +1,12 @@
+# Full lock: every package of the closure, pinned (Standard audits it without installing anything).
+certifi==2026.7.22
+chardet==4.0.0
+click==8.5.0
 flask==2.2.2
-werkzeug==2.2.2
+idna==2.10
+itsdangerous==2.2.0
 jinja2==3.1.2
+markupsafe==3.0.4
 requests==2.25.1
+urllib3==1.26.20
+werkzeug==2.2.2

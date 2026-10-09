@@ -54,6 +54,24 @@ def context(repo: Path, limit=120_000) -> str:
     return "\n".join(parts)
 
 
+SAFE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]*(/[A-Za-z0-9_][A-Za-z0-9_.-]*)*$")
+
+
+def allowed(repo: Path, path: str, target: str) -> Path:
+    """A model reply names files; only plain paths inside the work tree, never git's own files or control files."""
+    workflows = target == "actions" and re.fullmatch(r"\.github/workflows/[A-Za-z0-9_.-]+\.ya?ml", path)
+    parts = path.split("/")
+    if not (SAFE.fullmatch(path) or workflows) or any(p in ("", ".", "..") or p.lower().startswith(".git")
+                                                       and not workflows for p in parts):
+        raise ValueError(f"the agent may not write {path!r}")
+    if FORBIDDEN.match(path) and not workflows:
+        raise ValueError(f"the agent may not write {path!r}")
+    full = (repo / path).resolve()
+    if repo.resolve() not in full.parents or (full.exists() and (full.is_symlink() or not full.is_file())):
+        raise ValueError(f"the agent may not write {path!r}")
+    return full
+
+
 def propose_patch(repo: Path, target: str, status: str, key: str) -> dict:
     prompt = (f"Repository files follow. The maintenance target `{target}` currently reads `{status}`.\n"
               f"Task: {GUIDE[target]}\nReturn JSON: {{\"title\": str, \"body\": str, \"files\": "
@@ -62,10 +80,7 @@ def propose_patch(repo: Path, target: str, status: str, key: str) -> dict:
     patch = claude(prompt, key)
     files = patch.get("files") or {}
     for path in files:
-        rel = Path(path)
-        if rel.is_absolute() or ".." in rel.parts or (FORBIDDEN.match(path) and not
-                                                       (target == "actions" and path.startswith(".github/workflows/"))):
-            raise ValueError(f"the agent may not write {path}")
+        allowed(repo, str(path), target)
     return {"title": str(patch.get("title", f"Remediate {target}"))[:200], "body": str(patch.get("body", ""))[:4000],
             "files": {str(k): str(v) for k, v in files.items()}}
 
@@ -80,11 +95,13 @@ def open_repair(repo: Path, gh, target: str, area: str, item: str, status: str, 
     if not patch["files"]:
         return None
     branch = f"standard/{area}/{item}/{uuid.uuid4().hex[:8]}"
-    git = lambda *a: subprocess.run(["git", *a], cwd=repo, check=True, capture_output=True, text=True)
+    hardened = ("-c", "core.fsmonitor=false", "-c", "core.hooksPath=/dev/null", "-c", "core.sshCommand=false")
+    git = lambda *a: subprocess.run(["git", *hardened, *a], cwd=repo, check=True, capture_output=True, text=True)
     git("checkout", "-B", branch, "origin/main")
     for path, content in patch["files"].items():
-        (repo / path).parent.mkdir(parents=True, exist_ok=True)
-        (repo / path).write_text(content)
+        full = allowed(repo, path, target)
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(content)
     git("add", "--", *patch["files"])
     git("-c", "user.name=standard-agent", "-c", "user.email=agent@standard.invalid", "commit", "-m", patch["title"])
     git("push", "origin", branch)

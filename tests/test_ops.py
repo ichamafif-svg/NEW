@@ -89,7 +89,9 @@ def test_a_vulnerability_is_repaired_under_the_law_and_proven():
     keys = load_keys(keyfile)
 
     def step(command, **kw):
-        n = Node(state, keys, create=command == "init")
+        pinned = Path(state, "genesis.json")
+        expected = json.loads(pinned.read_text())["pin"] if pinned.exists() else None
+        n = Node(state, keys, create=command == "init", expected_genesis=expected)
         try:
             getattr(cycle, "cmd_" + command)(n, args(state, publics=publics, **kw))
             return n.state
@@ -135,13 +137,14 @@ def test_a_vulnerability_is_repaired_under_the_law_and_proven():
         s = step("scan")
         assert f"proof:{iid}" not in s["obligations"], "the read-back closes the proof"
         assert s["observations"]["repo:deps:vulns|high|scanner"]["status"] == "none"
-        n = Node(state, keys)
+        genesis = json.loads(Path(state, "genesis.json").read_text())["pin"]
+        n = Node(state, keys, expected_genesis=genesis)
         try:
             from compliance.dossier import build, rows_of, verify
             d = build(rows_of(n.journal.path), genesis_pin=n.genesis, checkpoints=n.pins.load(),
                       required_at=int(clock.t * 1000))
             assert d["measures"]["vulns"]["status"] == "PROUVÉ"
-            assert verify(d, rows_of(n.journal.path), checkpoints=n.pins.load())
+            assert verify(d, rows_of(n.journal.path), genesis_pin=genesis, checkpoints=n.pins.load())
         finally:
             n.close()
 
