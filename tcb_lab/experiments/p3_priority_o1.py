@@ -35,11 +35,16 @@ def probe(label,verdict,cycles):
                 "base_head_intact":last["head_unchanged"],"no_live_subject":not last["live"]},
                 "interpretation":"observed ops state; not a proof of TCB breach"}
 
+
+def quiet_probe(*args):
+    with redirect_stdout(io.StringIO()):
+        return probe(*args)
+
 def main():
     rows=[]
     for label,value,cycles in (("historic_red","found:1",2),("clean","none",2),
                                 ("red_early","found:1",1),("red_longer","found:1",3)):
-        try: rows.append({"id":"P3-O1-"+label,"status":"OBSERVED","evidence":probe(label,value,cycles)})
+        try: rows.append({"id":"P3-O1-"+label,"status":"OBSERVED","evidence":quiet_probe(label,value,cycles)})
         except Exception as exc: rows.append({"id":"P3-O1-"+label,"status":"INCONCLUSIVE",
              "evidence":{"exception":type(exc).__name__,"detail":str(exc)[:220]}})
     print(json.dumps({"priority":"O1/R1","observations":rows},indent=2))
