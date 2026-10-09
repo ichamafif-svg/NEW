@@ -114,17 +114,22 @@ jobs:
         continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_iv_coverage_audit.py | tee p3-iv-matrix.json
+      - name: Phase IV-B paired boundary counterexperiments
+        id: ivb_pairs
+        continue-on-error: true
+        shell: bash
+        run: python tcb_lab/experiments/p3_ivb_boundary_pairs.py | tee p3-ivb-pairs.json
       - name: Validate all experiment reports are parseable JSON
         id: jsoncheck
         continue-on-error: true
         shell: bash
         run: |
-          for file in g1-output.json p3-output.json p3-effects-output.json p3-mutation-output.json p3-autonomy-output.json p3-compositions-output.json p3-counter-output.json p3-long-horizon-output.json p3-priority-o1-output.json p3-priority-e1-output.json p3-priority-p1-output.json p3-depth-proof.json p3-depth-effect.json p3-depth-autonomy.json p3-iii-effect.json p3-iii-autonomy.json p3-iii-proof.json p3-iv-boundary.json p3-iv-matrix.json; do
+          for file in g1-output.json p3-output.json p3-effects-output.json p3-mutation-output.json p3-autonomy-output.json p3-compositions-output.json p3-counter-output.json p3-long-horizon-output.json p3-priority-o1-output.json p3-priority-e1-output.json p3-priority-p1-output.json p3-depth-proof.json p3-depth-effect.json p3-depth-autonomy.json p3-iii-effect.json p3-iii-autonomy.json p3-iii-proof.json p3-iv-boundary.json p3-iv-matrix.json p3-ivb-pairs.json; do
             test -s "$file" || exit 1
             python -m json.tool "$file" > /dev/null || exit 1
           done
       - name: Reject any failed suite, while retaining all suite outputs
-        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure' || steps.proofdepth.outcome == 'failure' || steps.effectdepth.outcome == 'failure' || steps.autonomydepth.outcome == 'failure' || steps.jsoncheck.outcome == 'failure' || steps.iii_effect.outcome == 'failure' || steps.iii_autonomy.outcome == 'failure' || steps.iii_proof.outcome == 'failure' || steps.iv_boundary.outcome == 'failure' || steps.iv_matrix.outcome == 'failure')
+        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure' || steps.proofdepth.outcome == 'failure' || steps.effectdepth.outcome == 'failure' || steps.autonomydepth.outcome == 'failure' || steps.jsoncheck.outcome == 'failure' || steps.iii_effect.outcome == 'failure' || steps.iii_autonomy.outcome == 'failure' || steps.iii_proof.outcome == 'failure' || steps.iv_boundary.outcome == 'failure' || steps.iv_matrix.outcome == 'failure' || steps.ivb_pairs.outcome == 'failure')
         run: exit 1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
@@ -148,6 +153,7 @@ jobs:
             p3-iii-proof.json
             p3-iv-boundary.json
             p3-iv-matrix.json
+            p3-ivb-pairs.json
             p3-iii-autonomy.json
             p3-iii-effect.json
           if-no-files-found: warn
