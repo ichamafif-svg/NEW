@@ -31,6 +31,7 @@ names={
 "p3-ive-reasons.json":"IV-E G08/G16 reason tracing",
 "p3-ivf-backoff.json":"IV-F G08/G16 24-hour backoff",
 "p3-ivg-health.json":"IV-G G08/G16 health and escalation",
+"p3-ivh-canonical.json":"IV-H G08 canonical vulns and G16 escalation",
 }
 rows=[]
 for filename,desc in names.items():
