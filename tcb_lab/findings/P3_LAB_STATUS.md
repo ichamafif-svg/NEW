@@ -35,3 +35,7 @@ Les 16 garanties ont désormais une allocation provisoire `K/T/U` dans [TCB_BOUN
 ## IV-D : deux frontières sémantiques investiguées
 
 Le dossier [G08/G16](P3_G08_G16_CAMPAIGN.md) décrit quatre contrastes longitudinaux codés et raccordés à la CI. L'expérience mesure cycles, phases, identités de proposition et obligations visibles ; elle **ne suppose pas** qu'un identifiant de proposition représente une dette canonique. Les 14 autres frontières demeurent conditionnellement délimitées, non démontrées en production. État d'exécution à vérifier dans l'[issue #2](https://github.com/ichamafif-svg/NEW/issues/2).
+
+## G08/G16 — lecture des résultats réels (après Actions 37964069387)
+
+Voir [l'interprétation complète](P3_G08_G16_FIRST_INTERPRETATION.md). Dans les scénarios à écart persistant, deux propositions sont retirées puis **18 cycles / 20 sans sujet live** sont observés, sans modification de main. Les obligations constitutionnelles ne peuvent pas être déduites de la seule liste `state["obligations"]` vide : **G08 reste ouvert**. **G16 reste ouvert** en attente du contrôle des escalades et de la fairness. Le prétendu contrôle sain était **invalide** (le runner `none` n'enlevait pas `vulns=found:2`) et a été rectifié dans le harnais ; ne pas citer l'ancien résultat comme témoin sain. Aucune modification du noyau ou du scope.
