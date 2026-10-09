@@ -25,3 +25,7 @@
 ## Limits NOT established
 
 Exactly-once remote effect under provider ambiguity; concurrent multi-host fencing; independence of two deployed judges; real source coverage/truth; stable obligations under repeated repairs; bootstrap runtime/key custody; verified no alternative egress. These remain OPEN and require experiments or an explicit, testable external contract.
+
+## Statut de clôture fonctionnelle (2026-10-09)
+
+Voir [FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md](FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md) : **16/16 allocations K/T/U figées conditionnellement**, sans certification des garanties ni du déploiement. Les constatations et limites ci-dessus restent valables comme faits historiques/conditions d'audit ; elles ne constituent plus un blocage de **délimitation du noyau**. La validation physique, les preuves empiriques et les portes de sortie de P3 restent ouvertes ; G08/G16 ne doivent pas provoquer une nouvelle boucle d'audit général du produit.
