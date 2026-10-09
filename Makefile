@@ -20,3 +20,6 @@ test:
 	python3 tests/test_maintenance.py
 	python3 tests/test_budget_classification.py
 	python3 tests/test_root_causes.py
+	python3 tests/test_m2.py
+	python3 tests/test_compliance.py
+	python3 tests/test_ops.py

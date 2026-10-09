@@ -1,0 +1,972 @@
+{
+ "format": "standard-compliance/1",
+ "note": "Projection hors TCB : quelles mesures des floors évidencent chaque contrôle. Elle n'accorde aucun droit et ne ferme aucune obligation ; un statut PROUVÉ reste une preuve technique, pas une certification.",
+ "measures": {
+  "journal": "Journal Standard : admission signée, indépendance des sources, quorum humain pour élargir, historique épinglé (FLOOR-0). Prouvé quand l'audit rejoue le journal sans faute."
+ },
+ "frameworks": [
+  {
+   "id": "iso27001",
+   "name": "ISO/IEC 27001:2022 — Annexe A",
+   "scope": "statement-of-applicability",
+   "controls": [
+    {
+     "id": "5.1",
+     "title": "Politiques de sécurité de l'information",
+     "measures": [
+      "isms"
+     ]
+    },
+    {
+     "id": "5.2",
+     "title": "Fonctions et responsabilités",
+     "measures": [
+      "isms"
+     ]
+    },
+    {
+     "id": "5.3",
+     "title": "Séparation des tâches",
+     "measures": [
+      "journal",
+      "access"
+     ]
+    },
+    {
+     "id": "5.4",
+     "title": "Responsabilités de la direction",
+     "measures": [
+      "isms"
+     ]
+    },
+    {
+     "id": "5.5",
+     "title": "Relations avec les autorités",
+     "measures": [
+      "incident",
+      "legal"
+     ]
+    },
+    {
+     "id": "5.6",
+     "title": "Relations avec des groupes d'intérêt",
+     "measures": [
+      "threat"
+     ]
+    },
+    {
+     "id": "5.7",
+     "title": "Renseignement sur les menaces",
+     "measures": [
+      "threat"
+     ]
+    },
+    {
+     "id": "5.8",
+     "title": "Sécurité dans la gestion de projet",
+     "measures": [
+      "isms",
+      "sast"
+     ]
+    },
+    {
+     "id": "5.9",
+     "title": "Inventaire des informations et actifs",
+     "measures": [
+      "assets",
+      "inventory"
+     ]
+    },
+    {
+     "id": "5.10",
+     "title": "Utilisation correcte des actifs",
+     "measures": [
+      "isms"
+     ]
+    },
+    {
+     "id": "5.11",
+     "title": "Restitution des actifs",
+     "measures": [
+      "hr"
+     ]
+    },
+    {
+     "id": "5.12",
+     "title": "Classification des informations",
+     "measures": [
+      "assets"
+     ]
+    },
+    {
+     "id": "5.13",
+     "title": "Marquage des informations",
+     "measures": [
+      "assets"
+     ]
+    },
+    {
+     "id": "5.14",
+     "title": "Transfert des informations",
+     "measures": [
+      "crypto",
+      "isms"
+     ]
+    },
+    {
+     "id": "5.15",
+     "title": "Contrôle d'accès",
+     "measures": [
+      "access",
+      "journal"
+     ]
+    },
+    {
+     "id": "5.16",
+     "title": "Gestion des identités",
+     "measures": [
+      "access"
+     ]
+    },
+    {
+     "id": "5.17",
+     "title": "Informations d'authentification",
+     "measures": [
+      "access",
+      "secrets"
+     ]
+    },
+    {
+     "id": "5.18",
+     "title": "Droits d'accès",
+     "measures": [
+      "access",
+      "journal"
+     ]
+    },
+    {
+     "id": "5.19",
+     "title": "Sécurité dans les relations fournisseurs",
+     "measures": [
+      "suppliers"
+     ]
+    },
+    {
+     "id": "5.20",
+     "title": "Sécurité dans les accords fournisseurs",
+     "measures": [
+      "suppliers"
+     ]
+    },
+    {
+     "id": "5.21",
+     "title": "Chaîne d'approvisionnement TIC",
+     "measures": [
+      "suppliers",
+      "sbom",
+      "vulns",
+      "licenses"
+     ]
+    },
+    {
+     "id": "5.22",
+     "title": "Surveillance des services fournisseurs",
+     "measures": [
+      "suppliers"
+     ]
+    },
+    {
+     "id": "5.23",
+     "title": "Services en nuage",
+     "measures": [
+      "suppliers",
+      "infra"
+     ]
+    },
+    {
+     "id": "5.24",
+     "title": "Planification de la gestion des incidents",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "5.25",
+     "title": "Évaluation des événements",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "5.26",
+     "title": "Réponse aux incidents",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "5.27",
+     "title": "Tirer des enseignements des incidents",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "5.28",
+     "title": "Recueil de preuves",
+     "measures": [
+      "journal",
+      "incident"
+     ]
+    },
+    {
+     "id": "5.29",
+     "title": "Sécurité pendant une perturbation",
+     "measures": [
+      "continuity"
+     ]
+    },
+    {
+     "id": "5.30",
+     "title": "Préparation des TIC à la continuité",
+     "measures": [
+      "continuity",
+      "backup"
+     ]
+    },
+    {
+     "id": "5.31",
+     "title": "Exigences légales et contractuelles",
+     "measures": [
+      "legal"
+     ]
+    },
+    {
+     "id": "5.32",
+     "title": "Propriété intellectuelle",
+     "measures": [
+      "legal",
+      "licenses"
+     ]
+    },
+    {
+     "id": "5.33",
+     "title": "Protection des enregistrements",
+     "measures": [
+      "journal",
+      "legal"
+     ]
+    },
+    {
+     "id": "5.34",
+     "title": "Vie privée et données personnelles",
+     "measures": [
+      "legal"
+     ]
+    },
+    {
+     "id": "5.35",
+     "title": "Revue indépendante",
+     "measures": [
+      "audit"
+     ]
+    },
+    {
+     "id": "5.36",
+     "title": "Conformité aux politiques et normes",
+     "measures": [
+      "audit",
+      "journal"
+     ]
+    },
+    {
+     "id": "5.37",
+     "title": "Procédures d'exploitation documentées",
+     "measures": [
+      "isms",
+      "journal"
+     ]
+    },
+    {
+     "id": "6.1",
+     "title": "Sélection des candidats",
+     "measures": [
+      "hr"
+     ]
+    },
+    {
+     "id": "6.2",
+     "title": "Conditions d'embauche",
+     "measures": [
+      "hr"
+     ]
+    },
+    {
+     "id": "6.3",
+     "title": "Sensibilisation et formation",
+     "measures": [
+      "training"
+     ]
+    },
+    {
+     "id": "6.4",
+     "title": "Processus disciplinaire",
+     "measures": [
+      "hr"
+     ]
+    },
+    {
+     "id": "6.5",
+     "title": "Responsabilités après la fin du contrat",
+     "measures": [
+      "hr"
+     ]
+    },
+    {
+     "id": "6.6",
+     "title": "Engagements de confidentialité",
+     "measures": [
+      "hr"
+     ]
+    },
+    {
+     "id": "6.7",
+     "title": "Travail à distance",
+     "measures": [
+      "infra",
+      "hr"
+     ]
+    },
+    {
+     "id": "6.8",
+     "title": "Signalement des événements",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "7.1",
+     "title": "Périmètres physiques",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.2",
+     "title": "Contrôles d'accès physiques",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.3",
+     "title": "Sécurisation des bureaux et locaux",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.4",
+     "title": "Surveillance de la sécurité physique",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.5",
+     "title": "Menaces physiques et environnementales",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.6",
+     "title": "Travail dans les zones sécurisées",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.7",
+     "title": "Bureau propre et écran vide",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.8",
+     "title": "Emplacement du matériel",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.9",
+     "title": "Actifs hors des locaux",
+     "measures": [
+      "physical",
+      "assets"
+     ]
+    },
+    {
+     "id": "7.10",
+     "title": "Supports de stockage",
+     "measures": [
+      "physical",
+      "assets"
+     ]
+    },
+    {
+     "id": "7.11",
+     "title": "Services généraux",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.12",
+     "title": "Sécurité du câblage",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.13",
+     "title": "Maintenance du matériel",
+     "measures": [
+      "physical"
+     ]
+    },
+    {
+     "id": "7.14",
+     "title": "Mise au rebut sécurisée",
+     "measures": [
+      "physical",
+      "assets"
+     ]
+    },
+    {
+     "id": "8.1",
+     "title": "Terminaux utilisateurs",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.2",
+     "title": "Droits d'accès privilégiés",
+     "measures": [
+      "access",
+      "journal"
+     ]
+    },
+    {
+     "id": "8.3",
+     "title": "Restriction d'accès aux informations",
+     "measures": [
+      "access"
+     ]
+    },
+    {
+     "id": "8.4",
+     "title": "Accès au code source",
+     "measures": [
+      "branch",
+      "journal"
+     ]
+    },
+    {
+     "id": "8.5",
+     "title": "Authentification sécurisée",
+     "measures": [
+      "access"
+     ]
+    },
+    {
+     "id": "8.6",
+     "title": "Dimensionnement",
+     "measures": [
+      "monitoring"
+     ]
+    },
+    {
+     "id": "8.7",
+     "title": "Protection contre les logiciels malveillants",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.8",
+     "title": "Gestion des vulnérabilités techniques",
+     "measures": [
+      "vulns",
+      "deps-age",
+      "threat"
+     ]
+    },
+    {
+     "id": "8.9",
+     "title": "Gestion des configurations",
+     "measures": [
+      "infra",
+      "journal"
+     ]
+    },
+    {
+     "id": "8.10",
+     "title": "Suppression des informations",
+     "measures": [
+      "assets"
+     ]
+    },
+    {
+     "id": "8.11",
+     "title": "Masquage des données",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.12",
+     "title": "Prévention de la fuite de données",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.13",
+     "title": "Sauvegarde des informations",
+     "measures": [
+      "backup"
+     ]
+    },
+    {
+     "id": "8.14",
+     "title": "Redondance",
+     "measures": [
+      "continuity"
+     ]
+    },
+    {
+     "id": "8.15",
+     "title": "Journalisation",
+     "measures": [
+      "monitoring",
+      "journal"
+     ]
+    },
+    {
+     "id": "8.16",
+     "title": "Activités de surveillance",
+     "measures": [
+      "monitoring"
+     ]
+    },
+    {
+     "id": "8.17",
+     "title": "Synchronisation des horloges",
+     "measures": [
+      "monitoring"
+     ]
+    },
+    {
+     "id": "8.18",
+     "title": "Programmes utilitaires à privilèges",
+     "measures": [
+      "access"
+     ]
+    },
+    {
+     "id": "8.19",
+     "title": "Installation de logiciels en exploitation",
+     "measures": [
+      "infra",
+      "journal"
+     ]
+    },
+    {
+     "id": "8.20",
+     "title": "Sécurité des réseaux",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.21",
+     "title": "Sécurité des services réseau",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.22",
+     "title": "Cloisonnement des réseaux",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.23",
+     "title": "Filtrage web",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "8.24",
+     "title": "Utilisation de la cryptographie",
+     "measures": [
+      "crypto"
+     ]
+    },
+    {
+     "id": "8.25",
+     "title": "Cycle de développement sécurisé",
+     "measures": [
+      "sast",
+      "ci",
+      "journal"
+     ]
+    },
+    {
+     "id": "8.26",
+     "title": "Exigences de sécurité des applications",
+     "measures": [
+      "isms",
+      "sast"
+     ]
+    },
+    {
+     "id": "8.27",
+     "title": "Architecture et ingénierie sécurisées",
+     "measures": [
+      "isms"
+     ]
+    },
+    {
+     "id": "8.28",
+     "title": "Codage sécurisé",
+     "measures": [
+      "sast",
+      "secrets"
+     ]
+    },
+    {
+     "id": "8.29",
+     "title": "Tests de sécurité",
+     "measures": [
+      "ci",
+      "sast",
+      "resilience"
+     ]
+    },
+    {
+     "id": "8.30",
+     "title": "Développement externalisé",
+     "measures": [
+      "suppliers",
+      "journal"
+     ]
+    },
+    {
+     "id": "8.31",
+     "title": "Séparation des environnements",
+     "measures": [
+      "infra",
+      "branch"
+     ]
+    },
+    {
+     "id": "8.32",
+     "title": "Gestion des changements",
+     "measures": [
+      "journal",
+      "branch",
+      "ci"
+     ]
+    },
+    {
+     "id": "8.33",
+     "title": "Informations de test",
+     "measures": [
+      "assets"
+     ]
+    },
+    {
+     "id": "8.34",
+     "title": "Protection des systèmes pendant les audits",
+     "measures": [
+      "audit"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "nis2",
+   "name": "Directive (UE) 2022/2555 (NIS2)",
+   "scope": "articles 20, 21(2), 23",
+   "controls": [
+    {
+     "id": "Art. 20",
+     "title": "Gouvernance : approbation des mesures et formation des dirigeants",
+     "measures": [
+      "isms",
+      "training"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(a)",
+     "title": "Analyse des risques et sécurité des systèmes",
+     "measures": [
+      "risk",
+      "isms"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(b)",
+     "title": "Gestion des incidents",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(c)",
+     "title": "Continuité, sauvegardes, reprise, gestion de crise",
+     "measures": [
+      "continuity",
+      "backup"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(d)",
+     "title": "Sécurité de la chaîne d'approvisionnement",
+     "measures": [
+      "suppliers",
+      "sbom",
+      "vulns",
+      "licenses",
+      "actions"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(e)",
+     "title": "Acquisition, développement, maintenance ; traitement des vulnérabilités",
+     "measures": [
+      "vulns",
+      "sast",
+      "secrets",
+      "deps-age",
+      "ci",
+      "branch",
+      "journal"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(f)",
+     "title": "Évaluation de l'efficacité des mesures",
+     "measures": [
+      "audit",
+      "resilience"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(g)",
+     "title": "Cyberhygiène et formation",
+     "measures": [
+      "training",
+      "infra"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(h)",
+     "title": "Cryptographie et chiffrement",
+     "measures": [
+      "crypto"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(i)",
+     "title": "Sécurité RH, contrôle d'accès, gestion des actifs",
+     "measures": [
+      "hr",
+      "access",
+      "assets"
+     ]
+    },
+    {
+     "id": "Art. 21(2)(j)",
+     "title": "Authentification multifacteur, communications sécurisées",
+     "measures": [
+      "access",
+      "infra"
+     ]
+    },
+    {
+     "id": "Art. 23",
+     "title": "Obligations de notification des incidents",
+     "measures": [
+      "incident"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "dora",
+   "name": "Règlement (UE) 2022/2554 (DORA)",
+   "scope": "chapitres II à V",
+   "controls": [
+    {
+     "id": "Art. 5",
+     "title": "Gouvernance et organisation",
+     "measures": [
+      "isms",
+      "training"
+     ]
+    },
+    {
+     "id": "Art. 6",
+     "title": "Cadre de gestion du risque lié aux TIC",
+     "measures": [
+      "risk",
+      "isms",
+      "audit"
+     ]
+    },
+    {
+     "id": "Art. 7",
+     "title": "Systèmes, protocoles et outils de TIC",
+     "measures": [
+      "infra"
+     ]
+    },
+    {
+     "id": "Art. 8",
+     "title": "Identification",
+     "measures": [
+      "assets",
+      "risk",
+      "inventory"
+     ]
+    },
+    {
+     "id": "Art. 9",
+     "title": "Protection et prévention",
+     "measures": [
+      "access",
+      "crypto",
+      "branch",
+      "vulns",
+      "journal"
+     ]
+    },
+    {
+     "id": "Art. 10",
+     "title": "Détection",
+     "measures": [
+      "monitoring"
+     ]
+    },
+    {
+     "id": "Art. 11",
+     "title": "Réponse et rétablissement",
+     "measures": [
+      "continuity"
+     ]
+    },
+    {
+     "id": "Art. 12",
+     "title": "Sauvegarde, restauration et rétablissement",
+     "measures": [
+      "backup",
+      "continuity"
+     ]
+    },
+    {
+     "id": "Art. 13",
+     "title": "Apprentissage et évolution",
+     "measures": [
+      "threat",
+      "training",
+      "incident"
+     ]
+    },
+    {
+     "id": "Art. 14",
+     "title": "Communication",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "Art. 17",
+     "title": "Processus de gestion des incidents liés aux TIC",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "Art. 18",
+     "title": "Classification des incidents",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "Art. 19",
+     "title": "Notification des incidents majeurs",
+     "measures": [
+      "incident"
+     ]
+    },
+    {
+     "id": "Art. 24",
+     "title": "Exigences générales des tests de résilience",
+     "measures": [
+      "resilience"
+     ]
+    },
+    {
+     "id": "Art. 25",
+     "title": "Tests des outils et systèmes de TIC",
+     "measures": [
+      "resilience",
+      "sast",
+      "vulns",
+      "ci"
+     ]
+    },
+    {
+     "id": "Art. 26",
+     "title": "Tests avancés fondés sur la menace (TLPT)",
+     "measures": [
+      "resilience"
+     ]
+    },
+    {
+     "id": "Art. 28",
+     "title": "Risque lié aux prestataires tiers ; registre d'informations",
+     "measures": [
+      "suppliers",
+      "sbom"
+     ]
+    },
+    {
+     "id": "Art. 29",
+     "title": "Risque de concentration",
+     "measures": [
+      "suppliers"
+     ]
+    },
+    {
+     "id": "Art. 30",
+     "title": "Dispositions contractuelles clés",
+     "measures": [
+      "suppliers",
+      "legal"
+     ]
+    }
+   ]
+  }
+ ]
+}

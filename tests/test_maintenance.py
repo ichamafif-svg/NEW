@@ -58,7 +58,8 @@ def test_real_audit_becomes_work_without_a_journal_write():
         result = plan(verdict)
         assert result["status"] == "REVIEW", (verdict, result)
         assert result["human"][0]["obligation"] == "clock:witness"
-        assert {ob["target"] for ob in result["work"]} == {"inventory", "pr42-ci"}
+        from tcb.floors import FLOORS
+        assert {ob["target"] for ob in result["work"]} == {t["id"] for t in FLOORS["targets"]} | {"pr42-ci"}
         assert result["basis"]["head"] == before == w.state["head"]
     finally:
         w.journal.close()

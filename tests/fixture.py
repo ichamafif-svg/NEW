@@ -40,7 +40,7 @@ def identity(kind, key) -> dict:
 def make_law(fresh_ms=DAY, due_ms=DAY, heartbeat_ms=0, owner="alice", **over) -> dict:
     """A client law: it binds the floor roles, adds one target of its own, and may only tighten the floors."""
     law = {"format": "standard-client/1", "floors": floors_digest(),
-           "bindings": {"owner": owner, "inventory_source": "ci"},
+           "bindings": {"owner": owner, "inventory_source": "ci", "scanner": "ci", "compliance_officer": "carol"},
            "targets": [{"id": "pr42-ci", "kind": "property", "coverage": "inventory", "resource": "repo:pr:42",
                         "property": "ci", "expect": "green", "min_level": "real", "fresh_ms": fresh_ms,
                         "due_ms": due_ms, "owner": owner, "sources": ["ci"], "repair": "merge"}]}

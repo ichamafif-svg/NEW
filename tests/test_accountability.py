@@ -6,6 +6,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fixture import DAY, H, T0, Refused, World, make_law, raises, run  # noqa: E402
 from tcb import audit  # noqa: E402
+from tcb.floors import ORGANISATIONAL as _ORG  # noqa: E402
+ORGANISATIONAL = {"soa", *(o[0] for o in _ORG)}
 from tcb.sandbox import WorkerFault
 from unittest.mock import patch
 
@@ -17,6 +19,17 @@ def ci(w, t):
 
 def observe(w, gid, at, resource, prop, status, author="ci"):
     return w.add("observation", author, at, under=gid, resource=resource, property=prop, status=status, level="real")
+
+
+def floors_proven(w, gid, t):
+    """The floor targets the client test does not study: scanner facts by ci, attestations by carol."""
+    from tcb.floors import FLOORS
+    officer, t = w.grant("carol", ["observe", "certify:real"], ["org:*"], t)
+    for i, x in enumerate(FLOORS["targets"]):
+        if x["id"] != "inventory":
+            under, author = (officer, "carol") if x["resource"].startswith("org:") else (gid, "ci")
+            observe(w, under, t + i, x["resource"], x["property"], x["expect"], author=author)
+    return t + len(FLOORS["targets"])
 
 
 def health(w, **kw):
@@ -35,6 +48,7 @@ def test_every_target_starts_open_and_coverage_gates_property():
     gid, t = ci(w, T0 + 1)
     h = health(w)
     assert h["state"] == "IN_PROGRESS" and {"target:inventory", "target:pr42-ci"} <= {o["obligation"] for o in h["open"]}
+    t = floors_proven(w, gid, t)
     observe(w, gid, t, "repo:pr:42", "ci", "green")
     h = health(w)
     pr = next(o for o in h["open"] if o["obligation"] == "target:pr42-ci")
@@ -76,6 +90,7 @@ def test_only_an_independent_declared_source_closes_a_target():
 def test_overdue_gap_escalates_and_expiry_opens_at_expiry():
     w = World(law=make_law(fresh_ms=2 * H, due_ms=H))
     gid, t = ci(w, T0 + 1)
+    t = floors_proven(w, gid, t)
     observe(w, gid, t, "repo:inventory:all", "coverage", "complete")
     observe(w, gid, t + 1, "repo:pr:42", "ci", "green")
     assert health(w)["state"] == "PROVEN"
@@ -97,12 +112,13 @@ def test_a_silent_witness_cannot_hold_the_verdict():
 def test_silent_witness_expires_previously_proven_targets_without_moving_ledger():
     w = World(law=make_law(fresh_ms=2 * H, due_ms=H))
     gid, t = ci(w, T0 + 1)
+    t = floors_proven(w, gid, t)
     observe(w, gid, t, "repo:inventory:all", "coverage", "complete")
     observe(w, gid, t + 1, "repo:pr:42", "ci", "green")
     assert health(w)["state"] == "PROVEN"
     before = w.state["head"]
     h = health(w, required_at=t + 5 * H)
-    assert h["state"] == "ESCALATED" and not h["proven"]
+    assert h["state"] == "ESCALATED" and all(p["target"] in ORGANISATIONAL for p in h["proven"]), h["proven"]
     assert {"target:inventory", "target:pr42-ci"} <= {o["obligation"] for o in h["escalated"]}
     property_gap = next(o for o in h["escalated"] if o["obligation"] == "target:pr42-ci")
     assert property_gap["opened"] == t + 2 * H + 1

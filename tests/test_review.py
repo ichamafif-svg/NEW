@@ -346,6 +346,8 @@ def copied_release(w):
     target = w.tmp / 'release'
     shutil.copytree(root / 'tcb', target / 'tcb', ignore=shutil.ignore_patterns('__pycache__'))
     shutil.copy2(root / 'bootstrap.py', target / 'bootstrap.py')
+    if (root / 'adapters').is_dir():
+        shutil.copytree(root / 'adapters', target / 'adapters', ignore=shutil.ignore_patterns('__pycache__'))
     return target
 
 

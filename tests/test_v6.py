@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fixture import World, T0, H, DAY, Refused, make_law, digest, raises, run
-from test_accountability import ci, observe, health, obligation
+from test_accountability import ci, observe, health, obligation, floors_proven
 from test_v0 import sensitive_world
 from tcb import Kernel, EffectPort, Guard
 from tcb.effects import NotDispatched
@@ -28,6 +28,7 @@ def issued(w):
 def proven():
     w = World()
     gid, t = ci(w, T0 + 1)
+    t = floors_proven(w, gid, t)
     observe(w, gid, t, "repo:inventory:all", "coverage", "complete")
     observe(w, gid, t + 1, "repo:pr:42", "ci", "green")
     assert health(w)["state"] == "PROVEN"
