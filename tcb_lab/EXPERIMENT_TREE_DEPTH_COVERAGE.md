@@ -123,3 +123,7 @@ Les parents sont documentés dans [GUARANTEE_MATRIX.md](GUARANTEE_MATRIX.md), [A
 `NOT_RUN` ; `CODED_NOT_OBSERVED` ; `OBSERVED` (mesuré, pas garanti) ; `INCONCLUSIVE` (mesure non discriminante) ; `VIOLATION_OBSERVED` (contre-exemple d'une propriété exactement énoncée) ; `BLOCKED` (exige infrastructure physique). Ne jamais classer `OBSERVED` comme `PASS` sans oracle indépendant. Les runs, cas et interprétations sont consignés dans [findings/README.md](findings/README.md) et le [registre automatique](https://github.com/ichamafif-svg/NEW/issues/2).
 
 **La phase 3 reste ouverte.** Aucune couverture intégrale ou sécurité formelle revendiquée.
+
+## Campagne IV — dimension FRONTIÈRE (superposée à profondeur × couverture)
+
+Chaque feuille de G01–G16 porte désormais une **triple allocation non exclusive** : `K` (verdict constitutionnel déterministe), `T` (mécanisme externe de confiance indispensable à l'application ou la vérité) et `U` (acteur remplaçable sans souveraineté). Le statut `LIMIT_ESTABLISHED_LOGICAL` exige un argument d'indiscernabilité ou de capacité absente, des hypothèses et un contre-exemple ; `EXTERNAL_CONTRACT_REQUIRED` ne vaut pas validation physique. Référence exhaustive : [TCB_BOUNDARY_MATRIX.md](TCB_BOUNDARY_MATRIX.md), [ESTABLISHED_LIMITS.md](ESTABLISHED_LIMITS.md), [SCOPE_FREEZE_REVIEW.md](SCOPE_FREEZE_REVIEW.md). **Le scope sémantique antérieurement figé n'est pas modifié.**
