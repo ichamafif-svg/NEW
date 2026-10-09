@@ -69,3 +69,11 @@ python3 tcb_lab/experiments/p3_effect_line.py
 ```
 
 Ces scripts ne lancent aucune action fournisseur. Les observations doivent être archivées avec SHA de code et environnement avant changement de statut. Les 18 constats historiques restent un corpus d'attaques complémentaire : ils n'ont pas encore été reclassifiés ici.
+
+## Extension phase 3 — référence canonique
+
+Les **80 nouvelles hypothèses** se trouvent dans [ATTACK_EXPANSION.md](ATTACK_EXPANSION.md), couvrant identité/autorité, loi, temps, preuves, obligations, effets, bootstrap et autonomie résiliente. Cela porte le registre à **104 scénarios** (24 ici + 80 en extension).
+
+Harnais additionnels : `experiments/p3_mutation_fuzz.py` réalise trente variantes d'entrées signées sur fixtures locales ; `experiments/p3_autonomy.py` examine dix propriétés *autorisation/progrès*. Les deux sont intégrés à la CI `.github/workflows/tcb-lab-p3.yml`. La stratégie de tests *safety et progression* se trouve dans [AUTONOMY_THREAT_MODEL.md](AUTONOMY_THREAT_MODEL.md).
+
+**État des résultats :** NOT_RUN jusqu'à constat explicite de logs et d'oracles. Ne pas compter les hypothèses statiques comme des vulnérabilités, ni les tests écrits comme des réussites. Un fail de harnais peut être INCONCLUSIVE ; seule une reproduction isolée permet CONFIRMED.
