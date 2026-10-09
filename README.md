@@ -1,42 +1,18 @@
 # Standard
 
-**Plateforme AI-native pour créer, faire évoluer et surtout maintenir des systèmes logiciels en autonomie, sans donner de pouvoir souverain aux agents.**
+**Plateforme AI-native de création et surtout de maintenance autonome des systèmes logiciels, sans pouvoir souverain accordé aux agents.**
 
-**[Lire l'architecture canonique de Standard](STANDARD_ARCHITECTURE.md)**
+- **BUILD** : créer, modifier et vérifier les applications.
+- **RUN** : surveiller, maintenir, réparer et traiter continuellement les écarts de sécurité, fiabilité et conformité.
+- **K — Noyau hybride** : un jugement constitutionnel déterministe unique, sans mapping métier rigide.
+- **T — Trusted External** : rendre effectives les garanties physiques (identités, preuves, journal, effets).
+- **U — Autonomie** : agents, WorkItems, outils et intégrations existantes ; jamais de pouvoir constitutionnel.
 
-## Promesse produit
+**Cycle central :** écart → obligation durable → travail autonome → preuve qualifiée → clôture ou escalade.
 
-Standard orchestre des agents qui détectent les écarts, réalisent les évolutions, corrigent les défaillances et vérifient les résultats. L'autonomie est bornée par une constitution déterministe et des frontières de confiance vérifiables. Les décisions humaines n'interviennent que lorsqu'elles sont réellement exigées par l'autorité applicable.
+## Lire Standard
 
-- **BUILD** : construire, transformer, tester et intégrer des systèmes logiciels.
-- **RUN** : observer continuellement, diagnostiquer, réparer, faire évoluer et maintenir la sécurité, la fiabilité et la conformité.
-- **Gouvernance** : floors non affaiblissables, loi client plus stricte, autorité contrôlée, preuves indépendantes, obligations durables et effets privilégiés protégés.
-- **Intégration** : réutiliser les services IAM, CI/CD, monitoring, cloud et outils de conformité existants lorsque leurs garanties sont suffisantes.
-- **Expérience humaine** : montrer ce qui est couvert, ce qui ne l'est pas, les risques, les obligations ouvertes, les résultats et les décisions attendues.
+1. **[STANDARD_ARCHITECTURE.md](STANDARD_ARCHITECTURE.md)** — vision produit, noyau hybride, frontières de confiance et protocole.
+2. **[IMPLEMENTATION_CONTRACTS.md](IMPLEMENTATION_CONTRACTS.md)** — spécification opérationnelle de chaque composant K/T/U, garanties G01–G16 et critères de réception.
 
-## Architecture
-
-**K — noyau constitutionnel hybride** : modèle relationnel typé, contraintes et conséquences dans un seul jugement déterministe. Il gouverne Identity, Authority, Law, State, Evidence, Obligation et Effect sans mapping métier figé.
-
-**T — Trusted External** : identité physique et clés, release pin, temps, ancrages durables, vérification indépendante, qualification des preuves, egress privilégié, réconciliation et acheminement des escalades. Ils sont dans la frontière de confiance effective.
-
-**U — autonomie non souveraine** : agents, WorkItems, diagnostics, observabilité, planification, workflows BUILD/RUN et adaptateurs. Ils accomplissent le travail sans pouvoir contourner K/T.
-
-La maintenance suit le cycle : **écart → obligation → travail autonome → preuve admissible → clôture ou escalade**.
-
-## Documentation canonique
-
-| Document | Objet |
-|---|---|
-| [STANDARD_ARCHITECTURE.md](STANDARD_ARCHITECTURE.md) | Produit Standard, architecture générale et garanties |
-| [IMPLEMENTATION_CONTRACTS.md](IMPLEMENTATION_CONTRACTS.md) | Directives normatives K/T/U par composant, 16 garanties, interfaces, tests et gates |
-| [KERNEL_CONCEPTUAL_MODEL.md](hybrid_kernel/KERNEL_CONCEPTUAL_MODEL.md) | Primitives, relations et jugement déterministe |
-| [TRUSTED_EXTERNAL_CONTRACTS.md](hybrid_kernel/TRUSTED_EXTERNAL_CONTRACTS.md) | Contrats de confiance physiques |
-| [KERNEL_EXECUTION_PROTOCOL.md](hybrid_kernel/KERNEL_EXECUTION_PROTOCOL.md) | Admission, commit, effets et reprise |
-| [hybrid_kernel/README.md](hybrid_kernel/README.md) | Vue synthétique du noyau |
-
-Ces documents forment la **spécification autonome de l'architecture cible**. Ils ne doivent pas être lus comme une déclaration de conformité de l'implémentation courante. La mise en production nécessite des preuves d'implémentation, d'indépendance des composants de confiance, de résistance aux pannes et de performance.
-
-## État
-
-**Architecture conceptuelle définie ; qualification de production non acquise.** Les systèmes externes et les effets privilégiés doivent être vérifiés dans leur environnement physique de déploiement.
+Ces deux documents sont autonomes et définissent la cible de conception. **Leur existence ne prouve pas que l'implémentation est prête pour la production.**
