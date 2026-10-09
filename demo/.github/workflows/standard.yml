@@ -171,7 +171,7 @@ jobs:
       - run: git -C repo config --unset-all http.https://github.com/.extraheader; git -C repo remote set-url origin "https://x-access-token:${AGENT_GITHUB_TOKEN}@github.com/$REPO.git"
         env:
           AGENT_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
-      - run: python -m ops repair --state state --repo "$REPO" --checkout repo --health state/report/health.json
+      - run: python -m ops repair --state state --repo "$REPO" --checkout repo --health state/report/health.json --agent-login "${{ vars.AGENT_LOGIN }}"
         env:
           AGENT_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

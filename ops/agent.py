@@ -66,8 +66,14 @@ def allowed(repo: Path, path: str, target: str) -> Path:
         raise ValueError(f"the agent may not write {path!r}")
     if FORBIDDEN.match(path) and not workflows:
         raise ValueError(f"the agent may not write {path!r}")
+    walk = repo
+    for part in parts:                                    # no component may be a link, before resolution hides it
+        walk = walk / part
+        if walk.is_symlink():
+            raise ValueError(f"the agent may not write {path!r}")
     full = (repo / path).resolve()
-    if repo.resolve() not in full.parents or (full.exists() and (full.is_symlink() or not full.is_file())):
+    if repo.resolve() not in full.parents or ".git" in full.relative_to(repo.resolve()).parts or (
+            full.exists() and not full.is_file()):
         raise ValueError(f"the agent may not write {path!r}")
     return full
 

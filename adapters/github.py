@@ -33,16 +33,21 @@ class GitHub:
         except urllib.error.HTTPError as e:
             return e.code, {}
 
-    def _merged_at(self, pr, head) -> bool:
+    def _pull(self, pr):
         status, pull = self._call("GET", f"/pulls/{pr}")
-        return status == 200 and pull.get("merged") is True and pull.get("head", {}).get("sha") == head
+        return pull if status == 200 else None
 
     def remediate(self, resource, args, reservation_key):
         pr, head, method = args["pr"], args["head"], args["method"]
         if not pr.isdigit() or not HEAD.fullmatch(head) or method not in METHODS:
             return "failed"
-        if self._merged_at(pr, head):
+        pull = self._pull(pr)
+        if pull is None:
+            return "unknown"
+        if pull.get("merged") is True and pull.get("head", {}).get("sha") == head:
             return "ok"                                 # an earlier attempt already landed this exact commit
+        if pull.get("base", {}).get("ref") != "main":
+            return "failed"                             # the judged repair targets main, nothing else
         status, _ = self._call("PUT", f"/pulls/{pr}/merge",
                                {"sha": head, "merge_method": method,
                                 "commit_title": f"standard: remediate {resource.split('/pr/')[0]} (#{pr})",

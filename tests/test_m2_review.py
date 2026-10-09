@@ -26,8 +26,8 @@ class PRs:
         self._pulls, self._files, self._reviews = pulls, files or {}, reviews or {}
         self.writers, self.changed = set(writers), changed or {}
 
-    def pulls(self):
-        return self._pulls
+    def authored(self, login, limit):
+        return [p for p in self._pulls if p["user"]["login"] == login][:limit]
 
     def check_runs(self, sha):
         return [{"name": "test", "conclusion": "success"}]
@@ -38,6 +38,9 @@ class PRs:
     def pull(self, n):
         return {"changed_files": self.changed.get(n, len(self.files(n)))}
 
+    def flood(self, n):
+        self._pulls = [pr(1000 + i, login="spammer") for i in range(n)] + self._pulls
+
     def reviews(self, n):
         return self._reviews.get(n, [])
 
@@ -46,7 +49,7 @@ class PRs:
 
 
 def pr(num, login=AGENT, repo="o/demo", base="main", ref="standard/deps/vulns/abcd1234"):
-    return {"number": num, "user": {"login": login}, "base": {"ref": base},
+    return {"number": num, "state": "open", "user": {"login": login}, "base": {"ref": base},
             "head": {"ref": ref, "sha": HEAD, "repo": {"full_name": repo}}}
 
 
@@ -64,11 +67,19 @@ def test_a_review_counts_only_from_a_writer_on_this_commit_without_standing_obje
         "older commit": ([review("maintainer", "APPROVED", "d" * 40)], False),
         "objection": ([review("maintainer", "APPROVED"), review("other", "CHANGES_REQUESTED")], False),
         "withdrawn objection": ([review("maintainer", "CHANGES_REQUESTED"), review("maintainer", "APPROVED")], True),
+        "outsider objection": ([review("maintainer", "APPROVED"), review("drive-by", "CHANGES_REQUESTED")], True),
     }
     for name, (reviews, expected) in cases.items():
-        gh = PRs([pr(4)], reviews={"4": reviews})
+        gh = PRs([pr(4)], reviews={"4": reviews}, writers=("maintainer", "other"))
         got = (f"repo:deps:vulns/pr/4/{HEAD}", "review", "approved") in scan.pull_facts(gh, AGENT)
         assert got is expected, name
+
+
+def test_a_flood_of_other_pull_requests_hides_nothing():
+    gh = PRs([pr(4)])
+    gh.flood(5000)
+    assert {r for r, _, _ in scan.pull_facts(gh, AGENT)} == {f"repo:deps:vulns/pr/4/{HEAD}"}
+    assert [p["number"] for p in scan.agent_pulls(gh, AGENT)] == [4]
 
 
 def test_a_truncated_file_list_is_never_dependency_scope():
@@ -97,14 +108,20 @@ def test_an_unaudited_dependency_or_a_failed_audit_is_a_gap():
         assert scan.vulns(repo_with({"requirements.txt": "flask==2.2.2\n"})) == "error:not-audited"
 
 
-def test_secrets_in_files_with_spaces_are_found():
+def test_secrets_in_files_with_spaces_are_found_and_binaries_do_not_block():
     repo = repo_with({"my config.py": 'API_KEY = "abcdefghijklmnop1234"\n'})
     assert scan.secrets(repo).startswith("found:")
+    big = repo_with({"ok.py": "x = 1\n"})
+    (big / "logo.png").write_bytes(b"\x89PNG\0" + b"\0" * 6_000_000)
+    subprocess.run(["git", "add", "-A"], cwd=big, check=True)
+    assert scan.secrets(big) == "none"
 
 
 def test_the_agent_never_writes_git_internals_or_outside_the_tree():
     repo = repo_with({"app.py": "x = 1\n"})
-    for path in (".git/config", "a/.git/hooks/pre-commit", "../escape.py", "/etc/passwd", ".gitattributes"):
+    (repo / "meta").symlink_to(repo / ".git")
+    for path in (".git/config", "a/.git/hooks/pre-commit", "../escape.py", "/etc/passwd", ".gitattributes",
+                 "meta/config"):
         with raises(ValueError, "may not write"):
             agent.allowed(repo, path, "sast")
     assert agent.allowed(repo, "app.py", "sast") == (repo / "app.py").resolve()
@@ -185,6 +202,53 @@ def test_a_refused_merge_is_asked_again_and_an_unknown_one_is_reconciled():
         assert s["line"][retry]["state"] == "uncertain"
         s = step("scan")
         assert s["line"][retry]["state"] == "proving" and f"proof:{retry}" not in s["obligations"]
+
+
+
+def test_a_guard_that_dies_after_its_reservation_does_not_stall_the_target():
+    class Crash(BaseException):
+        pass
+    tmp = tempfile.mkdtemp()
+    keyfile, publics = setup(tmp)
+    state = str(Path(tmp) / "state")
+    clock, gh = Clock(), FakeGH()
+    keys = load_keys(keyfile)
+    resource = f"repo:deps:vulns/pr/7/{HEAD}"
+    facts = [(resource, "ci", "green"), (resource, "scope", "dependencies")]
+
+    def step(command):
+        pinned = Path(state, "genesis.json")
+        expected = json.loads(pinned.read_text())["pin"] if pinned.exists() else None
+        n = Node(state, keys, create=command == "init", expected_genesis=expected)
+        try:
+            getattr(cycle, "cmd_" + command)(n, args(state, publics=publics))
+            return n.state
+        finally:
+            n.close()
+
+    def dies(*a):
+        raise Crash()
+    with patch.object(node_mod.time, "time", clock), patch.object(cycle.time, "time", clock), \
+            patch.dict("os.environ", {"GITHUB_TOKEN": "x", "MERGE_TOKEN": "z"}), \
+            patch("ops.gh.Client", lambda repo, token: gh), \
+            patch.object(scan, "measure", lambda repo, g: {}), \
+            patch.object(scan, "pull_facts", lambda g, login: list(facts)):
+        step("init")
+        clock.t += 3_700
+        step("activate")
+        step("scan")
+        s = step("ask")
+        first = next(iter(s["intents"]))
+        with patch("tcb.effects.EffectPort.perform", dies):
+            try:
+                step("guard")
+            except Crash:
+                pass
+        clock.t += 7 * 3_600                                   # past the dispatch window; facts refreshed
+        s = step("scan")
+        assert s["line"][first]["state"] == "failed", s["line"][first]   # reconciled: not applied
+        s = step("ask")
+        assert any(it["stmt"].get("retry_of") == first for it in s["intents"].values())
 
 
 if __name__ == "__main__":

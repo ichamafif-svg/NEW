@@ -37,22 +37,27 @@ class Client:
         return self.call("GET", path + ("?" + urllib.parse.urlencode(params) if params else ""))
 
     def pages(self, path, cap=10, **params):
+        """At most `cap` pages; the caller decides what a longer list means."""
         out = []
         for page in range(1, cap + 1):
             rows = self.get(path, per_page=100, page=page, **params)
             out += rows
             if len(rows) < 100:
-                return out
-        raise GitHubError(f"{path}: more than {cap * 100} rows")
+                break
+        return out
 
-    def pulls(self):
-        return self.pages("/pulls", state="open")
+    def authored(self, login, limit=20):
+        """Open pull requests by one author, through search: others' pull requests never crowd them out."""
+        author = "app/" + login[:-5] if login.endswith("[bot]") else login
+        found = self.call("GET", f"{self.api}/search/issues?" + urllib.parse.urlencode(
+            {"q": f"repo:{self.repo} is:pr is:open author:{author}", "per_page": limit, "sort": "created"}))
+        return [self.pull(item["number"]) for item in found.get("items", [])[:limit]]
 
     def pull(self, number):
         return self.get(f"/pulls/{number}")
 
     def files(self, number):
-        return [f["filename"] for f in self.pages(f"/pulls/{number}/files", cap=30)]
+        return [f["filename"] for f in self.pages(f"/pulls/{number}/files", cap=30)]   # compared to changed_files
 
     def reviews(self, number):
         return self.pages(f"/pulls/{number}/reviews")

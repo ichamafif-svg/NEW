@@ -81,10 +81,16 @@ def tracked(repo):
 
 
 def secrets(repo):
-    files = tracked(repo)
-    if any(p.stat().st_size >= 5_000_000 for p in files):
-        return "error:file-too-large"                     # unscanned is a gap, never a pass
-    hits = sum(1 for p in files for rx in SECRETS if rx.search(p.read_text(errors="ignore")))
+    hits = 0
+    for p in tracked(repo):
+        with p.open("rb") as f:
+            head = f.read(8192)
+        if b"\0" in head:
+            continue                                      # binary: images, archives, fixtures
+        if p.stat().st_size >= 5_000_000:
+            return f"error:too-large:{p.relative_to(repo).as_posix()[:80]}"   # an unscanned text is a gap
+        text = p.read_text(errors="ignore")
+        hits += sum(1 for rx in SECRETS if rx.search(text))
     return "none" if not hits else f"found:{hits}"
 
 
@@ -156,24 +162,32 @@ BRANCH = re.compile(r"^standard/([a-z]+)/([a-z-]+)/[0-9a-f]{8}$")
 
 
 def _approved(gh, number, sha) -> bool:
-    """Latest review of each reviewer with write access; any standing change request blocks."""
+    """Only reviewers with write access count, for approval and for objection alike: their latest review each.
+    One standing change request blocks; an approval must be on this very commit."""
     latest = {}
     for r in gh.reviews(number):
         if r["state"] in ("APPROVED", "CHANGES_REQUESTED", "DISMISSED"):
             latest[r["user"]["login"]] = r
+    latest = {login: r for login, r in latest.items() if gh.can_write(login)}
     if any(r["state"] == "CHANGES_REQUESTED" for r in latest.values()):
         return False
-    return any(r["state"] == "APPROVED" and r["commit_id"] == sha and gh.can_write(login)
-               for login, r in latest.items())
+    return any(r["state"] == "APPROVED" and r["commit_id"] == sha for r in latest.values())
+
+
+def agent_pulls(gh, agent_login: str, limit=20) -> list:
+    """Open pull requests of the agent itself, from this repository, into main. Searched by author, so no flood of
+    other pull requests can hide them or exhaust the listing."""
+    mine = [pr for pr in gh.authored(agent_login, limit)
+            if pr["user"]["login"] == agent_login and pr["base"]["ref"] == "main" and pr["state"] == "open"
+            and (pr["head"].get("repo") or {}).get("full_name") == gh.repo and BRANCH.match(pr["head"]["ref"])]
+    return mine[:limit]
 
 
 def pull_facts(gh, agent_login: str, ci_names=("test",), limit=20) -> list:
     """For each open pull request of the agent itself, from this repository, into main: facts about its head commit.
     Pull requests of anyone else are never observed: an outsider cannot borrow the agent's autonomy."""
     facts = []
-    mine = [pr for pr in gh.pulls() if pr["user"]["login"] == agent_login and pr["base"]["ref"] == "main"
-            and (pr["head"].get("repo") or {}).get("full_name") == gh.repo and BRANCH.match(pr["head"]["ref"])]
-    for pr in mine[:limit]:
+    for pr in agent_pulls(gh, agent_login, limit):
         m = BRANCH.match(pr["head"]["ref"])
         sha, num = pr["head"]["sha"], str(pr["number"])
         resource = f"repo:{m[1]}:{m[2]}/pr/{num}/{sha}"

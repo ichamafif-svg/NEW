@@ -31,11 +31,15 @@ class FakeGH:
         self.merged = False
         self.pr_open = False
 
-    def pulls(self):
-        return [{"number": 7, "head": {"ref": "standard/deps/vulns/abcd1234", "sha": HEAD}}] if self.pr_open else []
+    repo = "o/demo"
+
+    def authored(self, login, limit):
+        return [{"number": 7, "state": "open", "user": {"login": login}, "base": {"ref": "main"},
+                 "head": {"ref": "standard/deps/vulns/abcd1234", "sha": HEAD, "repo": {"full_name": self.repo}}}
+                ] if self.pr_open else []
 
     def pull(self, n):
-        return {"merged": self.merged, "head": {"sha": HEAD}}
+        return {"merged": self.merged, "head": {"sha": HEAD}, "base": {"ref": "main"}}
 
 
 def opener_for(gh, calls):
@@ -55,7 +59,7 @@ def opener_for(gh, calls):
     def opener(req, timeout):
         calls.append((req.get_method(), req.full_url, json.loads(req.data) if req.data else None))
         if req.get_method() == "GET":
-            return Resp(200, {"merged": gh.merged, "head": {"sha": HEAD}})
+            return Resp(200, {"merged": gh.merged, "head": {"sha": HEAD}, "base": {"ref": "main"}})
         gh.merged = True
         return Resp(200, {"merged": True})
     return opener
@@ -154,13 +158,13 @@ def test_the_adapter_merges_only_the_judged_commit_and_reports_honestly():
     from adapters.github import GitHub
     args = {"area": "deps", "item": "vulns", "pr": "7", "head": HEAD, "method": "squash"}
 
-    def with_put(status, merged=False):
+    def with_put(status, merged=False, base="main"):
         sent = []
 
         def opener(req, timeout):
             sent.append(req.get_method())
             if req.get_method() == "GET":
-                body = json.dumps({"merged": merged, "head": {"sha": HEAD}}).encode()
+                body = json.dumps({"merged": merged, "head": {"sha": HEAD}, "base": {"ref": base}}).encode()
                 return type("R", (), {"status": 200, "read": lambda self: body, "__enter__": lambda self: self,
                                       "__exit__": lambda self, *a: False})()
             if status == 200:
@@ -172,6 +176,7 @@ def test_the_adapter_merges_only_the_judged_commit_and_reports_honestly():
     assert with_put(409) == ("failed", ["GET", "PUT"])                 # head moved: GitHub merged nothing
     assert with_put(502) == ("unknown", ["GET", "PUT"])                # may have merged: reconcile
     assert with_put(200, merged=True) == ("ok", ["GET"])               # already landed: no second send
+    assert with_put(200, base="standard-journal") == ("failed", ["GET"])   # retargeted: nothing sent
     assert GitHub("o/demo", "t", opener=None).remediate("r", dict(args, head="HEAD"), "k") == "failed"
 
 

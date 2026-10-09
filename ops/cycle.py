@@ -22,6 +22,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tcb.floors import FLOORS, floors_digest  # noqa: E402
 from tcb import EffectPort, Guard, Refused  # noqa: E402
+from tcb.floor0 import line_state  # noqa: E402
 
 from ops import scan  # noqa: E402
 from ops.node import HUMANS, Node, load_keys, root_of  # noqa: E402
@@ -117,7 +118,7 @@ def cmd_scan(node: Node, a):
     for iid, it in s["intents"].items():                     # read back: did GitHub merge exactly this commit?
         if it["op"] != "remediate":
             continue
-        line = s["line"].get(iid, {}).get("state")
+        line = line_state(s["line"], iid, node.now())          # a reservation past its dispatch window is expired
         if f"proof:{iid}" not in s["obligations"] and line not in ("uncertain", "expired"):
             continue
         pull = gh.pull(it["args"]["pr"])
@@ -157,7 +158,7 @@ def cmd_ask(node: Node, a):
         retry = None
         if prior is not None:
             # Ask again only after a definite failure (GitHub merged nothing) and a newer observation of the commit.
-            if s["line"].get(prior["id"], {}).get("state") != "failed" or seen_at[resource] <= prior["stmt"]["at"]:
+            if line_state(s["line"], prior["id"], node.now()) != "failed" or seen_at[resource] <= prior["stmt"]["at"]:
                 continue
             retry = prior["id"]
         if f.get("ci") != "green":
@@ -185,7 +186,7 @@ def cmd_repair(node: Node, a):
     gh = Client(a.repo, os.environ["AGENT_GITHUB_TOKEN"])
     s = node.state
     opened = []
-    open_targets = {p["head"]["ref"].split("/")[2] for p in gh.pulls() if p["head"]["ref"].startswith("standard/")}
+    open_targets = {scan.BRANCH.match(p["head"]["ref"])[2] for p in scan.agent_pulls(gh, a.agent_login)}
     health = json.loads(Path(a.health).read_text()) if a.health else None
     gaps = [o for o in (health or {}).get("open", []) + (health or {}).get("escalated", [])
             if o.get("type") == "target" and TECH.get(o.get("target"), {}).get("repair") == "remediate"]
