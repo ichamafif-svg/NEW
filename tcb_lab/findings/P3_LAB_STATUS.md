@@ -31,3 +31,7 @@ Les 16 garanties ont désormais une allocation provisoire `K/T/U` dans [TCB_BOUN
 ## Campagne IV-C — conclusion de délimitation (pas une preuve physique)
 
 [IVC_BOUNDARY_DECISIONS.md](../IVC_BOUNDARY_DECISIONS.md) passe en revue les **12 frontières antérieurement ouvertes** : dix allocations K/T/U deviennent **conditionnelles** sur la base de leurs contrats d'information et d'application ; **G08** (continuité des obligations) et **G16** (progression autonome) restent sémantiquement ouvertes. Avec les quatre allocations déjà conditionnelles en IV-B, on obtient **14 délimitations conditionnelles / 2 ouvertes**, *et non 14 garanties vérifiées*. Les contrats externes restent non validés physiquement. `p3_ivc_scope_audit.py` vérifie seulement la cohérence documentaire dans la CI, sans se substituer aux expériences adversariales manquantes. Aucun changement du scope sémantique [SCOPE.md](../SCOPE.md) ou du noyau.
+
+## IV-D : deux frontières sémantiques investiguées
+
+Le dossier [G08/G16](P3_G08_G16_CAMPAIGN.md) décrit quatre contrastes longitudinaux codés et raccordés à la CI. L'expérience mesure cycles, phases, identités de proposition et obligations visibles ; elle **ne suppose pas** qu'un identifiant de proposition représente une dette canonique. Les 14 autres frontières demeurent conditionnellement délimitées, non démontrées en production. État d'exécution à vérifier dans l'[issue #2](https://github.com/ichamafif-svg/NEW/issues/2).
