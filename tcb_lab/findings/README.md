@@ -38,3 +38,7 @@ Lire [P3_PRIORITY_FIRST_RESULTS.md](P3_PRIORITY_FIRST_RESULTS.md) : les quatre t
 ## Deuxième campagne — contradiction empirique
 
 [P3_CAMPAIGN_II_CONTRADICTIONS.md](P3_CAMPAIGN_II_CONTRADICTIONS.md) documente **les résultats opposés du retrait après deux cycles sur plusieurs reprises dans un même run**, sans supposer un état initial identique, ainsi que les huit comparaisons de départ et sept variations de preuve. La campagne a également révélé que le rapport CI ne signalait pas les écarts `OBSERVED` vis-à-vis de l'assertion historique. La sortie automatisée a été enrichie pour afficher ces écarts plutôt que de les classer silencieusement parmi les tests verts.
+
+## Midpoint II — interprétation des 31 nouvelles expériences
+
+[P3_MIDPOINT_II.md](P3_MIDPOINT_II.md) reprend les **sorties individuelles** des 7 preuves, 8 effets et 16 séquences de maintenance, et rectifie la lecture trompeuse du vert CI : dix divergences historiques observées, refus de deuxième redemption uniquement `HIST.TIME` (oracle anti-doublon non isolé) et qualification de preuve sans accès à la vérité externe. Ce document est maintenant la référence pour la prochaine profondeur ; ne pas conclure sur une faiblesse structurelle ou une solution.
