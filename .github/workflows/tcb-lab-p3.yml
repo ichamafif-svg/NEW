@@ -89,8 +89,17 @@ jobs:
         continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_depth_autonomy.py | tee p3-depth-autonomy.json
+      - name: Validate all experiment reports are parseable JSON
+        id: jsoncheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          for file in g1-output.json p3-output.json p3-effects-output.json p3-mutation-output.json p3-autonomy-output.json p3-compositions-output.json p3-counter-output.json p3-long-horizon-output.json p3-priority-o1-output.json p3-priority-e1-output.json p3-priority-p1-output.json p3-depth-proof.json p3-depth-effect.json p3-depth-autonomy.json; do
+            test -s "$file" || exit 1
+            python -m json.tool "$file" > /dev/null || exit 1
+          done
       - name: Reject any failed suite, while retaining all suite outputs
-        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure' || steps.proofdepth.outcome == 'failure' || steps.effectdepth.outcome == 'failure' || steps.autonomydepth.outcome == 'failure')
+        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure' || steps.proofdepth.outcome == 'failure' || steps.effectdepth.outcome == 'failure' || steps.autonomydepth.outcome == 'failure' || steps.jsoncheck.outcome == 'failure')
         run: exit 1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
