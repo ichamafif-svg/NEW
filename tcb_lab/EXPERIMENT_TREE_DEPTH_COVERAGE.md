@@ -127,3 +127,7 @@ Les parents sont documentés dans [GUARANTEE_MATRIX.md](GUARANTEE_MATRIX.md), [A
 ## Campagne IV — dimension FRONTIÈRE (superposée à profondeur × couverture)
 
 Chaque feuille de G01–G16 porte désormais une **triple allocation non exclusive** : `K` (verdict constitutionnel déterministe), `T` (mécanisme externe de confiance indispensable à l'application ou la vérité) et `U` (acteur remplaçable sans souveraineté). Le statut `LIMIT_ESTABLISHED_LOGICAL` exige un argument d'indiscernabilité ou de capacité absente, des hypothèses et un contre-exemple ; `EXTERNAL_CONTRACT_REQUIRED` ne vaut pas validation physique. Référence exhaustive : [TCB_BOUNDARY_MATRIX.md](TCB_BOUNDARY_MATRIX.md), [ESTABLISHED_LIMITS.md](ESTABLISHED_LIMITS.md), [SCOPE_FREEZE_REVIEW.md](SCOPE_FREEZE_REVIEW.md). **Le scope sémantique antérieurement figé n'est pas modifié.**
+
+## IV-B — revue des frontières et critères de fermeture
+
+La [revue IV-B](IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CLOSED_CONDITIONAL`, `OPEN_CRITICAL` et `OPEN_SEMANTIC` pour **G01–G16**, avec les contre-exemples et dépendances physiques. Quatre nouvelles expériences signées (effet révoqué, retry inconnu, preuve bon/mauvais sujet) sont intégrées à la CI via `p3_ivb_boundary_pairs.py`. **La classification ne constitue pas une validation de sûreté ; aucun scope ou noyau n'a été modifié.**
