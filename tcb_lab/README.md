@@ -80,3 +80,9 @@ La règle de [P3_EXPLORATION_PROTOCOL.md](P3_EXPLORATION_PROTOCOL.md) demeure : 
 ## Phase 3 — arbre d'expériences PROFONDEUR × COUVERTURE
 
 [EXPERIMENT_TREE_DEPTH_COVERAGE.md](EXPERIMENT_TREE_DEPTH_COVERAGE.md) est désormais la structure directrice de l'exploration : **8 branches de couverture**, **8 profondeurs D0–D7**, quatre sous-arbres P0 illustrés, oracles safety/progression et exigences de preuve par feuille. Les résultats verts et rouges ouvrent des **enfants expérimentaux** ; ils ne servent pas à redéfinir le scope, réparer le cœur ou préchoisir un modèle. La profondeur effective doit être attribuée sur preuves de run, pas sur la seule présence de fichiers.
+
+## Documentation findings consolidée — 9 octobre 2026
+
+La porte d'entrée empirique est maintenant [findings/README.md](findings/README.md). Elle relie le [midpoint](findings/P3_MIDPOINT.md), les [preuves et runs précis](findings/P3_EVIDENCE_REGISTER.md), les [erreurs de mesure et rouges historiques](findings/P3_CI_OBSERVATIONS.md), la [limite des séries longues](findings/P3_LONG_HORIZON_QUESTIONS.md) et le [backlog profondeur × couverture](findings/P3_DEPTH_COVERAGE_BACKLOG.md). Les paragraphes de statut plus anciens du présent README reflètent des étapes historiques de rédaction ; privilégier le registre de preuves daté pour le statut réellement observé.
+
+**Suite suggérée par les findings :** reproduire et départager l'échec du retrait de réparation (O1/R1), puis ouvrir les contre-expériences sur effet incertain et fausse preuve. Les résultats servent à poser des questions plus difficiles, pas à modifier la constitution, le scope ou l'abstraction.
