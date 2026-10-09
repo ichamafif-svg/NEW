@@ -24,3 +24,7 @@ Référence : `main@d6347dccec714c0193bbc43af5de7e96e3a9ad27`. Statut des assert
 **Observation critique :** G04 n'est pas identique à « chaque effet physique correspond à une transition » ; G09/G10 doivent être examinés indépendamment. Les contrats de preuve G07 et G13 ne peuvent pas être réputés remplis sur la seule existence d'un niveau `real`.
 
 **Critère G1 :** pour chaque ligne, produire scénario reproductible, résultat vérifié, hypothèses d'attaque et décision de couverture. Aucun choix d'algèbre, de CIR ou de moteur de contrats avant ce travail.
+
+## Statut de clôture fonctionnelle (2026-10-09)
+
+Voir [FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md](FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md) : **16/16 allocations K/T/U figées conditionnellement**, sans certification des garanties ni du déploiement. Les constatations et limites ci-dessus restent valables comme faits historiques/conditions d'audit ; elles ne constituent plus un blocage de **délimitation du noyau**. La validation physique, les preuves empiriques et les portes de sortie de P3 restent ouvertes ; G08/G16 ne doivent pas provoquer une nouvelle boucle d'audit général du produit.
