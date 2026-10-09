@@ -29,6 +29,7 @@ La maintenance suit le cycle : **écart → obligation → travail autonome → 
 | Document | Objet |
 |---|---|
 | [STANDARD_ARCHITECTURE.md](STANDARD_ARCHITECTURE.md) | Produit Standard, architecture générale et garanties |
+| [IMPLEMENTATION_CONTRACTS.md](IMPLEMENTATION_CONTRACTS.md) | Directives normatives K/T/U par composant, 16 garanties, interfaces, tests et gates |
 | [KERNEL_CONCEPTUAL_MODEL.md](hybrid_kernel/KERNEL_CONCEPTUAL_MODEL.md) | Primitives, relations et jugement déterministe |
 | [TRUSTED_EXTERNAL_CONTRACTS.md](hybrid_kernel/TRUSTED_EXTERNAL_CONTRACTS.md) | Contrats de confiance physiques |
 | [KERNEL_EXECUTION_PROTOCOL.md](hybrid_kernel/KERNEL_EXECUTION_PROTOCOL.md) | Admission, commit, effets et reprise |
