@@ -8,10 +8,15 @@ Only the Standard team changes this file, by a release. A client law never redef
 declared here: it binds the floor roles to its own identities, adds its own declarations, and may only tighten.
 Context-dependent requirements apply to every client through conditions on attested facts, never by opting out.
 
-Two families of measures. Technical measures are observed by the independent scanner and repaired by agents through
-`remediate`, whose resource is the exact commit of a pull request under the target it repairs. Organisational measures
-are attested by the compliance officer, a human, and have no automatic repair: their gap goes to people. Which
-ISO 27001, NIS2 and DORA control each measure evidences is a projection outside the TCB (compliance/catalog.json)."""
+Two families of measures. Technical measures are observed by the independent scanner and repaired through
+`remediate`: main moves from one exact commit (base) to one exact child commit (head), fast-forward, so the object of
+the effect is the commit that was judged. Organisational measures are attested by the compliance officer, a human,
+and have no automatic repair: their gap goes to people. Which ISO 27001, NIS2 and DORA control each measure evidences
+is a projection outside the TCB (compliance/catalog.json).
+
+Autonomy is reproducibility: a repair merges without a human only if an independent instrument recomputed exactly its
+content from the base and trusted data (`reproduced`). Facts produced by running the commit's own code (`tests`) are
+necessary signals, never sufficient grounds, since that code can lie about itself."""
 from .canon import digest
 from .floor0 import MIN_DELAY_MS, floor0_digest
 
@@ -30,8 +35,10 @@ TECHNICAL = [
     ("actions", "repo:ci:actions", "pinned", "all", 7, 30),
     ("sbom", "repo:supply:sbom", "state", "current", 7, 7),
 ]
-# Settings the scanner observes but no pull request can change: their gap goes to people.
-SETTINGS = [("branch", "repo:settings:main", "protection", "pr-and-checks", 1, 7)]
+# Observed by @scanner, repaired by people only: main's protection (only the guard may move it), and its lineage
+# (every commit on main since the anchor is the head of a judged effect).
+SETTINGS = [("branch", "repo:settings:main", "protection", "guard-only", 1, 7),
+            ("lineage", "repo:main:lineage", "unjudged", "none", 1, 1)]
 # Organisational: (id, resource, fresh) attested "current" by @compliance_officer under the statement of applicability.
 ORGANISATIONAL = [
     ("isms", "org:isms:policy", 365), ("risk", "org:risk:assessment", 365), ("access", "org:access:review", 90),
@@ -64,16 +71,16 @@ FLOORS = {
     "ops": {"merge": {"args": {"pr": "segment", "method": "str"}, "resource": "repo:pr:{pr}", "profile": "capability"},
             "inventory-refresh": {"args": {"scope": "segment"}, "resource": "repo:inventory:{scope}",
                                   "profile": "capability"},
-            # Merge one exact commit of a pull request that repairs repo:{area}:{item}. Facts that authorize it are
-            # observed on this very resource, so they bind the commit that will be merged.
-            "remediate": {"args": {"area": "segment", "item": "segment", "pr": "segment", "head": "segment", "method": "str"},
-                    "resource": "repo:{area}:{item}/pr/{pr}/{head}", "profile": "capability"}},
+            # Fast-forward main from `base` to its child `head`, repairing repo:{area}:{item}. The facts that authorize
+            # it are observed on this very resource, so they bind both commits of the transition.
+            "remediate": {"args": {"area": "segment", "item": "segment", "base": "segment", "head": "segment"},
+                          "resource": "repo:{area}:{item}/{base}/{head}", "profile": "capability"}},
     "conditions": {"bot-author": {"all": [{"observed": ["pr_author", "dependabot[bot]", "real"]}]},
-                   # Autonomy: a green, dependency-only commit; anything else needs an independent human review.
-                   "remediate-autonomous": {"all": [{"observed": ["ci", "green", "real"]},
-                                              {"observed": ["scope", "dependencies", "real"]}]},
-                   "remediate-reviewed": {"all": [{"observed": ["ci", "green", "real"]},
-                                            {"observed": ["review", "approved", "real"]}]}},
+                   # Autonomy: green and reproduced; anything else needs a human who signed a review of this transition.
+                   "remediate-autonomous": {"all": [{"observed": ["tests", "green", "real"]},
+                                                    {"observed": ["reproduced", "yes", "real"]}]},
+                   "remediate-reviewed": {"all": [{"observed": ["tests", "green", "real"]},
+                                                  {"observed": ["review", "approved", "real"]}]}},
     # F2: coverage. Each declared universe must be observed complete by an independent source, or it is a gap.
     "targets": [
         {"id": "inventory", "kind": "coverage", "resource": "repo:inventory:all", "property": "coverage",

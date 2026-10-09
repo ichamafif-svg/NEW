@@ -1,17 +1,18 @@
-"""Trusted GitHub adapter for `remediate`: merge exactly the judged commit of one pull request, at most once.
+"""Trusted GitHub adapter for `remediate`: move main from the judged base to the judged head, fast-forward only.
 
-Inside the TCB budget: a bug here can send a wrong effect. It therefore takes nothing from the agent but the judged
-arguments, sends one request, and lets GitHub refuse any other commit through `sha`. Outcomes:
-  ok       GitHub reports the pull request merged at this head (now, or already by an earlier attempt)
-  failed   GitHub refused before merging (head moved, checks missing, conflict)
+Inside the TCB budget: a bug here can send a wrong effect. It takes nothing but the judged arguments and sends one
+ref update with force=false, so main ends exactly on the judged commit or does not move. Only the guard may update
+main (repository ruleset), so main cannot change between the read and the write but through this adapter.
+Outcomes:
+  ok       main is the judged head (now, or already by an earlier attempt)
+  failed   nothing was sent, main is not the judged base, or GitHub refused the fast-forward: nothing moved
   unknown  anything else: the line requires an independent reconciliation."""
 import json
 import re
 import urllib.error
 import urllib.request
 
-HEAD = re.compile(r"^[0-9a-f]{40}$")
-METHODS = ("merge", "squash", "rebase")
+SHA = re.compile(r"^[0-9a-f]{40}$")
 
 
 class GitHub:
@@ -33,28 +34,22 @@ class GitHub:
         except urllib.error.HTTPError as e:
             return e.code, {}
 
-    def _pull(self, pr):
-        status, pull = self._call("GET", f"/pulls/{pr}")
-        return pull if status == 200 else None
-
     def remediate(self, resource, args, reservation_key):
-        pr, head, method = args["pr"], args["head"], args["method"]
-        if not pr.isdigit() or not HEAD.fullmatch(head) or method not in METHODS:
+        base, head = args["base"], args["head"]
+        if not SHA.fullmatch(base) or not SHA.fullmatch(head):
             return "failed"
-        pull = self._pull(pr)
-        if pull is None:
-            return "unknown"
-        if pull.get("merged") is True and pull.get("head", {}).get("sha") == head:
-            return "ok"                                 # an earlier attempt already landed this exact commit
-        if pull.get("base", {}).get("ref") != "main":
-            return "failed"                             # the judged repair targets main, nothing else
-        status, _ = self._call("PUT", f"/pulls/{pr}/merge",
-                               {"sha": head, "merge_method": method,
-                                "commit_title": f"standard: remediate {resource.split('/pr/')[0]} (#{pr})",
-                                "commit_message": f"reservation {reservation_key}"})
+        status, ref = self._call("GET", "/git/ref/heads/main")
+        if status != 200:
+            return "failed"                             # nothing was sent
+        main = ref.get("object", {}).get("sha")
+        if main == head:
+            return "ok"                                 # an earlier attempt already moved main to this commit
+        if main != base:
+            return "failed"                             # the transition judged is no longer the one available
+        status, _ = self._call("PATCH", "/git/refs/heads/main", {"sha": head, "force": False})
         if status == 200:
             return "ok"
-        if status in (405, 409, 422):                   # not mergeable, head moved, invalid: GitHub merged nothing
+        if status in (409, 422):                        # not a fast-forward, or refused by a rule: nothing moved
             return "failed"
         return "unknown"
 

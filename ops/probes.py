@@ -1,10 +1,13 @@
-"""Probes: what the scanner measures, and the single rule that turns a measure into a signed status.
+"""Probes: what the scanner measures about main, and the single rule that turns a measure into a signed status.
 
-Principle (cause 2 of the M2 review): absence of a finding is not a pass. A probe returns its universe (what it had
-to examine), what it actually covered, and what it found. Only `verdict` writes a status, and it writes the floor's
-expected status only when the whole, non-empty universe was covered and nothing was found. A probe that raises,
-skips an element or examines nothing yields `uncovered`, a gap the scanner owns; `found` is a gap an agent may repair.
-The probes never install, import or run the code they examine."""
+Rule 2: a pass is a proof of coverage. A probe returns its universe, what it covered and what it found; only
+`verdict` writes a status, the floor's expected one only when the whole non-empty universe was covered without
+finding. An exception, a skipped element or an empty universe is `uncovered`.
+
+Rule 5: the instrument and its universe are fixed by Standard, never by the content measured. Every tracked file is
+in the secrets universe whatever its bytes; every `uses` anywhere in a parsed workflow counts; bandit ignores
+`# nosec`; the lock is the dependency universe and any other dependency manifest makes it uncovered. Probes read
+content; they never install, import or run it (code that runs is measured apart, by ops.testrun, without keys)."""
 from __future__ import annotations
 
 import json
@@ -14,15 +17,23 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
+import yaml
+
 from .world import pypi
 
 PIN = re.compile(r"^([A-Za-z0-9_.-]+)==([A-Za-z0-9_.+-]+)$")
-LICENSES = ("MIT", "BSD", "Apache", "ISC", "PSF", "Python Software Foundation", "MPL", "Unlicense", "Zlib")
+PERMISSIVE = {"MIT", "BSD-2-Clause", "BSD-3-Clause", "Apache-2.0", "ISC", "PSF-2.0", "MPL-2.0", "Unlicense", "Zlib"}
+PERMISSIVE_CLASSIFIERS = {"License :: OSI Approved :: MIT License", "License :: OSI Approved :: BSD License",
+                          "License :: OSI Approved :: Apache Software License", "License :: OSI Approved :: ISC License (ISCL)",
+                          "License :: OSI Approved :: Python Software Foundation License",
+                          "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
+                          "License :: OSI Approved :: The Unlicense (Unlicense)", "License :: OSI Approved :: zlib/libpng License"}
+OTHER_MANIFESTS = ("setup.py", "setup.cfg", "Pipfile", "Pipfile.lock", "poetry.lock", "uv.lock")
 SECRETS = [re.compile(p) for p in (
-    r"AKIA[0-9A-Z]{16}", r"-----BEGIN (?:RSA |EC |OPENSSH |)PRIVATE KEY-----", r"gh[pousr]_[A-Za-z0-9]{36,}",
-    r"sk-ant-[A-Za-z0-9_-]{20,}", r"xox[baprs]-[A-Za-z0-9-]{10,}",
-    r"(?i)(?:api[_-]?key|secret|password|token)\s*[:=]\s*['\"][A-Za-z0-9/+_=-]{16,}['\"]")]
-MAX_TEXT = 5_000_000
+    rb"AKIA[0-9A-Z]{16}", rb"-----BEGIN (?:RSA |EC |OPENSSH |)PRIVATE KEY-----", rb"gh[pousr]_[A-Za-z0-9]{36,}",
+    rb"sk-ant-[A-Za-z0-9_-]{20,}", rb"xox[baprs]-[A-Za-z0-9-]{10,}",
+    rb"(?i)(?:api[_-]?key|secret|password|token)\s*[:=]\s*['\"][A-Za-z0-9/+_=-]{16,}['\"]")]
+MAX_FILE = 5_000_000
 
 
 @dataclass(frozen=True)
@@ -49,13 +60,36 @@ def repairable(status: str) -> bool:
 
 
 def _run(cmd, cwd):
-    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=600)
+    return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True, timeout=900)
 
 
-def lock(repo: Path) -> dict:
-    """requirements.txt is a full lock of exact pins. A line that is not one is a finding of its own kind."""
+class Checkout:
+    """A tree on disk: the tracked files of a git checkout, read as bytes."""
+
+    def __init__(self, root):
+        self.root = Path(root)
+        names = _run(["git", "ls-files", "-z"], self.root).stdout.split("\0")
+        self._paths = {p for p in names if p}
+
+    def paths(self):
+        return set(self._paths)
+
+    def read(self, path):
+        full = self.root / path
+        if path not in self._paths or full.is_symlink():
+            raise FileNotFoundError(path)
+        return full.read_bytes()
+
+
+def lock(tree) -> dict:
+    """The dependency universe: requirements.txt as a full lock of exact pins, and no other manifest."""
+    present = [m for m in OTHER_MANIFESTS if m in tree.paths()]
+    if "pyproject.toml" in tree.paths() and re.search(rb"(?m)^\s*(dependencies|requires)\s*=", tree.read("pyproject.toml")):
+        present.append("pyproject.toml")
+    if present:
+        raise ValueError(f"dependencies declared outside the lock: {present}")
     pins, bad = {}, []
-    for line in (repo / "requirements.txt").read_text().splitlines():
+    for line in tree.read("requirements.txt").decode().splitlines():
         line = line.split("#")[0].strip()
         if line:
             m = PIN.match(line)
@@ -65,33 +99,28 @@ def lock(repo: Path) -> dict:
     return pins
 
 
-def tracked(repo: Path) -> list:
-    names = _run(["git", "ls-files", "-z"], repo).stdout.split("\0")
-    return [p for p in names if p and (repo / p).is_file() and not (repo / p).is_symlink()]
-
-
-def text_files(repo: Path) -> list:
-    out = []
-    for p in tracked(repo):
-        with (repo / p).open("rb") as f:
-            if b"\0" not in f.read(8192):
-                out.append(p)
-    return out
-
-
-# ---- probes: repo -> Measure ----------------------------------------------------------------------------------
-def vulns(repo, world=None):
-    pins = lock(repo)
+def audit(tree) -> list:
+    """pip-audit of the lock, without installing or resolving anything."""
+    lock(tree)
     r = _run([sys.executable, "-m", "pip_audit", "-r", "requirements.txt", "--no-deps", "--disable-pip",
-              "-f", "json", "--progress-spinner", "off"], repo)
-    deps = json.loads(r.stdout)["dependencies"]
+              "-f", "json", "--progress-spinner", "off"], tree.root)
+    return json.loads(r.stdout)["dependencies"]
+
+
+def advisories(deps: list) -> dict:
+    return {d["name"].lower(): [v["fix_versions"] for v in d["vulns"]] for d in deps if d.get("vulns")}
+
+
+# ---- probes: (tree, ctx) -> Measure ---------------------------------------------------------------------------
+def vulns(tree, ctx):
+    pins, deps = lock(tree), ctx["audit"]()
     audited = {d["name"].lower() for d in deps if "skip_reason" not in d}
     return Measure(frozenset(pins), frozenset(audited & set(pins)),
                    tuple(v["id"] for d in deps for v in d.get("vulns", [])))
 
 
-def deps_age(repo, world=None):
-    pins, covered, behind = lock(repo), set(), []
+def deps_age(tree, ctx):
+    pins, covered, behind = lock(tree), set(), []
     for name, version in pins.items():
         latest = pypi(name)["version"]
         covered.add(name)
@@ -101,77 +130,88 @@ def deps_age(repo, world=None):
     return Measure(frozenset(pins), frozenset(covered), tuple(behind))
 
 
-def licenses(repo, world=None):
-    pins, covered, bad = lock(repo), set(), []
+def licenses(tree, ctx):
+    pins, covered, bad = lock(tree), set(), []
     for name in pins:
         info = pypi(name)
-        text = " ".join([info.get("license") or "", info.get("license_expression") or "", *info.get("classifiers", [])])
+        ok = (info.get("license_expression") in PERMISSIVE
+              or bool(PERMISSIVE_CLASSIFIERS & set(info.get("classifiers") or [])))
         covered.add(name)
-        if not any(x in text for x in LICENSES):
+        if not ok:
             bad.append(name)
     return Measure(frozenset(pins), frozenset(covered), tuple(bad))
 
 
-def secrets(repo, world=None):
-    files, covered, hits = text_files(repo), set(), []
+def secrets(tree, ctx):
+    files, covered, hits = tree.paths(), set(), []
     for p in files:
-        if (repo / p).stat().st_size < MAX_TEXT:
-            text = (repo / p).read_text(errors="ignore")
+        data = tree.read(p)
+        if len(data) < MAX_FILE:
             covered.add(p)
-            hits += [p for rx in SECRETS if rx.search(text)]
+            hits += [p for rx in SECRETS if rx.search(data)]
     return Measure(frozenset(files), frozenset(covered), tuple(hits))
 
 
-def sast(repo, world=None):
-    files = [p for p in tracked(repo) if p.endswith(".py") and not p.startswith("tests/")]
-    r = _run([sys.executable, "-m", "bandit", "-f", "json", "-q", *files], repo)
+def sast(tree, ctx):
+    files = sorted(p for p in tree.paths() if p.endswith(".py"))
+    r = _run([sys.executable, "-m", "bandit", "--ignore-nosec", "-f", "json", "-q", *files], tree.root)
     data = json.loads(r.stdout)
     covered = {k.removeprefix("./") for k in data["metrics"] if k != "_totals"} - {e["filename"] for e in data["errors"]}
     high = [x["test_id"] for x in data["results"] if x["issue_severity"] == "HIGH"]
     return Measure(frozenset(files), frozenset(covered) & frozenset(files), tuple(high))
 
 
-def actions(repo, world=None):
-    flows = sorted(p for p in tracked(repo) if re.fullmatch(r"\.github/workflows/[^/]+\.ya?ml", p))
-    loose = [u for p in flows for u in re.findall(r"uses:\s*([^\s#]+)", (repo / p).read_text())
-             if not u.startswith("./") and not re.search(r"@[0-9a-f]{40}$", u)]
-    return Measure(frozenset(flows), frozenset(flows), tuple(loose))
+def _uses(node):
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == "uses" and isinstance(v, str):
+                yield v
+            yield from _uses(v)
+    elif isinstance(node, list):
+        for v in node:
+            yield from _uses(v)
 
 
-def sbom_document(repo) -> dict:
-    return {"bomFormat": "CycloneDX", "specVersion": "1.5", "components": [
-        {"type": "library", "name": n, "version": v, "purl": f"pkg:pypi/{n}@{v}"} for n, v in sorted(lock(repo).items())]}
+def actions(tree, ctx):
+    files = sorted(p for p in tree.paths() if re.fullmatch(r"\.github/workflows/[^/]+\.ya?ml", p)
+                   or re.fullmatch(r"(.*/)?action\.ya?ml", p))
+    covered, loose = set(), []
+    for p in files:
+        doc = yaml.safe_load(tree.read(p))
+        covered.add(p)
+        loose += [u for u in _uses(doc) if not u.startswith("./") and not re.search(r"@[0-9a-f]{40}$", u)]
+    return Measure(frozenset(files), frozenset(covered), tuple(loose))
 
 
-def sbom(repo, world=None):
-    pins = lock(repo)
-    path = repo / "sbom.json"
-    listed = {(c["name"], c["version"]) for c in json.loads(path.read_text())["components"]} if path.exists() else set()
+def sbom(tree, ctx):
+    pins = lock(tree)
+    listed = ({(c["name"], c["version"]) for c in json.loads(tree.read("sbom.json"))["components"]}
+              if "sbom.json" in tree.paths() else set())
     return Measure(frozenset(pins), frozenset(pins), tuple(n for n, v in pins.items() if (n, v) not in listed))
 
 
-def ci(repo, world):
-    head = world.main_head()
-    conclusion = world.ci(head)
-    return Measure(frozenset({head}), frozenset({head} if conclusion else ()),
-                   () if conclusion == "success" else (conclusion,))
+def branch(tree, ctx):
+    need = frozenset({"update", "deletion", "non_fast_forward"})
+    return Measure(need, need, tuple(sorted(need - ctx["world"].rule_types())))
 
 
-def branch(repo, world):
-    need = frozenset({"pull_request", "required_status_checks"})
-    return Measure(need, need, tuple(sorted(need - world.rule_types())))
+def lineage(tree, ctx):
+    """Every commit on main since the anchor is the head of a judged effect: no change reached main around the law."""
+    history = ctx["world"].history(ctx["anchor"], ctx["main"])
+    return Measure(frozenset(history) | {ctx["main"]}, frozenset(history) | {ctx["main"]},
+                   tuple(c for c in history if c not in ctx["judged"]))
 
 
 PROBES = {"vulns": vulns, "deps-age": deps_age, "licenses": licenses, "secrets": secrets, "sast": sast,
-          "actions": actions, "sbom": sbom, "ci": ci, "branch": branch}
+          "actions": actions, "sbom": sbom, "branch": branch, "lineage": lineage}
 
 
-def measure_all(repo: Path, world, targets: dict) -> dict:
-    """target id -> status, every probe through `verdict`."""
+def measure_all(tree, ctx, targets: dict) -> dict:
+    """target id -> status, every probe through `verdict`. `ci` comes from ops.testrun, not from here."""
     out = {}
     for tid, probe in PROBES.items():
         try:
-            m = probe(repo, world)
+            m = probe(tree, ctx)
         except Exception as exc:  # noqa: BLE001 - an exception is a measure: nothing was covered
             m = exc
         out[tid] = verdict(targets[tid]["expect"], m)
