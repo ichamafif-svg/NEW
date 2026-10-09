@@ -54,7 +54,7 @@ def scenario(seed):
             distinct.add(resource)
         else:
             refused+=1
-            assert w.state==w.journal.snapshot()
+            assert copy.deepcopy(w.state)==before,"refused candidate changed journal state"
         events.append({"step":i,"variant":kind,"verdict":code,"size":w.state["size"]})
     assert len(distinct)==accepted
     assert accepted and refused
