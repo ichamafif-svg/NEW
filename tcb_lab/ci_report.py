@@ -25,6 +25,7 @@ names={
 "p3-iv-boundary.json":"IV K/T/U boundary discriminators",
 "p3-iv-matrix.json":"IV 16-guarantee matrix inventory",
 "p3-ivb-pairs.json":"IV-B boundary paired contrasts",
+"p3-ivc-scope.json":"IV-C conditional boundary scope audit",
 }
 rows=[]
 for filename,desc in names.items():
