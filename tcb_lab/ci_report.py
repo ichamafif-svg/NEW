@@ -36,7 +36,9 @@ for filename,desc in names.items():
         continue
     try:
         d=json.loads(path.read_text())
-        cases=d.get("attacks",d.get("experiments",d.get("observations",[])))
+        cases=d.get("attacks",d.get("experiments",d.get("observations",d.get("cases",[]))))
+        if not isinstance(cases,list) or not cases:
+            raise ValueError("missing or empty experiment cases; an inventory audit must report at least one explicit observation")
         flagged=[]
         for x in cases:
             status=x.get("status",x.get("outcome"))
