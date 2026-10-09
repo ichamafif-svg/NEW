@@ -12,6 +12,7 @@ from tcb.canon import canon, digest, parse
 from tcb.invariants import Invariants
 from tcb.kernel import Kernel, Refused, apply, empty
 from tcb.release import code_digest
+from .transition import normalize, transition, verify
 
 
 class StaleDecision(ValueError):
@@ -65,8 +66,11 @@ class DeterministicCore:
             raise Refused("CORE.MUTATION", "kernel changed an input state")
         if canon(copy.deepcopy(entry)) != entry_bytes:
             raise Refused("CORE.MUTATION", "kernel changed a signed entry")
-        post = parse(before_bytes)
-        apply(post, copy.deepcopy(delta))
+        post, trace = transition(parse(before_bytes), delta)
+        historical = parse(before_bytes)
+        apply(historical, copy.deepcopy(delta))
+        if canon(post) != canon(historical):
+            raise Refused('CORE.DELTA', 'independent transition interpreter disagrees')
         return Decision(
             code=self.code_pin,
             before=digest(parse(before_bytes)),
@@ -74,7 +78,7 @@ class DeterministicCore:
             law=record["law"],
             entry_bytes=entry_bytes,
             record_bytes=canon(record),
-            delta_bytes=canon([list(op) for op in delta]),
+            delta_bytes=canon(normalize(delta)),
             state_bytes=canon(post),
         )
 
@@ -85,10 +89,10 @@ class DeterministicCore:
         before = parse(canon(copy.deepcopy(state)))
         if digest(before) != decision.before:
             raise StaleDecision("predecessor changed")
-        apply(before, decision.delta)
-        if digest(before) != decision.after or canon(before) != decision.state_bytes:
+        after, _trace = transition(before, decision.delta)
+        if digest(after) != decision.after or canon(after) != decision.state_bytes:
             raise StaleDecision("recorded delta or next state differs")
-        return before
+        return after
 
     def replay(self, signed_entries, *, initial=None):
         state = copy.deepcopy(initial) if initial is not None else empty()
