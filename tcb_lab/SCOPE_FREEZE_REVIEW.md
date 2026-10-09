@@ -21,3 +21,7 @@
 4. **A/L/T/B**: key ownership, quorum, time, signed prefix and independent pin/failover, working across real trust zones.
 
 **No physical boundary is waived because a local test is green.**
+
+## IV-B — revue des frontières et critères de fermeture
+
+La [revue IV-B](IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CLOSED_CONDITIONAL`, `OPEN_CRITICAL` et `OPEN_SEMANTIC` pour **G01–G16**, avec les contre-exemples et dépendances physiques. Quatre nouvelles expériences signées (effet révoqué, retry inconnu, preuve bon/mauvais sujet) sont intégrées à la CI via `p3_ivb_boundary_pairs.py`. **La classification ne constitue pas une validation de sûreté ; aucun scope ou noyau n'a été modifié.**
