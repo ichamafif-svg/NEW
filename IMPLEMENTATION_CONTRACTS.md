@@ -1,6 +1,6 @@
 # STANDARD — Contrats d'implémentation par composant
 
-**Statut : direction normative de réalisation, pas attestation de production.** Ce document est autonome : il définit le *quoi construire, avec quelles entrées, quelles décisions, quels refus et quels tests*. Il ne suppose aucune connaissance d'un laboratoire ou d'un code antérieur. Il accompagne [l'architecture produit](STANDARD_ARCHITECTURE.md), [le modèle du noyau](hybrid_kernel/KERNEL_CONCEPTUAL_MODEL.md), [les frontières T](hybrid_kernel/TRUSTED_EXTERNAL_CONTRACTS.md) et [le protocole](hybrid_kernel/KERNEL_EXECUTION_PROTOCOL.md).
+**Statut : direction normative de réalisation, pas attestation de production.** Document autonome avec contrats, invariants et tests par composant. Vue produit : [STANDARD_ARCHITECTURE.md](STANDARD_ARCHITECTURE.md).
 
 ## Principes transversaux exécutables
 
