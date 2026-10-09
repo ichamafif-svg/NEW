@@ -23,3 +23,7 @@ Campagne III : 8 expériences d'effet à temps post-commit, 18 expériences d'id
 ## Vérification post-correction — 9 octobre 2026
 
 Le [run Actions `37956022363`](https://github.com/ichamafif-svg/NEW/actions/runs/37956022363) est **success** avec artefacts III **PARSED** : E=8 observations, O/R=18 observations, P=6 observations, zéro cas III classé inconclusif dans le registre. L'erreur JSON du premier run est donc résolue pour ce run ; elle reste conservée comme constat d'instrumentation. **Ne pas confondre ce succès CI avec une validation de safety/liveness :** les expériences O/R sont descriptives, le fournisseur E est simulé, et le label de vérité P ne figure pas dans la déclaration signée. Les runs historiques continuent de présenter des divergences aux assertions de cycle ; les trois sous-arbres demeurent **ouverts**.
+
+## Campagne IV — état initial
+
+Les 16 garanties ont désormais une allocation provisoire `K/T/U` dans [TCB_BOUNDARY_MATRIX.md](../TCB_BOUNDARY_MATRIX.md), avec plusieurs limites logiques conditionnelles dans [ESTABLISHED_LIMITS.md](../ESTABLISHED_LIMITS.md). La revue [SCOPE_FREEZE_REVIEW.md](../SCOPE_FREEZE_REVIEW.md) maintient les sept responsabilités historiques figées tout en signalant les validations physiques manquantes. Trois probes différentiels locaux supplémentaires sont intégrés en CI. **On n'annonce pas un nouveau scope figé par tests : on évalue le scope déjà figé.**
