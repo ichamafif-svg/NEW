@@ -26,6 +26,9 @@ def experiment(label,red,steps):
                     subjects=lifecycle.declared(st)
                     actions=lifecycle.plan(st,now,cycle.REVIEWERS)
                     details=[]
+                    health=node.journal.health(required_at=now)
+                    health_summary={k:len(health.get(k,[])) for k in ("open","escalated","proven")}
+                    attempt_observations=[{"resource":o["resource"],"status":o["status"],"at":o["at"]} for o in st["observations"].values() if o["author"]=="agent" and o["property"]=="attempt"]
                     for x in subjects:
                         phase,intent,condition=lifecycle.phase(st,x,now,cycle.REVIEWERS)
                         f=lifecycle.facts(st,x)
@@ -36,12 +39,13 @@ def experiment(label,red,steps):
                     timeline.append({"cycle":n+1,"now":now,"gap_signal":sim.measured["vulns"],
                       "actions":[{"role":a.role,"verb":a.verb,"subject":a.subject.resource} for a in actions],
                       "subjects":details,"obligations":sorted(st.get("obligations",{})),
+                      "accountability":health_summary,"attempt_facts":attempt_observations,
                       "main_changed":sim.world.main_head()!=base})
                 finally:node.close()
     idle=[r["cycle"] for r in timeline if r["gap_signal"]!="none" and not r["actions"]]
     return {"scenario":label,"trace":timeline,"no_plan_while_gap":idle,
        "no_plan_count":len(idle),"proposals":len(timeline[-1]["subjects"]),
-       "observability":"Plan actions != executed effects; no escalation oracle; obligations field is only one state surface."}
+       "observability":"Plan actions != executed effects; accountability health includes open and escalated but their target linkage must be checked."}
 
 def main():
     out=[]
