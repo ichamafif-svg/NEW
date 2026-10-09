@@ -74,7 +74,7 @@ class DeterministicCore:
             law=record["law"],
             entry_bytes=entry_bytes,
             record_bytes=canon(record),
-            delta_bytes=canon(delta),
+            delta_bytes=canon([list(op) for op in delta]),
             state_bytes=canon(post),
         )
 
