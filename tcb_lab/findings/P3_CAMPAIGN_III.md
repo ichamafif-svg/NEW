@@ -17,3 +17,9 @@ Si E donne un refus autre que `HIST.TIME`, isoler la cause, puis ajouter la repr
 ## Couverture résiduelle
 
 Les autres branches A/L/T/B, la concurrence déterministe D4, la panne D5, le multi-hôte/fournisseur D6 et la contradiction extérieure D7 **ne sont pas fermées**. La campagne III est une campagne **ciblée** à partir des findings, pas une couverture complète de toutes les garanties.
+
+## Premier diagnostic de CI (sous réserve du run corrigé)
+
+Le premier job III ([Actions #92](https://github.com/ichamafif-svg/NEW/actions/runs/37955599612)) a correctement été **rouge** : le script O/R avait laissé fuiter les messages du simulateur sur stdout et son artefact JSON était illisible. Cette erreur est un **défaut de harnais**, pas un défaut TCB ; le script a été corrigé au commit `23976479b1` en capturant toute la sortie de `Sim`. La vérification du run correctif reste requise.
+
+Les **huit observations E1** du même run sont lisibles : seconde redemption au temps `last_at + 1` ; le cas ACK perdu est cette fois refusé par `OBL.NOT_OPEN`, avec un seul appel au port synthétique, plutôt que par `HIST.TIME`. Cette mesure permet de lever une ambiguïté d'oracle **localement** sans conclure à un fencing global. Les six preuves épistémiques sont également lisibles, mais l'indicateur de vérité reste hors message signé. L'interprétation des 18 séquences O/R attend un artefact JSON valide.
