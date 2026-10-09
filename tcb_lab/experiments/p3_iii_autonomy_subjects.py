@@ -35,6 +35,10 @@ def experiment(label,verdict,ncycles):
                 x["count_measuring"]>0 and x["count_withdrawn"]>0 for x in timeline),
             "limit":"fresh Sim on each run, local CI fixture; source of time nondeterminism not isolated"}
 
+def quiet_experiment(*args):
+    with redirect_stdout(io.StringIO()):
+        return experiment(*args)
+
 def main():
     rows=[]
     for verdict in ("found:1","none"):
@@ -42,7 +46,7 @@ def main():
             for rep in range(3):
                 ident="P3-III-O-"+verdict+"-"+str(count)+"-"+str(rep)
                 try:rows.append({"id":ident,"status":"OBSERVED",
-                                 "evidence":experiment(ident,verdict,count)})
+                                 "evidence":quiet_experiment(ident,verdict,count)})
                 except Exception as e:rows.append({"id":ident,"status":"INCONCLUSIVE",
                    "evidence":{"error":type(e).__name__,"detail":str(e)[:260]}})
     print(json.dumps({"campaign":"III","branch":"O/R","experiments":rows},indent=2))
