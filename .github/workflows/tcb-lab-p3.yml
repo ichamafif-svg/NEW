@@ -109,7 +109,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          for file in g1-output.json p3-output.json p3-effects-output.json p3-mutation-output.json p3-autonomy-output.json p3-compositions-output.json p3-counter-output.json p3-long-horizon-output.json p3-priority-o1-output.json p3-priority-e1-output.json p3-priority-p1-output.json p3-depth-proof.json p3-depth-effect.json p3-depth-autonomy.json p3-iii-effect.json; do
+          for file in g1-output.json p3-output.json p3-effects-output.json p3-mutation-output.json p3-autonomy-output.json p3-compositions-output.json p3-counter-output.json p3-long-horizon-output.json p3-priority-o1-output.json p3-priority-e1-output.json p3-priority-p1-output.json p3-depth-proof.json p3-depth-effect.json p3-depth-autonomy.json p3-iii-effect.json p3-iii-autonomy.json p3-iii-proof.json; do
             test -s "$file" || exit 1
             python -m json.tool "$file" > /dev/null || exit 1
           done
