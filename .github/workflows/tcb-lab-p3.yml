@@ -54,8 +54,13 @@ jobs:
         continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_counterexperiments.py | tee p3-counter-output.json
+      - name: Run long-horizon seeded autonomous sequences
+        id: longhorizon
+        continue-on-error: true
+        shell: bash
+        run: python tcb_lab/experiments/p3_long_horizon.py | tee p3-long-horizon-output.json
       - name: Reject any failed suite, while retaining all suite outputs
-        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure')
+        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure')
         run: exit 1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
@@ -69,6 +74,7 @@ jobs:
             p3-autonomy-output.json
             p3-compositions-output.json
             p3-counter-output.json
+            p3-long-horizon-output.json
           if-no-files-found: warn
 
   report:
