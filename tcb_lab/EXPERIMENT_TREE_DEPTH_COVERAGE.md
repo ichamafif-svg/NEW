@@ -107,7 +107,7 @@ P1 — déclaration signée sur le sujet X
 - **B :** bootstrap sans god-mode, egress alternatifs, secrets, runtime non pinné, fournisseur et hôtes indépendants.
 - **R (transversal) :** maintenance de repo sans SRE, mixte, mature ; scanner absent, CI flapping, obligation non masquée, escalade justifiée.
 
-Les parents sont documentés dans [GARANTEE_MATRIX.md](GUARANTEE_MATRIX.md), [ATTACK_CATALOG.md](ATTACK_CATALOG.md), [ATTACK_EXPANSION.md](ATTACK_EXPANSION.md) et [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md). Chaque nouvelle campagne doit **attribuer une feuille à toutes les garanties pertinentes**, et conserver les hypothèses de confiance non testées.
+Les parents sont documentés dans [GUARANTEE_MATRIX.md](GUARANTEE_MATRIX.md), [ATTACK_CATALOG.md](ATTACK_CATALOG.md), [ATTACK_EXPANSION.md](ATTACK_EXPANSION.md) et [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md). Chaque nouvelle campagne doit **attribuer une feuille à toutes les garanties pertinentes**, et conserver les hypothèses de confiance non testées.
 
 ## 6. Ordonnanceur de recherche (pas d'agent autonome de production)
 
