@@ -48,3 +48,11 @@ Plan complet des huit phases : [PLAN.md](PLAN.md). Inventaire des garanties : [G
 Les suites `experiments/p3_signed_core.py` et `experiments/p3_effect_line.py` fournissent **12 exercices adversariaux** (huit sur les décisions signées et quatre sur les frontières d'effet). Les scénarios complémentaires du catalogue exigent encore des harness dédiés, notamment pour multi-hôte, fournisseur et restauration. `python tcb_lab/experiments/g1_decision_probes.py` constitue une première expérience de scope additionnelle.
 
 Une CI lecture seule `.github/workflows/tcb-lab-p3.yml` exécute ces suites sur un environnement isolé sans clés Standard ni droit d'écriture. **Aucun succès d'exécution n'est revendiqué tant que les logs ne sont pas vérifiés.** Les résultats sont distingués des hypothèses de lecture de code. Les phases 1–2 restent ouvertes à l'affinement, la phase 3 est en cours et **aucune abstraction centrale n'a été adoptée**.
+
+## Phase 3 — extension adversariale à grande échelle
+
+La campagne possède désormais [80 nouvelles hypothèses structurées](ATTACK_EXPANSION.md) en plus des [24 scénarios initiaux](ATTACK_CATALOG.md), soit **104 hypothèses d'attaque distinctement répertoriées**. Trois axes de tests supplémentaires sont ajoutés : `experiments/p3_mutation_fuzz.py` (**30 mutations signées**), `experiments/p3_autonomy.py` (**10 expériences autorité/progrès**), et le [modèle de menace de l'autonomie](AUTONOMY_THREAT_MODEL.md).
+
+Au total, **52 exercices locaux sont codés dans les quatre scripts P3** : huit entrées signées, quatre effets locaux, trente mutations et dix expériences sur l'autonomie. Les quatre expériences G1 restent séparées. Les hypothèses non codées restent une file de recherche, et non des résultats. La CI déclenche ces suites sur push. L'accès GitHub disponible ici ne fournit pas encore de compte rendu d'exécution validé : **aucun résultat vert ni vulnérabilité confirmée n'est annoncé**.
+
+L'objectif de Standard est l'**autonomie gouvernée**, pas seulement le refus de toute action : chaque campagne doit examiner si un agent habilité peut progresser en respectant les protections, et si toute impossibilité de progresser devient un état, une obligation ou une escalade explicite. Le noyau ne devient pas pour autant le scheduler ou l'agent.
