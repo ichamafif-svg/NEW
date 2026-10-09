@@ -16,7 +16,8 @@ def experiment(verdict,cycles,repeat):
         sim.default_test=verdict
         trace=[]
         for step in range(cycles):
-            sim.cycle()
+            with redirect_stdout(io.StringIO()):
+                sim.cycle()
             n=sim.node()
             try: live=bool(lifecycle.live(n.state,n.now()))
             finally:n.close()
