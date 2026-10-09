@@ -33,3 +33,9 @@ Commande prévue : `python3 tests/test_vnext_decision.py`. La suite historique :
 2. Formaliser la matrice des garanties historiques et les entrées/sorties des sept responsabilités.
 3. Auditer la complétude du scope, en incluant la TCB effective et les composants de preuve externes.
 4. Réaliser les recherches adversariales groupées, puis seulement rechercher une abstraction plus simple.
+
+## Differential equivalence gate (added)
+
+`python tools/compare_vnext.py` runs **the same 19 historical test scripts twice**: unmodified `main` behavior, then the *same scripts* with a shadow hook intercepting `Kernel.decide`. Every intercepted admitted decision compares canonical record and ordered delta; refusals compare exact refusal code. The hook returns the original decision to keep the test's behavior unchanged. It writes `validation/vnext-differential.json`. A new push-triggered workflow at `.github/workflows/vnext-parity.yml` runs both this parity gate and `tests/test_vnext_decision.py`.
+
+**Not yet measured:** neither local results nor CI results have been observed at documentation time. A passing shadow comparison would establish test-suite behavioral parity for intercepted paths, **not** independent assurance: vNext still delegates its judgement to the historical kernel and shares its trust dependencies. Other guarantees (effect isolation, provider atomicity, durable pins and deployments) require separate evaluation.
