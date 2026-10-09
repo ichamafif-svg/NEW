@@ -13,7 +13,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tests"))
 from fixture import run  # noqa: E402
 from ops import cycle, node as node_mod, scan  # noqa: E402
-from ops.node import KINDS, Ed25519PrivateKey, Node, load_keys, new_keys, public  # noqa: E402
+from ops.node import KINDS, Node, load_keys, new_keys, public  # noqa: E402
 
 HEAD = "c" * 40
 
@@ -111,18 +111,18 @@ def test_a_vulnerability_is_repaired_under_the_law_and_proven():
         health = {"open": [{"type": "target", "target": "vulns", "due": 1, "needs": ["repair"]}], "escalated": []}
         hpath = Path(tmp) / "health.json"
         hpath.write_text(json.dumps(health))
-        step("agent", health=str(hpath))
+        step("repair", health=str(hpath))
         assert gh.pr_open
         resource = f"repo:deps:vulns/pr/7/{HEAD}"
         facts[:] = [(resource, "ci", "green"), (resource, "scope", "code")]
         clock.t += 60
         step("scan")
-        s = step("agent", health=str(hpath))
+        s = step("ask")
         assert not s["intents"], "code scope without review must not be asked"
         facts.append((resource, "scope", "dependencies"))
         clock.t += 60
         step("scan")
-        s = step("agent", health=str(hpath))
+        s = step("ask")
         iid = next(iter(s["intents"]))
         s = step("guard")
         assert s["executed"] and list(s["executed"].values()) == ["ok"]

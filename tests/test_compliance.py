@@ -1,6 +1,5 @@
 """The compliance dossier is a projection of the replayed journal: rebuilt byte for byte, never trusted as written."""
 import copy
-import sqlite3
 import sys
 from pathlib import Path
 

@@ -3,7 +3,8 @@
   init      humans: genesis (root + client law) and the grant proposals; witnesses: first checkpoint
   activate  humans: activate proposals whose witnessed delay has elapsed
   scan      scanner + witnesses: checkpoint, measure main, observe agent pull requests, read back merges
-  agent     agent: ask to merge observed commits, open at most one new repair pull request
+  ask       agent: ask the law to merge commits the scanner observed ready (fast, inside the witnessed window)
+  repair    agent: prepare at most one new repair pull request with Claude (slow, writes no journal entry)
   guard     guard: token, durable reservation, rejudgment, merge through the GitHub adapter
   attest    compliance officer: attest an organisational measure
   report    anyone: health, work plan, compliance dossier (JSON + HTML), status for the dashboard
@@ -23,7 +24,7 @@ from tcb.floors import FLOORS, floors_digest  # noqa: E402
 from tcb import EffectPort, Guard, Refused  # noqa: E402
 
 from ops import scan  # noqa: E402
-from ops.node import HUMANS, Node, load_keys, public, root_of  # noqa: E402
+from ops.node import HUMANS, Node, load_keys, root_of  # noqa: E402
 
 DAY = 86_400_000
 TECH = {t["id"]: t for t in FLOORS["targets"] if t.get("repair") == "remediate" or t["id"] in ("branch", "inventory")}
@@ -123,10 +124,8 @@ def cmd_scan(node: Node, a):
     print(json.dumps({"measured": measured, "written": written}))
 
 
-def cmd_agent(node: Node, a):
-    from ops.gh import Client
-    from ops import agent
-    gh = Client(a.repo, os.environ["AGENT_GITHUB_TOKEN"])
+def cmd_ask(node: Node, a):
+    """Ask the law to merge every commit the scanner observed ready. Fast: it runs inside the witnessed window."""
     s = node.state
     asked = {(it["args"].get("pr"), it["args"].get("head")) for it in s["intents"].values() if it["op"] == "remediate"}
     facts = {}
@@ -151,6 +150,16 @@ def cmd_agent(node: Node, a):
             intents.append(pr)
         except Refused as r:
             print(f"intent for #{pr} refused: {r.code} {r.detail}")
+    node.retain()
+    print(json.dumps({"intents": intents}))
+
+
+def cmd_repair(node: Node, a):
+    """Prepare at most one new repair pull request. Slow (Claude); it writes nothing to the journal."""
+    from ops.gh import Client
+    from ops import agent
+    gh = Client(a.repo, os.environ["AGENT_GITHUB_TOKEN"])
+    s = node.state
     opened = []
     open_targets = {p["head"]["ref"].split("/")[2] for p in gh.pulls() if p["head"]["ref"].startswith("standard/")}
     health = json.loads(Path(a.health).read_text()) if a.health else None
@@ -167,8 +176,7 @@ def cmd_agent(node: Node, a):
         if pull:
             opened.append(pull.get("number"))
             break                                             # one new repair per cycle keeps review possible
-    node.retain()
-    print(json.dumps({"intents": intents, "opened": opened}))
+    print(json.dumps({"opened": opened}))
 
 
 def cmd_guard(node: Node, a):
@@ -227,7 +235,7 @@ def cmd_report(node: Node, a):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m ops")
-    ap.add_argument("command", choices=["init", "activate", "scan", "agent", "guard", "attest", "report"])
+    ap.add_argument("command", choices=["init", "activate", "scan", "ask", "guard", "repair", "attest", "report"])
     ap.add_argument("--state", required=True)
     ap.add_argument("--keys", help="JSON key file; default: STANDARD_KEYS")
     ap.add_argument("--publics")

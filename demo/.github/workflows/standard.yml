@@ -1,0 +1,157 @@
+# Standard maintenance cycle. Each job holds only its role's keys and tokens:
+#   scan    scanner + witnesses  GITHUB_TOKEN (read)       measure main, observe agent PRs, read back merges
+#   ask     agent                                          ask the law to merge commits observed ready
+#   guard   guard                GitHub App with bypass    merge the exact judged commit, nothing else
+#   repair  agent                agent token + Claude API  prepare one repair pull request
+#   report  scanner                                        health, work plan, compliance dossier
+# Jobs run one after the other; the journal and the pins travel on two branches of this repository.
+name: standard
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+concurrency:
+  group: standard
+  cancel-in-progress: false
+permissions:
+  contents: write
+  pull-requests: read
+  checks: read
+  actions: read
+env:
+  STANDARD_REPO: ichamafif-svg/NEW
+  STANDARD_REF: STANDARD_REF_PLACEHOLDER
+  PYTHONPATH: ${{ github.workspace }}/standard
+  REPO: ${{ github.repository }}
+jobs:
+  scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          path: repo
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ env.STANDARD_REPO }}
+          ref: ${{ env.STANDARD_REF }}
+          path: standard
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt pip-audit bandit
+      - run: standard/ops/state.sh load repo state
+      - run: python -m ops scan --state state --repo "$REPO" --checkout repo --agent-login "${{ vars.AGENT_LOGIN }}"
+        env:
+          STANDARD_KEYS: ${{ secrets.SCANNER_KEYS }}
+          GITHUB_TOKEN: ${{ github.token }}
+      - if: always()
+        run: standard/ops/state.sh save repo state "standard scan"
+
+  ask:
+    needs: scan
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          path: repo
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ env.STANDARD_REPO }}
+          ref: ${{ env.STANDARD_REF }}
+          path: standard
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
+      - run: standard/ops/state.sh load repo state
+      - run: python -m ops ask --state state
+        env:
+          STANDARD_KEYS: ${{ secrets.AGENT_KEYS }}
+      - if: always()
+        run: standard/ops/state.sh save repo state "standard ask"
+
+  guard:
+    needs: ask
+    runs-on: ubuntu-24.04
+    steps:
+      - id: app
+        uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b # v2.1.1
+        with:
+          app-id: ${{ vars.GUARD_APP_ID }}
+          private-key: ${{ secrets.GUARD_APP_KEY }}
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          path: repo
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ env.STANDARD_REPO }}
+          ref: ${{ env.STANDARD_REF }}
+          path: standard
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
+      - run: standard/ops/state.sh load repo state
+      - run: python -m ops guard --state state --repo "$REPO"
+        env:
+          STANDARD_KEYS: ${{ secrets.GUARD_KEYS }}
+          MERGE_TOKEN: ${{ steps.app.outputs.token }}
+      - if: always()
+        run: standard/ops/state.sh save repo state "standard guard"
+
+  report:
+    needs: guard
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          path: repo
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ env.STANDARD_REPO }}
+          ref: ${{ env.STANDARD_REF }}
+          path: standard
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
+      - run: standard/ops/state.sh load repo state
+      - run: python -m ops report --state state --out state/report
+      - if: always()
+        run: standard/ops/state.sh save repo state "standard report"
+
+  repair:
+    needs: report
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+          path: repo
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: ${{ env.STANDARD_REPO }}
+          ref: ${{ env.STANDARD_REF }}
+          path: standard
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.12"
+      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
+      - run: standard/ops/state.sh load repo state
+      - run: git -C repo config --unset-all http.https://github.com/.extraheader; git -C repo remote set-url origin "https://x-access-token:${AGENT_GITHUB_TOKEN}@github.com/$REPO.git"
+        env:
+          AGENT_GITHUB_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+      - run: python -m ops repair --state state --repo "$REPO" --checkout repo --health state/report/health.json
+        env:
+          STANDARD_KEYS: ${{ secrets.AGENT_KEYS }}
+          AGENT_GITHUB_TOKEN: ${{ secrets.AGENT_GITHUB_TOKEN }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
