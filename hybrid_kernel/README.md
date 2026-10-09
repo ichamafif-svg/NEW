@@ -78,3 +78,11 @@ La [matrice de réemploi et d'écarts](PRODUCTION_GAP_AND_REUSE.md) confronte di
 La séparation en chemins de fichiers pour les pins est vérifiée logiciellement, mais **n'assure pas leur indépendance physique** ; il faut un domaine de restauration distinct et contrôlé par l'exploitant. L'exclusivité d'egress et le confinement des credentials ne peuvent pas être garantis par une façade Python. Un contexte réseau/OS réel, l'indépendance humaine et la qualification du fournisseur sont requis pour un lancement. Vérifier également le préfixe après redémarrage et l'authenticité du code de release.
 
 **Position provisoire :** utiliser uniquement `ConstitutionalRuntime` comme trajectoire d'intégration constitutionnelle ; ne pas promouvoir `SQLiteAdmission` ni `judge_signed` comme seul contrôleur d'autorité. Le chantier restant est le portage des mécanismes complets dans le modèle générique, sans régression et avec tests d'interface, puis les preuves Trusted External sur le déploiement cible.
+
+## Full-code assessment and Trusted External scaffolding
+
+**Engineering assessment:** [DEEP_ASSESSMENT.md](DEEP_ASSESSMENT.md). **Trusted External ports and fail-closed registry:** [externals.py](externals.py), [deployment.py](deployment.py). **Mandatory independent release evidence:** [release_readiness.json](release_readiness.json) and [release_gate.py](release_gate.py).
+
+The public `hybrid_kernel` package exports the signed and pinned constitutional runtime; the experimental `core.judge` remains a non-privileged research module. The current legacy-backed admission path is the source of constitutional authority while generic hybrid-model convergence is still pending. Contract presence and a green CI are **not proof** that the trusted domain is physically independent or all floors are carried forward. Release status must remain **BLOCKED** until all P0 criteria are demonstrated.
+
+Production migration objective: **one generic constitutional engine** replacing the legacy fixed-kinds admission only once a non-regression verdict is independently verified; no separate God-mode or hidden bypass path.
