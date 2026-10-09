@@ -19,6 +19,9 @@ names={
 "p3-depth-proof.json":"Depth P1 signed proof",
 "p3-depth-effect.json":"Depth E1 effect retries",
 "p3-depth-autonomy.json":"Depth O1 withdrawal replay",
+"p3-iii-effect.json":"III E effect monotone retry",
+"p3-iii-autonomy.json":"III O autonomy subjects",
+"p3-iii-proof.json":"III P epistemic proof",
 }
 rows=[]
 for filename,desc in names.items():
