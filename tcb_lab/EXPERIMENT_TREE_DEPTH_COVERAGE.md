@@ -135,3 +135,7 @@ La [revue IV-B](IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CL
 ## Campagne IV-C — conclusion de délimitation (pas une preuve physique)
 
 [IVC_BOUNDARY_DECISIONS.md](IVC_BOUNDARY_DECISIONS.md) passe en revue les **12 frontières antérieurement ouvertes** : dix allocations K/T/U deviennent **conditionnelles** sur la base de leurs contrats d'information et d'application ; **G08** (continuité des obligations) et **G16** (progression autonome) restent sémantiquement ouvertes. Avec les quatre allocations déjà conditionnelles en IV-B, on obtient **14 délimitations conditionnelles / 2 ouvertes**, *et non 14 garanties vérifiées*. Les contrats externes restent non validés physiquement. `p3_ivc_scope_audit.py` vérifie seulement la cohérence documentaire dans la CI, sans se substituer aux expériences adversariales manquantes. Aucun changement du scope sémantique [SCOPE.md](SCOPE.md) ou du noyau.
+
+## IV-D — enfants actifs O/G08 et R/G16
+
+**O.G08.D3** : une même cible sur 20 cycles, avec fail persistant vs signal scanner guéri à l'étape 6 ; comparer nouvelles propositions, identités de dette, âge et clôture. **R.G16.D3** : dégradation persistante vs contrôle sain sur 20 cycles ; séparer activité, progression effective et escalade. Expériences dans [P3_G08_G16_CAMPAIGN.md](findings/P3_G08_G16_CAMPAIGN.md). Le niveau D3 **n'est revendiqué qu'au titre de la durée de l'observation opérationnelle**, pas pour le suivi de dette constitutionnelle qui demeure non établi. Éviter d'inférer une garantie G08 ou G16 à partir de l'état `OBSERVED`.
