@@ -39,3 +39,9 @@ Questions auxquelles elle **ne** répond **pas** :
 Un test vert n'autorise **aucune conclusion hors de ses hypothèses**. Une suite rouge exige de différencier : bug dans l'oracle, instrumentation, comportement légitime de sécurité, défaut de progression, violation de sûreté. Les contre-expériences ultérieures doivent varier une dimension puis plusieurs, sans transformer ces observations en prescriptions de design.
 
 Lien de suivi des exécutions : https://github.com/ichamafif-svg/NEW/issues/2.
+
+## Mise à jour empirique — 9 octobre 2026
+
+Le run [Actions #45](https://github.com/ichamafif-svg/NEW/actions/runs/37951191335) rapporte cinq expériences long-horizon lisibles et zéro ID signalé. Il s'agit de **cinq séquences de 80 intentions sur des ressources différentes**, et non de la vie d'une obligation sur un même sujet. Ne pas extrapoler de la réussite des 400 tentatives une propriété de convergence ou de liveness d'une maintenance réelle.
+
+Les questions de continuité sur même sujet, expiration et restitution des obligations sont désormais les feuilles O1/R1 prioritaires du [backlog consolidé](P3_DEPTH_COVERAGE_BACKLOG.md). Pour chaque essai suivant, collecter `obligation.subject`, `opened`, `due`, l'empreinte de preuve, l'identité de tentative et le verdict de santé avant/après. Aucune nouvelle abstraction n'est sélectionnée.
