@@ -52,15 +52,15 @@ Le commit doit être lié au préfixe constitutionnel authentique. L'effet est l
 
 Les responsabilités sont réparties entre **K** (prononce les conséquences légales), **T** (rend fiables les prémisses et effets physiques), **U** (réalise le travail). Il ne suffit pas de signer une affirmation `allowed` pour établir une autorité ; K dérive les droits de la constitution et de l'état authentique. Il ne suffit pas non plus de conserver un journal pour rendre impossible sa restauration : l'ancrage doit être indépendant de son domaine de restauration.
 
-## Documents normatifs de cette architecture
+## Documentation de référence
 
-- [Contrats d'implémentation par composant](IMPLEMENTATION_CONTRACTS.md) : prescriptions K/T/U, propriétés de refus, couverture G01–G16 et scénarios de réception.
-- [Modèle conceptuel du noyau](hybrid_kernel/KERNEL_CONCEPTUAL_MODEL.md) : objets et invariants de K.
-- [Contrats Trusted External](hybrid_kernel/TRUSTED_EXTERNAL_CONTRACTS.md) : capacités T, menaces et obligations d'intégration.
-- [Protocole d'exécution](hybrid_kernel/KERNEL_EXECUTION_PROTOCOL.md) : séquence atomique et gestion des effets.
-- [Présentation du noyau](hybrid_kernel/README.md) : principes et limites de validation.
+- **[IMPLEMENTATION_CONTRACTS.md](IMPLEMENTATION_CONTRACTS.md)** : contrats par composant, scénarios d'échec, frontières K/T/U, garanties G01–G16 et tests de réception.
 
-Ces documents doivent pouvoir être lus sans connaître l'histoire du projet. Toute proposition d'implémentation se mesure à ces contrats ; les tests et preuves de production ne sont pas remplacés par la documentation.
+Les objets canoniques sont : constitution, principal, ressource, capacité, preuve, obligation, transition et intention d'effet. Le jugement unique combine les relations typées, les contraintes bornées et les conséquences exactes ; aucune ontologie GitHub, CI, SRE ou fournisseur ne peut se substituer à ces primitives.
+
+**Frontière K ↔ T :** K qualifie les prémisses selon la constitution et produit verdict/delta/grant, T atteste l'identité et les événements physiques et applique les effets exclusivement ; un contexte signé `allowed=true` ne remplace jamais une autorisation dérivée par K. Les neuf fonctions de confiance sont des contrats regroupables, pas neuf microservices.
+
+**Séquence :** proposition → authentification et preuve qualifiée → jugement → vérification indépendante si requise → commit ancré → réservation → contrôle au départ → résultat confirmé ou `UNKNOWN` → réconciliation et audit.
 
 ## Critères de validation avant production
 
