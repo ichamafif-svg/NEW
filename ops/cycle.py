@@ -1,35 +1,40 @@
-"""Standard maintenance cycle, one role per command. Each command runs with only that role's keys and tokens.
+"""Standard maintenance, one role per command. A role holds only its own keys and tokens and acts only on what the
+journal names.
 
   init      humans: genesis (root + client law) and the grant proposals; witnesses: first checkpoint
   activate  humans: activate proposals whose witnessed delay has elapsed
-  scan      scanner + witnesses: checkpoint, measure main, observe agent pull requests, read back merges
-  ask       agent: ask the law to merge commits the scanner observed ready (fast, inside the witnessed window)
-  repair    agent: prepare at most one new repair pull request with Claude (slow, writes no journal entry)
-  guard     guard: token, durable reservation, rejudgment, merge through the GitHub adapter
-  attest    compliance officer: attest an organisational measure
-  report    anyone: health, work plan, compliance dossier (JSON + HTML), status for the dashboard
+  scan      scanner + witnesses: checkpoint, measure main, observe declared commits, reconcile and prove effects
+  agent     agent: ask the law for ready commits, then craft and declare at most one new repair
+  guard     guard: token, durable reservation, rejudgment, merge through the trusted GitHub adapter
+  review    a human: approve one declared commit
+  attest    the compliance officer: attest an organisational measure
+  report    anyone: health, work plan, compliance dossier (JSON + HTML), status
 
-State lives in a directory (journal/ and pins/ are independent restore domains; genesis.json holds the pin)."""
+What a role does next comes from ops.lifecycle (the kernel's effect automaton); what the world is asked comes from
+ops.world (questions about named subjects only); what a probe concludes comes from ops.probes.verdict."""
 from __future__ import annotations
 
 import argparse
 import json
 import os
+import re
 import sys
 import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from tcb.floors import FLOORS, floors_digest  # noqa: E402
 from tcb import EffectPort, Guard, Refused  # noqa: E402
-from tcb.floor0 import line_state  # noqa: E402
+from tcb.floors import FLOORS, floors_digest  # noqa: E402
 
-from ops import scan  # noqa: E402
+from ops import agent, lifecycle, probes  # noqa: E402
 from ops.node import HUMANS, Node, load_keys, root_of  # noqa: E402
 
 DAY = 86_400_000
-TECH = {t["id"]: t for t in FLOORS["targets"] if t.get("repair") == "remediate" or t["id"] in ("branch", "inventory")}
+TARGETS = {t["id"]: t for t in FLOORS["targets"]}
 REMEDIATE = ["repo:deps:*", "repo:code:*", "repo:ci:*", "repo:supply:*"]
+DEPENDENCY_FILES = r"(requirements[A-Za-z0-9_.-]*\.txt|pyproject\.toml|poetry\.lock|uv\.lock|sbom\.json)"
+REVIEWERS = ("icham",)
+REFRESH_MS = 6 * 3_600_000
 
 
 def law() -> dict:
@@ -41,22 +46,34 @@ def law() -> dict:
 GRANTS = [
     {"holder": "agent", "actions": ["effect:remediate"], "resources": REMEDIATE, "conditions": ["remediate-autonomous"]},
     {"holder": "agent", "actions": ["effect:remediate"], "resources": REMEDIATE, "conditions": ["remediate-reviewed"]},
+    {"holder": "agent", "actions": ["observe", "certify:unknown"], "resources": REMEDIATE, "conditions": []},
     {"holder": "scanner", "actions": ["observe", "certify:real", "evidence", "reconcile"], "resources": ["repo:*"],
      "conditions": []},
+    {"holder": "icham", "actions": ["observe", "certify:real"], "resources": REMEDIATE, "conditions": []},
     {"holder": "second", "actions": ["observe", "certify:real"], "resources": ["org:*"], "conditions": []},
 ]
 
 
-def grant_of(s, holder, condition=None, action=None):
-    now = s["last_at"]
+def grant_of(s, holder, action, condition=None):
     for g in s["grants"].values():
-        if (g["holder"] == holder and g["id"] not in s["revoked"] and g["not_after"] > now
-                and (condition is None or list(g["conditions"]) == [condition])
-                and (action is None or action in g["actions"])):
+        if (g["holder"] == holder and g["id"] not in s["revoked"] and g["not_after"] > s["last_at"]
+                and action in g["actions"] and (condition is None or list(g["conditions"]) == [condition])):
             return g["id"]
-    return None
+    raise SystemExit(f"{holder} holds no active grant for {action} {condition or ''}")
 
 
+def observe(node: Node, author, resource, prop, status, level="real", force=False) -> int:
+    """Sign a fact when it changed, went stale, or must be seen again (force): facts are evidence, not a pulse."""
+    s = node.state
+    last = s["observations"].get(f"{resource}|{prop}|{author}")
+    if not force and last and last["status"] == status and node.now() - last["at"] < REFRESH_MS:
+        return 0
+    node.add("observation", author, under=grant_of(s, author, "observe"), resource=resource, property=prop,
+             status=status, level=level)
+    return 1
+
+
+# ---- roles ----------------------------------------------------------------------------------------------------
 def cmd_init(node: Node, a):
     if node.genesis:
         raise SystemExit("this state directory already has a genesis")
@@ -87,148 +104,134 @@ def cmd_activate(node: Node, a):
     print(json.dumps({"activated": done}))
 
 
-def observe(node: Node, under, resource, prop, status, refresh_ms=6 * 3_600_000):
-    """Sign only what changed, or what is about to go stale: facts are evidence, not a heartbeat."""
-    s = node.state
-    last = s["observations"].get(f"{resource}|{prop}|scanner")
-    if last and last["status"] == status and node.now() - last["at"] < refresh_ms:
-        return False
-    node.add("observation", "scanner", under=under, resource=resource, property=prop, status=status, level="real")
-    return True
+def subject_facts(world, subject) -> dict:
+    """What may be believed about one declared commit, asked about that commit only."""
+    pull = world.pull(subject.pr)
+    if pull["head"] != subject.head or pull["base"] != "main" or not pull["same_repo"]:
+        state = "moved"                                     # no longer this commit into main: another subject
+    else:
+        state = "merged" if pull["merged"] else lifecycle.OPEN if pull["open"] else "closed"
+    conclusion = world.ci(subject.head)
+    files = world.files(subject.pr)
+    scope = ("dependencies" if files and len(files) == pull["changed"]
+             and all(re.fullmatch(DEPENDENCY_FILES, f) for f in files) else "code")
+    return {"state": state, "ci": "green" if conclusion == "success" else conclusion or "pending", "scope": scope}
 
 
-def cmd_scan(node: Node, a):
-    from ops.gh import Client
-    gh = Client(a.repo, os.environ["GITHUB_TOKEN"])
+def scanner_step(node: Node, world, act) -> int:
+    sub = act.subject
+    if act.verb == "observe":
+        it, written = lifecycle.latest_intent(node.state, sub), 0
+        for prop, status in subject_facts(world, sub).items():
+            # after a failure, whether the pull request is still open must be seen again to be believed
+            stale = prop == "state" and it is not None and lifecycle.facts(node.state, sub).get(
+                "state", (None, -1))[1] <= it["stmt"]["at"]
+            written += observe(node, "scanner", sub.resource, prop, status, force=stale)
+        return written
+    landed = subject_facts(world, sub)["state"] == "merged"
+    if act.verb == "reconcile":
+        node.add("reconciliation", "scanner", under=grant_of(node.state, "scanner", "reconcile"), intent=act.intent,
+                 result="applied" if landed else "not_applied")
+        return 1
+    if act.verb == "prove" and landed:
+        node.add("evidence", "scanner", under=grant_of(node.state, "scanner", "evidence"), resource=sub.resource,
+                 subject=act.intent, level="real")
+        return 1
+    return 0
+
+
+def cmd_scan(node: Node, a, world=None):
+    from ops.world import GitHub
+    world = world or GitHub(a.repo, os.environ["GITHUB_TOKEN"])
     node.checkpoint()
-    under = grant_of(node.state, "scanner", action="observe")
-    if under is None:
-        raise SystemExit("the scanner has no active grant yet")
-    measured = scan.measure(Path(a.checkout), gh)
-    targets = {t["id"]: t for t in FLOORS["targets"]}
-    written = 0
-    for tid, status in measured.items():
-        t = targets[tid]
-        written += observe(node, under, t["resource"], t["property"], status)
-    complete = not any(str(v).startswith("error:") for v in measured.values())
-    written += observe(node, under, "repo:inventory:all", "coverage", "complete" if complete else "partial")
-    for resource, prop, status in scan.pull_facts(gh, a.agent_login):
-        written += observe(node, under, resource, prop, status)
-    s = node.state
-    for iid, it in s["intents"].items():                     # read back: did GitHub merge exactly this commit?
-        if it["op"] != "remediate":
-            continue
-        line = line_state(s["line"], iid, node.now())          # a reservation past its dispatch window is expired
-        if f"proof:{iid}" not in s["obligations"] and line not in ("uncertain", "expired"):
-            continue
-        pull = gh.pull(it["args"]["pr"])
-        landed = bool(pull.get("merged")) and pull["head"]["sha"] == it["args"]["head"]
-        if line in ("uncertain", "expired"):                 # an outcome nobody knows is settled by reading back
-            node.add("reconciliation", "scanner", under=under, intent=iid,
-                     result="applied" if landed else "not_applied")
-            written += 1
-            s = node.state
-        if landed and f"proof:{iid}" in s["obligations"]:
-            node.add("evidence", "scanner", under=under, resource=it["resource"], subject=iid, level="real")
-            written += 1
+    statuses = probes.measure_all(Path(a.checkout), world, TARGETS)
+    written = sum(observe(node, "scanner", TARGETS[t]["resource"], TARGETS[t]["property"], st)
+                  for t, st in statuses.items())
+    covered = not any(st.startswith("uncovered") for st in statuses.values())
+    written += observe(node, "scanner", "repo:inventory:all", "coverage", "complete" if covered else "partial")
+    for _ in range(len(lifecycle.NEXT)):                       # until the scanner's part of the automaton is still
+        step = sum(scanner_step(node, world, act) for act in lifecycle.plan(node.state, node.now(), REVIEWERS)
+                   if act.role == "scanner")
+        written += step
+        if not step:
+            break
     node.retain()
-    print(json.dumps({"measured": measured, "written": written}))
+    print(json.dumps({"measured": statuses, "written": written}))
 
 
-def cmd_ask(node: Node, a):
-    """Ask the law to merge every commit the scanner observed ready. Fast: it runs inside the witnessed window."""
-    s = node.state
-    latest = {}                                                # (pr, head) -> its most recent intent
-    for iid, it in s["intents"].items():
-        if it["op"] == "remediate":
-            key = (it["args"]["pr"], it["args"]["head"])
-            if key not in latest or it["stmt"]["at"] >= latest[key]["stmt"]["at"]:
-                latest[key] = it
-    facts, seen_at = {}, {}
-    for o in s["observations"].values():
-        if "/pr/" in o["resource"] and o["author"] == "scanner":
-            facts.setdefault(o["resource"], {})[o["property"]] = o["status"]
-            seen_at[o["resource"]] = max(seen_at.get(o["resource"], 0), o["at"])
-    intents = []
-    for resource, f in sorted(facts.items()):
-        base, _, rest = resource.partition("/pr/")
-        pr, head = rest.split("/")
-        _, area, item = base.split(":")
-        prior = latest.get((pr, head))
-        retry = None
-        if prior is not None:
-            # Ask again only after a definite failure (GitHub merged nothing) and a newer observation of the commit.
-            if line_state(s["line"], prior["id"], node.now()) != "failed" or seen_at[resource] <= prior["stmt"]["at"]:
-                continue
-            retry = prior["id"]
-        if f.get("ci") != "green":
-            continue
-        cond = "remediate-autonomous" if f.get("scope") == "dependencies" else (
-            "remediate-reviewed" if f.get("review") == "approved" else None)
-        under = cond and grant_of(s, "agent", condition=cond)
-        if not under:
-            continue
-        try:
-            fields = {"retry_of": retry} if retry else {}
-            node.add("intent", "agent", under=under, op="remediate",
-                     args={"area": area, "item": item, "pr": pr, "head": head, "method": "squash"}, **fields)
-            intents.append(pr)
-        except Refused as r:
-            print(f"intent for #{pr} refused: {r.code} {r.detail}")
+def cmd_agent(node: Node, a, world=None, craft=agent.craft):
+    from ops.world import GitHub
+    asked = []
+    for act in lifecycle.plan(node.state, node.now(), REVIEWERS):
+        if act.role == "agent" and act.verb == "ask":
+            retry = {"retry_of": act.intent} if act.intent else {}
+            try:
+                node.add("intent", "agent", under=grant_of(node.state, "agent", "effect:remediate", act.condition),
+                         op="remediate", args=act.subject.args, **retry)
+                asked.append(act.subject.pr)
+            except Refused as r:
+                print(f"#{act.subject.pr}: {r.code} {r.detail}")
     node.retain()
-    print(json.dumps({"intents": intents}))
-
-
-def cmd_repair(node: Node, a):
-    """Prepare at most one new repair pull request. Slow (Claude); it writes nothing to the journal."""
-    from ops.gh import Client
-    from ops import agent
-    gh = Client(a.repo, os.environ["AGENT_GITHUB_TOKEN"])
+    # Then at most one new repair: the most urgent repairable gap that no live declared commit already addresses.
     s = node.state
-    opened = []
-    open_targets = {scan.BRANCH.match(p["head"]["ref"])[2] for p in scan.agent_pulls(gh, a.agent_login)}
-    health = json.loads(Path(a.health).read_text()) if a.health else None
-    gaps = [o for o in (health or {}).get("open", []) + (health or {}).get("escalated", [])
-            if o.get("type") == "target" and TECH.get(o.get("target"), {}).get("repair") == "remediate"]
-    for gap in sorted(gaps, key=lambda o: o["due"]):
-        t = TECH[gap["target"]]
+    live = {(x.area, x.item) for x in lifecycle.declared(s)
+            if lifecycle.facts(s, x).get("state", (lifecycle.OPEN,))[0] == lifecycle.OPEN}
+    gaps = sorted((TARGETS[t]["due_ms"], t) for t in agent.WRITE_SCOPE
+                  if probes.repairable(s["observations"].get(
+                      f"{TARGETS[t]['resource']}|{TARGETS[t]['property']}|scanner", {}).get("status", ""))
+                  and tuple(TARGETS[t]["resource"].split(":")[1:]) not in live)
+    proposed = None
+    if gaps:
+        t = TARGETS[gaps[0][1]]
         _, area, item = t["resource"].split(":")
-        seen = s["observations"].get(f"{t['resource']}|{t['property']}|scanner")
-        status = seen["status"] if seen else None
-        if item in open_targets or status in (None, t["expect"]) or status.startswith("error:"):
-            continue                                          # already in review, unmeasured, or only stale
-        pull = agent.open_repair(Path(a.checkout), gh, t["id"], area, item, status, os.environ.get("ANTHROPIC_API_KEY", ""))
-        if pull:
-            opened.append(pull.get("number"))
-            break                                             # one new repair per cycle keeps review possible
-    print(json.dumps({"opened": opened}))
+        status = s["observations"][f"{t['resource']}|{t['property']}|scanner"]["status"]
+        repair = craft(Path(a.checkout), t["id"], status, os.environ.get("ANTHROPIC_API_KEY", ""))
+        world = world or GitHub(a.repo, os.environ["AGENT_GITHUB_TOKEN"])
+        pr = world.propose(agent.branch_for(area, item), repair["files"], repair["title"],
+                           f"{repair['body']}\n\n---\nStandard target `{t['id']}` read `{status}`. This commit merges "
+                           "only through the law: green CI and dependency-only scope, or a signed human review.")
+        resource = f"repo:{area}:{item}/pr/{pr['number']}/{pr['head']}"
+        observe(node, "agent", resource, "proposed", "open", level="unknown")
+        proposed = resource
+    node.retain()
+    print(json.dumps({"asked": asked, "proposed": proposed}))
 
 
-def cmd_guard(node: Node, a):
+def cmd_guard(node: Node, a, port=None):
     from adapters.github import GitHub
-    port = EffectPort(GitHub(a.repo, os.environ["MERGE_TOKEN"]).ports())
+    port = port or EffectPort(GitHub(a.repo, os.environ["MERGE_TOKEN"]).ports())
     guard = Guard(node.journal, "guard", node.signer("guard"), port)
-    s, results = node.state, {}
-    for iid, it in s["intents"].items():
-        if it["op"] != "remediate" or s["line"].get(iid, {}).get("state") != "intended":
+    results = {}
+    for act in lifecycle.plan(node.state, node.now(), REVIEWERS):
+        if act.role != "guard":
             continue
         try:
-            guard.issue(iid, node.now())
-            tid = node.state["token_of"][iid]
-            guard.redeem(tid, node.now())
-            results[iid] = node.state["executed"].get(tid)
+            if act.verb == "issue":
+                guard.issue(act.intent, node.now())
+            token = node.state["token_of"][act.intent]
+            guard.redeem(token, node.now())
+            results[act.intent] = node.state["executed"].get(token)
         except Refused as r:
-            results[iid] = f"refused {r.code}"
+            results[act.intent] = f"refused {r.code}"
     node.retain()
     print(json.dumps(results))
 
 
+def cmd_review(node: Node, a):
+    """A human approves one declared commit, with their own key: the review is a signed fact, not a GitHub record."""
+    node.checkpoint()
+    subject = next((x for x in lifecycle.declared(node.state) if x.pr == a.pr), None)
+    if subject is None:
+        raise SystemExit(f"#{a.pr} is not a commit the agent declared")
+    observe(node, a.reviewer, subject.resource, "review", "approved", force=True)
+    node.retain()
+
+
 def cmd_attest(node: Node, a):
     node.checkpoint()
-    under = grant_of(node.state, "second", action="observe")
     resource, prop, status = (("org:controls:soa", "coverage", "complete") if a.resource == "org:controls:soa"
                               else (a.resource, "attested", "current"))
-    node.add("observation", "second", under=under, resource=resource, property=prop, status=status, level="real")
+    observe(node, "second", resource, prop, status, force=True)
     node.retain()
 
 
@@ -249,7 +252,7 @@ def cmd_report(node: Node, a):
     lines = list(s["line"].values())
     status = {"at": health["evaluated_at"], "state": health["state"], "size": s["size"], "head": s["head"],
               "merged": sum(1 for v in s["executed"].values() if v == "ok"),
-              "refused_or_failed": sum(1 for v in s["executed"].values() if v != "ok"),
+              "not_merged": sum(1 for v in s["executed"].values() if v != "ok"),
               "intents": len(s["intents"]), "proven": len(health["proven"]),
               "open": len(health["open"]), "escalated": len(health["escalated"]),
               "lines": {k: sum(1 for x in lines if x["state"] == k) for k in {x["state"] for x in lines}},
@@ -260,15 +263,15 @@ def cmd_report(node: Node, a):
 
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="python -m ops")
-    ap.add_argument("command", choices=["init", "activate", "scan", "ask", "guard", "repair", "attest", "report"])
+    ap.add_argument("command", choices=["init", "activate", "scan", "agent", "guard", "review", "attest", "report"])
     ap.add_argument("--state", required=True)
     ap.add_argument("--keys", help="JSON key file; default: STANDARD_KEYS")
     ap.add_argument("--publics")
     ap.add_argument("--days", type=int, default=90)
     ap.add_argument("--repo")
     ap.add_argument("--checkout", default=".")
-    ap.add_argument("--agent-login", default="standard-agent")
-    ap.add_argument("--health")
+    ap.add_argument("--pr")
+    ap.add_argument("--reviewer", default="icham", choices=REVIEWERS)
     ap.add_argument("--resource")
     ap.add_argument("--out", default="report")
     ap.add_argument("--genesis", help="externally kept genesis pin (default: STANDARD_GENESIS)")

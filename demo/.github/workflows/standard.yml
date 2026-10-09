@@ -1,12 +1,10 @@
-# Standard maintenance cycle. Each job holds only its role's keys and tokens:
-#   scan    scanner + witnesses  GITHUB_TOKEN (read)       measure main, observe agent PRs, read back merges
-#   ask     agent                                          ask the law to merge commits observed ready
-#   guard   guard                GitHub App with bypass    merge the exact judged commit, nothing else
-#   repair  agent                agent GitHub App + Claude prepare one repair pull request
-#   report  scanner                                        health, work plan, compliance dossier
-# Jobs run one after the other; the journal and the pins travel on two branches of this repository. The genesis pin
-# is an admin-only repository variable: a replaced journal is refused. Role secrets live in environments that only
-# main may use, so no pull request can read them; the agent App cannot update main nor the state branches.
+# Standard maintenance cycle: one job per role, each with only its role's keys and tokens.
+#   scan    scanner + witnesses  measure main; observe declared commits; reconcile and prove effects
+#   agent   agent                ask the law for ready commits; craft and declare at most one repair (Claude)
+#   guard   guard                merge the exact judged commit through the guard App, the only one allowed on main
+#   report  none                 health, work plan, compliance dossier
+# The journal and the pins travel on two branches of this repository. The genesis pin is an admin-only variable, so
+# a replaced journal is refused. Role secrets live in environments only main may use: no pull request reads them.
 name: standard
 on:
   schedule:
@@ -29,7 +27,6 @@ jobs:
     permissions:
       contents: write
       pull-requests: read
-      checks: read
       actions: read
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
@@ -47,20 +44,25 @@ jobs:
           python-version: "3.12"
       - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4
       - run: standard/ops/state.sh load repo state
-      - run: python -m ops scan --state state --repo "$REPO" --checkout repo --agent-login "${{ vars.AGENT_LOGIN }}"
+      - run: python -m ops scan --state state --repo "$REPO" --checkout repo
         env:
           STANDARD_KEYS: ${{ secrets.SCANNER_KEYS }}
           GITHUB_TOKEN: ${{ github.token }}
       - if: always()
         run: standard/ops/state.sh save repo state "standard scan"
 
-  ask:
+  agent:
     needs: scan
     runs-on: ubuntu-24.04
     environment: standard-agent
     permissions:
       contents: write
     steps:
+      - id: app
+        uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b # v2.1.1
+        with:
+          app-id: ${{ vars.AGENT_APP_ID }}
+          private-key: ${{ secrets.AGENT_APP_KEY }}
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           fetch-depth: 0
@@ -76,14 +78,16 @@ jobs:
           python-version: "3.12"
       - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
       - run: standard/ops/state.sh load repo state
-      - run: python -m ops ask --state state
+      - run: python -m ops agent --state state --repo "$REPO" --checkout repo
         env:
           STANDARD_KEYS: ${{ secrets.AGENT_KEYS }}
+          AGENT_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       - if: always()
-        run: standard/ops/state.sh save repo state "standard ask"
+        run: standard/ops/state.sh save repo state "standard agent"
 
   guard:
-    needs: ask
+    needs: agent
     runs-on: ubuntu-24.04
     environment: standard-guard
     permissions:
@@ -140,38 +144,3 @@ jobs:
       - run: python -m ops report --state state --out state/report
       - if: always()
         run: standard/ops/state.sh save repo state "standard report"
-
-  repair:
-    needs: report
-    runs-on: ubuntu-24.04
-    environment: standard-agent
-    permissions:
-      contents: read
-    steps:
-      - id: app
-        uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b # v2.1.1
-        with:
-          app-id: ${{ vars.AGENT_APP_ID }}
-          private-key: ${{ secrets.AGENT_APP_KEY }}
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          fetch-depth: 0
-          path: repo
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          repository: ${{ env.STANDARD_REPO }}
-          ref: ${{ env.STANDARD_REF }}
-          path: standard
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: "3.12"
-      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
-      - run: standard/ops/state.sh load repo state
-      - run: git -C repo config --unset-all http.https://github.com/.extraheader; git -C repo remote set-url origin "https://x-access-token:${AGENT_GITHUB_TOKEN}@github.com/$REPO.git"
-        env:
-          AGENT_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
-      - run: python -m ops repair --state state --repo "$REPO" --checkout repo --health state/report/health.json --agent-login "${{ vars.AGENT_LOGIN }}"
-        env:
-          AGENT_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

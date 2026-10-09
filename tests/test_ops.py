@@ -1,154 +1,39 @@
-"""End to end, with GitHub and Claude faked and the clock controlled: genesis, witnessed activation, a vulnerable
-dependency observed, a repair pull request, the law's merge of its exact commit, read-back proof, a proven target and
-a dossier that rebuilds from the journal."""
+"""End to end on a simulated world: a vulnerable dependency is measured, a repair commit is crafted and declared,
+the scanner observes that exact commit, the law admits its merge, the guard merges it once, the scanner proves it,
+and the dossier rebuilds from the journal."""
 import json
 import sys
-import tempfile
 from pathlib import Path
-from types import SimpleNamespace
-from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "tests"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fixture import run  # noqa: E402
-from ops import cycle, node as node_mod, scan  # noqa: E402
-from ops.node import KINDS, Node, load_keys, new_keys, public  # noqa: E402
-
-HEAD = "c" * 40
-
-
-class Clock:
-    def __init__(self):
-        self.t = 1_800_000_000.0
-
-    def __call__(self):
-        return self.t
-
-
-class FakeGH:
-    def __init__(self):
-        self.merged = False
-        self.pr_open = False
-
-    repo = "o/demo"
-
-    def authored(self, login, limit):
-        return [{"number": 7, "state": "open", "user": {"login": login}, "base": {"ref": "main"},
-                 "head": {"ref": "standard/deps/vulns/abcd1234", "sha": HEAD, "repo": {"full_name": self.repo}}}
-                ] if self.pr_open else []
-
-    def pull(self, n):
-        return {"merged": self.merged, "head": {"sha": HEAD}, "base": {"ref": "main"}}
-
-
-def opener_for(gh, calls):
-    class Resp:
-        def __init__(self, status, body):
-            self.status, self.body = status, body
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *a):
-            return False
-
-        def read(self):
-            return json.dumps(self.body).encode()
-
-    def opener(req, timeout):
-        calls.append((req.get_method(), req.full_url, json.loads(req.data) if req.data else None))
-        if req.get_method() == "GET":
-            return Resp(200, {"merged": gh.merged, "head": {"sha": HEAD}, "base": {"ref": "main"}})
-        gh.merged = True
-        return Resp(200, {"merged": True})
-    return opener
-
-
-def setup(tmp):
-    keys = new_keys(KINDS)
-    path = Path(tmp) / "keys.json"
-    path.write_text(json.dumps(keys))
-    loaded = load_keys(str(path))
-    publics = Path(tmp) / "publics.json"
-    publics.write_text(json.dumps({n: public(k) for n, k in loaded.items()}))
-    return str(path), str(publics)
-
-
-def args(state, **kw):
-    base = dict(state=state, keys=None, publics=None, days=90, repo="o/demo", checkout=".", agent_login="bot",
-                health=None, resource=None, out=None)
-    return SimpleNamespace(**{**base, **kw})
+from sim import HEAD, Sim  # noqa: E402
+from compliance.dossier import build, rows_of, verify  # noqa: E402
+from ops.node import load_keys  # noqa: E402
 
 
 def test_a_vulnerability_is_repaired_under_the_law_and_proven():
-    tmp = tempfile.mkdtemp()
-    keyfile, publics = setup(tmp)
-    state = str(Path(tmp) / "state")
-    clock, gh, calls = Clock(), FakeGH(), []
-    good = {"vulns": "none", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none",
-            "actions": "all", "sbom": "current", "ci": "green", "branch": "pr-and-checks"}
-    measured = dict(good, vulns="found:1")
-    facts = []
-    keys = load_keys(keyfile)
-
-    def step(command, **kw):
-        pinned = Path(state, "genesis.json")
-        expected = json.loads(pinned.read_text())["pin"] if pinned.exists() else None
-        n = Node(state, keys, create=command == "init", expected_genesis=expected)
-        try:
-            getattr(cycle, "cmd_" + command)(n, args(state, publics=publics, **kw))
-            return n.state
-        finally:
-            n.close()
-
-    with patch.object(node_mod.time, "time", clock), patch.object(cycle.time, "time", clock), \
-            patch.dict("os.environ", {"GITHUB_TOKEN": "x", "AGENT_GITHUB_TOKEN": "y", "MERGE_TOKEN": "z"}), \
-            patch("ops.gh.Client", lambda repo, token: gh), \
-            patch.object(scan, "measure", lambda repo, g: dict(measured)), \
-            patch.object(scan, "pull_facts", lambda g, login: list(facts)), \
-            patch("ops.agent.open_repair", lambda *a: (setattr(gh, "pr_open", True), {"number": 7})[1]), \
-            patch("adapters.github.urllib.request.urlopen", opener_for(gh, calls)):
-        step("init")
-        clock.t += 3_700
-        step("activate")
-        s = step("scan")
-        assert s["observations"]["repo:deps:vulns|high|scanner"]["status"] == "found:1"
-        health = {"open": [{"type": "target", "target": "vulns", "due": 1, "needs": ["repair"]}], "escalated": []}
-        hpath = Path(tmp) / "health.json"
-        hpath.write_text(json.dumps(health))
-        step("repair", health=str(hpath))
-        assert gh.pr_open
-        resource = f"repo:deps:vulns/pr/7/{HEAD}"
-        facts[:] = [(resource, "ci", "green"), (resource, "scope", "code")]
-        clock.t += 60
-        step("scan")
-        s = step("ask")
-        assert not s["intents"], "code scope without review must not be asked"
-        facts.append((resource, "scope", "dependencies"))
-        clock.t += 60
-        step("scan")
-        s = step("ask")
+    with Sim({"vulns": "found:3"}) as sim:
+        s = sim.cycle()                                      # measure, craft + declare, nothing to merge yet
+        assert sim.world.proposals == 1 and not s["intents"]
+        s = sim.cycle()                                      # observe the declared commit (CI pending): no ask
+        assert not s["intents"]
+        sim.world.runs[HEAD] = "success"
+        s = sim.cycle(minutes=400)                           # green, dependency scope: asked, merged
         iid = next(iter(s["intents"]))
-        s = step("guard")
-        assert s["executed"] and list(s["executed"].values()) == ["ok"]
-        assert [c[0] for c in calls] == ["GET", "PUT"] and calls[1][2]["sha"] == HEAD
-        assert f"proof:{iid}" in s["obligations"]
-        step("guard")                                                  # a rerun sends nothing
-        assert len(calls) == 2
-        measured.update(good)
-        clock.t += 60
-        s = step("scan")
-        assert f"proof:{iid}" not in s["obligations"], "the read-back closes the proof"
+        assert list(s["executed"].values()) == ["ok"] and sim.world.pulls["7"]["merged"]
+        assert f"proof:{iid}" in s["obligations"] and sim.world.proposals == 1
+        sim.measured["vulns"] = "none"
+        s = sim.cycle()                                      # read back: proven; main measured clean
+        assert f"proof:{iid}" not in s["obligations"]
         assert s["observations"]["repo:deps:vulns|high|scanner"]["status"] == "none"
-        genesis = json.loads(Path(state, "genesis.json").read_text())["pin"]
-        n = Node(state, keys, expected_genesis=genesis)
+        assert len(s["executed"]) == 1 and sim.world.proposals == 1   # nothing merged twice, nothing re-proposed
+        n = sim.node()
         try:
-            from compliance.dossier import build, rows_of, verify
-            d = build(rows_of(n.journal.path), genesis_pin=n.genesis, checkpoints=n.pins.load(),
-                      required_at=int(clock.t * 1000))
+            rows = rows_of(n.journal.path)
+            d = build(rows, genesis_pin=sim.genesis, checkpoints=n.pins.load(), required_at=int(sim.clock.t * 1000))
             assert d["measures"]["vulns"]["status"] == "PROUVÉ"
-            assert verify(d, rows_of(n.journal.path), genesis_pin=genesis, checkpoints=n.pins.load())
+            assert verify(d, rows, genesis_pin=sim.genesis, checkpoints=n.pins.load())
         finally:
             n.close()
 
@@ -161,28 +46,29 @@ def test_the_adapter_merges_only_the_judged_commit_and_reports_honestly():
     def with_put(status, merged=False, base="main"):
         sent = []
 
+        def reply(body):
+            return type("R", (), {"status": 200, "read": lambda self: body, "__enter__": lambda self: self,
+                                  "__exit__": lambda self, *a: False})()
+
         def opener(req, timeout):
             sent.append(req.get_method())
             if req.get_method() == "GET":
-                body = json.dumps({"merged": merged, "head": {"sha": HEAD}, "base": {"ref": base}}).encode()
-                return type("R", (), {"status": 200, "read": lambda self: body, "__enter__": lambda self: self,
-                                      "__exit__": lambda self, *a: False})()
+                return reply(json.dumps({"merged": merged, "head": {"sha": HEAD}, "base": {"ref": base}}).encode())
             if status == 200:
-                return type("R", (), {"status": 200, "read": lambda self: b"{}", "__enter__": lambda self: self,
-                                      "__exit__": lambda self, *a: False})()
+                return reply(b"{}")
             raise urllib.error.HTTPError(req.full_url, status, "x", {}, None)
         return GitHub("o/demo", "t", opener=opener).remediate("r", dict(args), "k"), sent
     assert with_put(200) == ("ok", ["GET", "PUT"])
     assert with_put(409) == ("failed", ["GET", "PUT"])                 # head moved: GitHub merged nothing
     assert with_put(502) == ("unknown", ["GET", "PUT"])                # may have merged: reconcile
     assert with_put(200, merged=True) == ("ok", ["GET"])               # already landed: no second send
-    assert with_put(200, base="standard-journal") == ("failed", ["GET"])   # retargeted: nothing sent
+    assert with_put(200, base="standard-journal") == ("failed", ["GET"])
     assert GitHub("o/demo", "t", opener=None).remediate("r", dict(args, head="HEAD"), "k") == "failed"
 
 
 def test_unknown_identities_in_key_material_are_refused():
-    tmp = tempfile.mkdtemp()
-    p = Path(tmp) / "k.json"
+    import tempfile
+    p = Path(tempfile.mkdtemp()) / "k.json"
     p.write_text(json.dumps({"mallory": "AAAA"}))
     try:
         load_keys(str(p))

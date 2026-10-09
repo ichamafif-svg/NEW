@@ -1,147 +1,131 @@
-"""Regressions for the independent adversarial review of M2 (docs/M2.md, "Revue adversariale")."""
+"""Properties of the four causes found by the adversarial review of M2. Each test states a cause's rule, not a patch:
+the earlier findings are instances of it."""
 import json
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
-from types import SimpleNamespace
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-sys.path.insert(0, str(ROOT / "tests"))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fixture import raises, run  # noqa: E402
-from ops import agent, cycle, node as node_mod, scan  # noqa: E402
-from ops.node import Node, load_keys  # noqa: E402
-from test_ops import HEAD, Clock, FakeGH, args, setup  # noqa: E402
-
-AGENT = "standard-agent[bot]"
-
-
-class PRs:
-    """A GitHub where pull requests, files, reviews and permissions are scripted."""
-    repo = "o/demo"
-
-    def __init__(self, pulls, files=None, reviews=None, writers=("maintainer",), changed=None):
-        self._pulls, self._files, self._reviews = pulls, files or {}, reviews or {}
-        self.writers, self.changed = set(writers), changed or {}
-
-    def authored(self, login, limit):
-        return [p for p in self._pulls if p["user"]["login"] == login][:limit]
-
-    def check_runs(self, sha):
-        return [{"name": "test", "conclusion": "success"}]
-
-    def files(self, n):
-        return self._files.get(n, ["requirements.txt"])
-
-    def pull(self, n):
-        return {"changed_files": self.changed.get(n, len(self.files(n)))}
-
-    def flood(self, n):
-        self._pulls = [pr(1000 + i, login="spammer") for i in range(n)] + self._pulls
-
-    def reviews(self, n):
-        return self._reviews.get(n, [])
-
-    def can_write(self, login):
-        return login in self.writers
+from sim import HEAD, Sim  # noqa: E402
+from ops import agent, lifecycle, probes  # noqa: E402
+from ops.node import Node  # noqa: E402
+from tcb.floor0 import LINE  # noqa: E402
 
 
-def pr(num, login=AGENT, repo="o/demo", base="main", ref="standard/deps/vulns/abcd1234"):
-    return {"number": num, "state": "open", "user": {"login": login}, "base": {"ref": base},
-            "head": {"ref": ref, "sha": HEAD, "repo": {"full_name": repo}}}
+# ---- cause 1: a fact exists only about a subject the journal names --------------------------------------------
+def test_pull_requests_nobody_declared_are_never_asked_about():
+    with Sim({"vulns": "found:1"}) as sim:
+        sim.world.pulls["666"] = {"head": "e" * 40, "base": "main", "merged": False, "open": True,
+                                  "same_repo": False, "files": ["requirements.txt"]}
+        sim.world.runs["e" * 40] = "success"
+        for _ in range(3):
+            s = sim.cycle(minutes=400)
+        assert ("pull", "666") not in sim.world.asked and not sim.world.pulls["666"]["merged"]
+        assert all(it["args"]["pr"] == "7" for it in s["intents"].values())
 
 
-def test_only_the_agents_own_pull_requests_into_main_are_observed():
-    gh = PRs([pr(1, login="outsider"), pr(2, repo="evil/fork"), pr(3, base="standard-journal"), pr(4)])
-    resources = {r for r, _, _ in scan.pull_facts(gh, AGENT)}
-    assert resources == {f"repo:deps:vulns/pr/4/{HEAD}"}, resources
+def test_a_declared_commit_that_moved_is_another_subject():
+    with Sim({"vulns": "found:1"}) as sim:
+        sim.cycle()
+        sim.world.runs[HEAD] = "success"
+        sim.world.pulls["7"].update(head="f" * 40)                     # force-pushed after declaration
+        s = sim.cycle(minutes=400)
+        assert not s["intents"]
+        assert s["observations"][f"repo:deps:vulns/pr/7/{HEAD}|state|scanner"]["status"] == "moved"
 
 
-def test_a_review_counts_only_from_a_writer_on_this_commit_without_standing_objection():
-    review = lambda login, state, sha=HEAD: {"user": {"login": login}, "state": state, "commit_id": sha}
-    cases = {
-        "sockpuppet": ([review("nobody", "APPROVED")], False),
-        "writer": ([review("maintainer", "APPROVED")], True),
-        "older commit": ([review("maintainer", "APPROVED", "d" * 40)], False),
-        "objection": ([review("maintainer", "APPROVED"), review("other", "CHANGES_REQUESTED")], False),
-        "withdrawn objection": ([review("maintainer", "CHANGES_REQUESTED"), review("maintainer", "APPROVED")], True),
-        "outsider objection": ([review("maintainer", "APPROVED"), review("drive-by", "CHANGES_REQUESTED")], True),
-    }
-    for name, (reviews, expected) in cases.items():
-        gh = PRs([pr(4)], reviews={"4": reviews}, writers=("maintainer", "other"))
-        got = (f"repo:deps:vulns/pr/4/{HEAD}", "review", "approved") in scan.pull_facts(gh, AGENT)
-        assert got is expected, name
-
-
-def test_a_flood_of_other_pull_requests_hides_nothing():
-    gh = PRs([pr(4)])
-    gh.flood(5000)
-    assert {r for r, _, _ in scan.pull_facts(gh, AGENT)} == {f"repo:deps:vulns/pr/4/{HEAD}"}
-    assert [p["number"] for p in scan.agent_pulls(gh, AGENT)] == [4]
+def test_a_review_is_a_signed_human_fact_never_the_agents_nor_githubs():
+    with Sim({"sast": "found:1"}) as sim:
+        sim.cycle()
+        sim.world.pulls["7"]["files"] = ["app/service.py"]               # code scope: needs a review
+        sim.world.runs[HEAD] = "success"
+        s = sim.cycle(minutes=400)
+        assert not s["intents"]
+        n = sim.node()
+        try:                                                           # the agent approving itself counts for nothing
+            from ops.cycle import observe
+            subject = lifecycle.declared(n.state)[0]
+            observe(n, "agent", subject.resource, "review", "approved", level="unknown")
+        finally:
+            n.close()
+        s = sim.cycle(minutes=400)
+        assert not s["intents"]
+        sim.run("review", pr="7")
+        s = sim.cycle()
+        assert list(s["executed"].values()) == ["ok"]
 
 
 def test_a_truncated_file_list_is_never_dependency_scope():
-    gh = PRs([pr(4)], files={"4": ["requirements.txt"]}, changed={"4": 2})
-    assert (f"repo:deps:vulns/pr/4/{HEAD}", "scope", "code") in scan.pull_facts(gh, AGENT)
+    from ops.cycle import subject_facts
+    world = type("W", (), {"pull": lambda self, n: {"head": HEAD, "base": "main", "merged": False, "open": True,
+                                                    "same_repo": True, "changed": 2},
+                           "ci": lambda self, sha: "success", "files": lambda self, n: ["requirements.txt"]})()
+    assert subject_facts(world, lifecycle.subject_of(f"repo:deps:vulns/pr/7/{HEAD}"))["scope"] == "code"
+
+
+# ---- cause 2: a pass is a proof of coverage ----------------------------------------------------------------------
+def test_only_full_coverage_without_findings_passes():
+    M = probes.Measure
+    assert probes.verdict("none", M(frozenset("ab"), frozenset("ab"))) == "none"
+    assert probes.verdict("none", M(frozenset("ab"), frozenset("a"))) == "uncovered:1"
+    assert probes.verdict("none", M(frozenset(), frozenset())) == "uncovered:empty"
+    assert probes.verdict("none", RuntimeError("tool crashed")) == "uncovered:RuntimeError"
+    assert probes.verdict("none", M(frozenset("a"), frozenset("a"), ("x",))) == "found:1"
+    assert not probes.repairable("uncovered:1") and probes.repairable("found:1")
 
 
 def repo_with(files: dict) -> Path:
     d = Path(tempfile.mkdtemp())
-    for name, text in files.items():
-        (d / name).write_text(text)
+    for name, content in files.items():
+        (d / name).write_bytes(content if isinstance(content, bytes) else content.encode())
     subprocess.run(["git", "init", "-q"], cwd=d, check=True)
     subprocess.run(["git", "add", "-A"], cwd=d, check=True)
     return d
 
 
-def test_an_unaudited_dependency_or_a_failed_audit_is_a_gap():
-    with raises(ValueError, "exact pin"):
-        scan.vulns(repo_with({"requirements.txt": "pkg @ https://evil.invalid/x.whl\n"}))
-    failed = SimpleNamespace(returncode=1, stdout="")
-    with patch.object(scan, "_run", lambda cmd, cwd: failed):
-        assert scan.vulns(repo_with({"requirements.txt": "flask==2.2.2\n"})) == "error:pip-audit"
-    skipped = SimpleNamespace(returncode=0, stdout=json.dumps({"dependencies": [{"name": "flask", "skip_reason": "x"}]}))
-    with patch.object(scan, "_run", lambda cmd, cwd: skipped if "pip_audit" in cmd else subprocess.run(
-            cmd, cwd=cwd, capture_output=True, text=True)):
-        assert scan.vulns(repo_with({"requirements.txt": "flask==2.2.2\n"})) == "error:not-audited"
+def test_every_probe_failure_mode_is_uncovered_not_a_pass():
+    from tcb.floors import FLOORS
+    targets = {t["id"]: t for t in FLOORS["targets"]}
+    repo = repo_with({"requirements.txt": "flask==2.2.2\npkg @ https://evil.invalid/x.whl\n"})
+    status = probes.measure_all(repo, None, targets)
+    assert all(not st == targets[t]["expect"] for t, st in status.items() if t in ("vulns", "deps-age", "licenses",
+                                                                                   "sbom", "ci", "branch")), status
+    skipped = type("R", (), {"returncode": 0, "stdout": json.dumps({"dependencies": [
+        {"name": "flask", "version": "2.2.2", "skip_reason": "x", "vulns": []}]})})()
+    with patch.object(probes, "_run", lambda cmd, cwd: skipped):
+        m = probes.vulns(repo_with({"requirements.txt": "flask==2.2.2\n"}))
+    assert probes.verdict("none", m) == "uncovered:1"
 
 
-def test_secrets_in_files_with_spaces_are_found_and_binaries_do_not_block():
-    repo = repo_with({"my config.py": 'API_KEY = "abcdefghijklmnop1234"\n'})
-    assert scan.secrets(repo).startswith("found:")
-    big = repo_with({"ok.py": "x = 1\n"})
-    (big / "logo.png").write_bytes(b"\x89PNG\0" + b"\0" * 6_000_000)
-    subprocess.run(["git", "add", "-A"], cwd=big, check=True)
-    assert scan.secrets(big) == "none"
+def test_secrets_cover_every_text_file_and_name_what_they_skip():
+    repo = repo_with({"my config.py": 'API_KEY = "abcdefghijklmnop1234"\n', "logo.png": b"\x89PNG\0" + b"\0" * 100,
+                      "big.txt": "x" * (probes.MAX_TEXT + 1)})
+    m = probes.secrets(repo)
+    assert m.universe == {"my config.py", "big.txt"} and m.findings
+    assert probes.verdict("none", m) == "uncovered:1"                    # the large text was not scanned
 
 
-def test_the_agent_never_writes_git_internals_or_outside_the_tree():
-    repo = repo_with({"app.py": "x = 1\n"})
-    (repo / "meta").symlink_to(repo / ".git")
-    for path in (".git/config", "a/.git/hooks/pre-commit", "../escape.py", "/etc/passwd", ".gitattributes",
-                 "meta/config"):
-        with raises(ValueError, "may not write"):
-            agent.allowed(repo, path, "sast")
-    assert agent.allowed(repo, "app.py", "sast") == (repo / "app.py").resolve()
+# ---- cause 3: hostile data stays data; each role holds only its own ----------------------------------------------
+def test_a_repair_writes_only_inside_its_targets_scope():
+    for path in (".git/config", "a/.git/x.py", "../x.py", "/etc/passwd", ".github/workflows/standard.yml",
+                 "tests/test_service.py", "app/service.py"):
+        assert not agent.in_scope("vulns", path), path
+    assert agent.in_scope("sast", "app/service.py") and not agent.in_scope("sast", ".github/workflows/ci.yml")
+    assert agent.in_scope("actions", ".github/workflows/ci.yml")
+    with patch.object(agent, "claude", lambda prompt, key: {"files": {".git/config": "[core]\nfsmonitor=x\n"}}):
+        with raises(ValueError, "write scope"):
+            agent.craft(Path("."), "sast", "found:1", "k")
 
 
 def test_a_replaced_state_is_refused_without_the_external_genesis_pin():
-    tmp = tempfile.mkdtemp()
-    keyfile, publics = setup(tmp)
-    state = str(Path(tmp) / "state")
-    n = Node(state, load_keys(keyfile), create=True)
-    try:
-        cycle.cmd_init(n, args(state, publics=publics))
-    finally:
-        n.close()
-    real = json.loads(Path(state, "genesis.json").read_text())["pin"]
-    with raises(ValueError, "externally pinned genesis"):
-        Node(state, load_keys(keyfile))
-    with raises(ValueError, "externally pinned genesis"):
-        Node(state, load_keys(keyfile), expected_genesis="sha256:" + "1" * 64)
-    Node(state, load_keys(keyfile), expected_genesis=real).close()
+    with Sim() as sim:
+        with raises(ValueError, "externally pinned genesis"):
+            Node(sim.state, sim.keys)
+        with raises(ValueError, "externally pinned genesis"):
+            Node(sim.state, sim.keys, expected_genesis="sha256:" + "1" * 64)
 
 
 def test_a_child_route_needs_a_typed_child():
@@ -150,105 +134,56 @@ def test_a_child_route_needs_a_typed_child():
     assert not _reaches(ops["noop"], "payroll")
 
 
+# ---- cause 4: the next step is the kernel's automaton, exhaustively ----------------------------------------------
+def test_every_state_of_the_effect_line_has_one_next_step():
+    assert set(lifecycle.NEXT) == lifecycle.STATES, lifecycle.STATES ^ set(lifecycle.NEXT)
+    assert {to for _, to in LINE.values()} <= lifecycle.STATES
+
+
 def test_a_refused_merge_is_asked_again_and_an_unknown_one_is_reconciled():
-    tmp = tempfile.mkdtemp()
-    keyfile, publics = setup(tmp)
-    state = str(Path(tmp) / "state")
-    clock, gh = Clock(), FakeGH()
-    keys = load_keys(keyfile)
-    resource = f"repo:deps:vulns/pr/7/{HEAD}"
-    facts = [(resource, "ci", "green"), (resource, "scope", "dependencies")]
-    outcomes = []
+    with Sim({"vulns": "found:1"}) as sim:
+        sim.cycle()
+        sim.world.runs[HEAD] = "success"
+        outcomes = ["failed", "ok-late"]
 
-    def step(command):
-        pinned = Path(state, "genesis.json")
-        expected = json.loads(pinned.read_text())["pin"] if pinned.exists() else None
-        n = Node(state, keys, create=command == "init", expected_genesis=expected)
-        try:
-            getattr(cycle, "cmd_" + command)(n, args(state, publics=publics))
-            return n.state
-        finally:
-            n.close()
-
-    def merge(resource_, args_, key):
-        result = outcomes.pop(0)
-        gh.merged = result == "ok-late"
-        return "unknown" if result == "ok-late" else result
-
-    with patch.object(node_mod.time, "time", clock), patch.object(cycle.time, "time", clock), \
-            patch.dict("os.environ", {"GITHUB_TOKEN": "x", "MERGE_TOKEN": "z"}), \
-            patch("ops.gh.Client", lambda repo, token: gh), \
-            patch.object(scan, "measure", lambda repo, g: {}), \
-            patch.object(scan, "pull_facts", lambda g, login: list(facts)), \
-            patch("adapters.github.GitHub.remediate", lambda self, r, a, k: merge(r, a, k)):
-        step("init")
-        clock.t += 3_700
-        step("activate")
-        step("scan")
-        step("ask")
-        outcomes.append("failed")
-        s = step("guard")
+        def merge(r, args, k):
+            result = outcomes.pop(0)
+            if result == "ok-late":                                       # merged, but the adapter cannot tell
+                sim.world.pulls["7"].update(merged=True, open=False)
+                return "unknown"
+            return result
+        sim.merge = merge
+        s = sim.cycle(minutes=400)
         first = next(iter(s["intents"]))
         assert s["line"][first]["state"] == "failed"
-        s = step("ask")
-        assert len(s["intents"]) == 1, "no retry without a newer observation of the commit"
-        clock.t += 7 * 3_600                                   # the scanner refreshes its facts
-        step("scan")
-        s = step("ask")
+        s = sim.cycle()                                                   # state seen again, then asked again
         retry = next(i for i in s["intents"] if i != first)
-        assert s["intents"][retry]["stmt"]["retry_of"] == first
-        outcomes.append("ok-late")                              # merged, but the adapter could not tell
-        s = step("guard")
-        assert s["line"][retry]["state"] == "uncertain"
-        s = step("scan")
+        assert s["intents"][retry]["stmt"]["retry_of"] == first and s["line"][retry]["state"] == "uncertain"
+        s = sim.cycle()
         assert s["line"][retry]["state"] == "proving" and f"proof:{retry}" not in s["obligations"]
-
 
 
 def test_a_guard_that_dies_after_its_reservation_does_not_stall_the_target():
     class Crash(BaseException):
         pass
-    tmp = tempfile.mkdtemp()
-    keyfile, publics = setup(tmp)
-    state = str(Path(tmp) / "state")
-    clock, gh = Clock(), FakeGH()
-    keys = load_keys(keyfile)
-    resource = f"repo:deps:vulns/pr/7/{HEAD}"
-    facts = [(resource, "ci", "green"), (resource, "scope", "dependencies")]
 
-    def step(command):
-        pinned = Path(state, "genesis.json")
-        expected = json.loads(pinned.read_text())["pin"] if pinned.exists() else None
-        n = Node(state, keys, create=command == "init", expected_genesis=expected)
+    with Sim({"vulns": "found:1"}) as sim:
+        sim.cycle()
+        sim.world.runs[HEAD] = "success"
+
+        def dies(*a):
+            raise Crash()
+        sim.merge = dies
         try:
-            getattr(cycle, "cmd_" + command)(n, args(state, publics=publics))
-            return n.state
-        finally:
-            n.close()
-
-    def dies(*a):
-        raise Crash()
-    with patch.object(node_mod.time, "time", clock), patch.object(cycle.time, "time", clock), \
-            patch.dict("os.environ", {"GITHUB_TOKEN": "x", "MERGE_TOKEN": "z"}), \
-            patch("ops.gh.Client", lambda repo, token: gh), \
-            patch.object(scan, "measure", lambda repo, g: {}), \
-            patch.object(scan, "pull_facts", lambda g, login: list(facts)):
-        step("init")
-        clock.t += 3_700
-        step("activate")
-        step("scan")
-        s = step("ask")
-        first = next(iter(s["intents"]))
-        with patch("tcb.effects.EffectPort.perform", dies):
-            try:
-                step("guard")
-            except Crash:
-                pass
-        clock.t += 7 * 3_600                                   # past the dispatch window; facts refreshed
-        s = step("scan")
-        assert s["line"][first]["state"] == "failed", s["line"][first]   # reconciled: not applied
-        s = step("ask")
-        assert any(it["stmt"].get("retry_of") == first for it in s["intents"].values())
+            sim.cycle(minutes=400)
+        except Crash:
+            pass
+        sim.merge = sim.world.merge
+        s = sim.cycle(minutes=10)                                         # expired -> reconciled: not applied
+        first = min(s["intents"], key=lambda i: s["intents"][i]["stmt"]["at"])
+        assert s["line"][first]["state"] == "failed"
+        s = sim.cycle()
+        assert list(s["executed"].values()).count("ok") == 1 and sim.world.pulls["7"]["merged"]
 
 
 if __name__ == "__main__":
