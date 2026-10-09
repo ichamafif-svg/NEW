@@ -33,3 +33,7 @@ La [revue IV-B](IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CL
 ## IV-D — revue des blocages G08 / G16
 
 Le découpage actuel reste 14 `CLOSED_CONDITIONAL` / 2 `OPEN_SEMANTIC` (G08, G16). [P3_G08_G16_CAMPAIGN.md](findings/P3_G08_G16_CAMPAIGN.md) fixe les hypothèses, témoins, raisons de non-clôture et nouvelles traces sur 20 cycles. **Aucun changement de scope**, aucune sélection d'abstraction ; la revue finale est suspendue à la preuve d'identité/durée d'une obligation et à l'oracle de progression ou escalade.
+
+## G08/G16 — lecture des résultats réels (après Actions 37964069387)
+
+Voir [l'interprétation complète](findings/P3_G08_G16_FIRST_INTERPRETATION.md). Dans les scénarios à écart persistant, deux propositions sont retirées puis **18 cycles / 20 sans sujet live** sont observés, sans modification de main. Les obligations constitutionnelles ne peuvent pas être déduites de la seule liste `state["obligations"]` vide : **G08 reste ouvert**. **G16 reste ouvert** en attente du contrôle des escalades et de la fairness. Le prétendu contrôle sain était **invalide** (le runner `none` n'enlevait pas `vulns=found:2`) et a été rectifié dans le harnais ; ne pas citer l'ancien résultat comme témoin sain. Aucune modification du noyau ou du scope.
