@@ -1,57 +1,44 @@
-# TRUSTED_EXTERNAL_CONTRACTS — frontières de confiance effectives
+# Trusted External — contrats de confiance de Standard
 
-**Statut : contrat conceptuel v1 ; implémentations non attestées.** Les neuf domaines ci-dessous sont des **capacités de confiance**, pas une exigence de neuf microservices. Certains peuvent être regroupés, fournis par l'infrastructure du client ou par un prestataire, **à condition de conserver leurs domaines de défaillance et propriétés vérifiables**. Les dépendances T font partie de la *TCB effective*.
+**Statut : frontières fonctionnelles définies ; conformité physique à démontrer par déploiement.** Les neuf contrats sont des responsabilités vérifiables, **pas neuf microservices imposés**. Ils constituent avec le noyau la TCB effective.
 
-## Critère d'appartenance à T
+## Pourquoi une fonction est Trusted External
 
-Un composant est Trusted External s'il peut, par une défaillance ou un contournement, (a) donner un pouvoir interdit, (b) effacer/forger une transition admise, (c) transformer un fait faux en preuve suffisante pour autoriser un effet, ou (d) permettre un effet privilégié hors du chemin gouverné. Un ordonnanceur ou agent qui ne fait que proposer une action n'est pas T ; sa clé de déploiement non contrôlée, elle, le devient.
+Une dépendance est T si sa compromission peut fabriquer l'identité/autorité réelle, falsifier une preuve prise pour recevable, restaurer un état constitutionnel ancien ou émettre un effet privilégié interdit. Une couche de planification sans privilège reste autonome non souveraine (U). Le noyau (K) est seul compétent pour interpréter les conséquences constitutionnelles.
 
-## Catalogue exhaustif des **contrats fonctionnels** identifiés
+## Catalogue
 
-| ID | Domaine T | Attestation/garantie attendue à l'interface | Défaillance structurante et réaction |
-|---|---|---|---|
-| T01 | **Trust anchor & runtime pin** | Release, floors, code, genèse et racine authentiquement épinglés | Substitution de binaire, re-genèse, downgrade : fail closed |
-| T02 | **Identity & key custody** | Signature, contrôle de clé, liaison d'identité, distinction physique des humains/témoins | Même personne avec plusieurs identités ; clés compromises : séparation indépendante requise |
-| T03 | **Trusted time** | Temps d'énoncé, ancrage attesté et temps de départ distingués, provenance et borne d'incertitude | Horloges contradictoires : pas de gain de privilèges, suspension de l'effet |
-| T04 | **Durable ledger & independent pin** | Ordre linéarisable, commit atomique, checkpoints ancrés hors domaine de restauration, reprise exacte | Rollback coordonné : rejeter état non ancré et interrompre effets |
-| T05 | **Independent constitutional verifier** | Décision seconde par implémentation et domaine effectivement indépendants selon la loi | Bug commun, même input corrompu : désaccord/indépendance non prouvée = blocage |
-| T06 | **Evidence qualification & instruments** | Provenance, méthode, couverture, identité du sujet, fraîcheur, séparation des auteurs/mesures | Fausse mesure signée : la signature prouve la source, non la vérité ; ne pas clore |
-| T07 | **Effect guard & privileged egress** | Identité de destination, octets exacts, re-jugement au départ, credentials exclusifs, fencing | Route alternative CI/cloud ou effet modifié : aucun dispatch |
-| T08 | **Effect receipts & reconciliation** | Réservation durable, idempotency domain, reçus et readback indépendants, état `unknown` explicite | ACK perdu/appliqué inconnu : ne jamais supposer « non appliqué » |
-| T09 | **Progress signal & escalation delivery** | Disponibilité et traçabilité des signaux requis, accusé de livraison d'escalade sous hypothèses d'équité | Agent en panne/scheduler indisponible : dette conservée, livraison non présumée |
+| Contrat | Garantie nécessaire | Défaillance à contenir |
+|---|---|---|
+| T01 — Trust anchor | Release, constitution, runtime et genèse authentiques | Substitution, downgrade, re-genèse |
+| T02 — Identity & key custody | Liens entre identités, clés et individus réellement distincts | Clés compromises, faux quorum |
+| T03 — Trusted time | Temps attesté, fraîcheur et bornes d'incertitude | Horloge manipulée, délais contournés |
+| T04 — Durable ledger | Ordre atomique, stockage vérifiable et anti-rollback indépendant | Restaurations, réécriture, préfixe supprimé |
+| T05 — Independent verifier | Vérification réellement indépendante des transitions critiques | Bug ou contrôle commun non détecté |
+| T06 — Evidence attestor | Méthode, couverture, provenance, sujet et indépendance des faits | Mesure mensongère mais signée |
+| T07 — Effect guard | Credentials exclusifs, destination et octets exacts, revalidation, fencing | Egress parallèle ou effet altéré |
+| T08 — Effect reconciler | Réservation, identité d'opération, ACK/readback et état UNKNOWN | Retry aveugle d'une action possiblement appliquée |
+| T09 — Progress/escalation | Signaux, livraison et accusés conformes aux hypothèses de disponibilité | Dette ou escalade due non délivrée |
 
-**T09 :** le noyau décide *quand* l'escalade est due ; la progression et la notification physiques sont conditionnelles à la disponibilité/fairness externe explicitement assumée. Un monitor sans effet sur les droits peut rester U ; le canal T ne couvre que les propriétés indispensables aux garanties promises.
+Un fournisseur peut satisfaire plusieurs contrats s'il prouve les propriétés requises. La séparation de services sous un même compte administrateur n'est pas une indépendance physique. Le déploiement doit documenter dépendances communes, acteurs, clés, capacités de restauration, secrets et chemins d'egress.
 
-## Interface standard minimale de chaque contrat
+## Contrat d'interface commun
 
-Chaque Trusted External fournit un **enregistrement de capacité et une attestation** contenant :
-- `contract_id, provider_id, trust_domain, subject, operation, input_digest, output_digest, issued_at, expires_at, signer, version` ;
-- provenance des clés et de l'artefact exécuté, règles de renouvellement, erreur normalisée ;
-- statut `VERIFIED / REJECTED / UNAVAILABLE / INDETERMINATE` ; tout état non vérifié échoue fermé pour l'admission sensible ;
-- limites de couverture, domaine de défaillance, version de la garantie et preuve d'audit reproductible.
+Chaque capacité de confiance expose : identifiant et version du contrat, domaine d'autorité, sujet exact, opération, digests d'entrée/sortie, identité de l'attestateur, validité temporelle, qualité de provenance, couverture et état de vérification. Les états `REJECTED`, `UNAVAILABLE` ou `INDETERMINATE` ne donnent jamais une permission implicite.
 
-Il s'agit d'un **schéma conceptuel**, pas d'une assertion selon laquelle un outil peut attester honnêtement des faits physiques qu'il ne peut pas connaître. L'instrument de mesure, sa méthode et son domaine d'observation sont dans le contrat, pas déduits d'un champ `verified:true`.
+L'attestation cryptographique prouve une origine sous ses hypothèses ; elle ne prouve pas automatiquement la véracité physique, l'indépendance des personnes ni l'exhaustivité d'une couverture.
 
-## Regroupement des fournisseurs et risque de défaillance commune
+## Frontières de défaillance
 
-La séparation logique **n'implique pas** l'indépendance physique : un unique compte cloud avec tous les droits peut contrôler T01, T02, T04, T05 et T07 malgré cinq services nommés différemment. Pour chaque installation, fournir un **trust graph** indiquant propriétaires, clés, dépendances, modes de restauration, chemins d'egress, humains, compte de facturation, réseau et runtime. Vérifier les arêtes critiques, non la simple présence de produits.
+- Si une racine d'identité ou un ancrage n'est pas fiable, les opérations constitutionnelles sensibles sont bloquées.
+- Un ledger ne prouve pas sa propre inviolabilité : son anti-rollback dépend d'un domaine indépendant.
+- Une autorisation logique n'exécute rien ; seul le garde d'effets possède la sortie privilégiée.
+- Un résultat fournisseur inconnu reste `UNKNOWN` jusqu'à preuve suffisante.
+- Les vérificateurs exigés ne doivent pas partager un domaine de panne qui annule l'indépendance promise.
+- K constate l'exigibilité d'une escalade ; les garanties de livraison reposent sur une disponibilité physique explicitement définie.
 
-L'infrastructure existante du client est réutilisable si ses garanties sont réellement suffisantes. Elle ne peut pas affaiblir les floors. Une capacité existante non attestable reste **UNVERIFIED**, même si elle fonctionne sur des cas courants.
+## Qualification de production
 
-## Contrats d'échec transversaux
+Pour T01–T09, consigner le fournisseur, la version, la frontière de restauration, les identités/permissions, le modèle de menace, les tests contradictoires, le comportement fail-closed et les limites réelles. Une capacité non prouvée est `UNVERIFIED`. Aucune déclaration de production-ready ne découle de cette seule architecture.
 
-- Un service T indisponible n'accorde jamais une permission par défaut.
-- Une observation authentique mais sans couverture n'est pas une preuve de satisfaction.
-- L'externalité d'un composant n'autorise pas une exemption de la TCB effective.
-- Une décision K positive **ne suffit pas** à garantir l'effet si les T07/T08 ne sont pas opérationnels.
-- Un journal SQLite local et ses propres lignes d'audit ne sont **pas** deux ancrages indépendants.
-- Une seconde signature sur le même jugement n'est pas un deuxième vérificateur.
-- Un escalade envoyée par un agent ne prouve ni réception ni traitement.
-
-## Obligations de conformité d'une intégration production
-
-Pour chaque T01–T09, documenter `IMPLEMENTED / PARTIAL / UNVERIFIED / NOT_AVAILABLE`, test adversarial, responsable, fournisseur, version, domaine de panne, mécanisme de fail-closed, source de preuve, date de revue. Les écarts critiques sont des **bloqueurs de promotion**, pas des raisons d'élargir automatiquement le noyau. Les responsabilités K/T/U des G01–G16 sont référencées dans [la décision figée](../tcb_lab/FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md).
-
-## État actuel du prototype
-
-`hybrid_kernel/trusted.py` apporte une vérification cryptographique de reçu DSSE et son arrimage à la demande, à la loi et au préfixe ; la propriété réelle de la clé du signataire et la qualité des mesures sont externes. `hybrid_kernel/store.py` fournit une transaction SQLite locale, **sans** ancre indépendante anti-rollback. `hybrid_kernel/core.py` n'applique pas encore les contrats constitutionnels complets. Aucune exclusivité physique d'effet ou seconde implémentation de jugement n'est démontrée. Ne pas qualifier la pile de « production ready ».
+Pour la séquence d'utilisation, voir [le protocole](KERNEL_EXECUTION_PROTOCOL.md).
