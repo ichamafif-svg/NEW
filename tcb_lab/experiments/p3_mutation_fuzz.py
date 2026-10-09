@@ -25,11 +25,11 @@ RESULTS = []
 def execute(ident, family, mutate):
     w = World()
     entry, _ = w.signed("freeze", "carol", T0 + 1, scope="repo:prod:*")
-    before = canon(w.state)
+    before = copy.deepcopy(w.state)
     try:
         altered = mutate(copy.deepcopy(entry), w)
         accepted, reason, _ = w.kernel.admit(w.state, altered)
-        assert canon(w.state) == before, "admission mutated caller state"
+        assert w.state == before, "admission mutated caller state"
         if accepted:
             outcome = "VIOLATION_OBSERVED"
             detail = "malformed or forged signed entry admitted"
