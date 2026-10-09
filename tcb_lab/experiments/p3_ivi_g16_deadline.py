@@ -22,8 +22,8 @@ def sample(after):
                 row=next(x for x in h.get("open",[]) if x.get("obligation")=="target:vulns")
                 due=int(row["due"]);initial=int(n.now())
             finally:n.close()
-            # One-minute cycle advances 60000ms. Stop 1ms before or 1ms after due.
-            sim.clock.t+=(due-initial-60000+ (1 if after else -1))/1000
+            # One-minute cycle advances 60000ms; use a 5-minute buffer to avoid journal time drift.
+            sim.clock.t+=(due-initial-60000+ (300000 if after else -300000))/1000
             sim.cycle()
             n=sim.node()
             try:
