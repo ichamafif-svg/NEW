@@ -55,7 +55,6 @@ jobs:
       contents: read
       issues: write
     env:
-      GH_TOKEN: ${{ github.token }}
       TEST_JOB_RESULT: ${{ needs.adversarial.result }}
       REPORT_RUN_ID: ${{ github.run_id }}
       REPORT_RUN_NUMBER: ${{ github.run_number }}
@@ -64,17 +63,23 @@ jobs:
         with:
           persist-credentials: false
       - name: Download available run reports, no manual exports
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           mkdir -p p3-artifacts
           gh run download "$REPORT_RUN_ID" --name tcb-lab-g1-p3-results --dir p3-artifacts || true
       - name: Retrieve repository workflow history, including red runs
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=100" > ci-history.json
       - name: Build complete concise report
         run: python3 tcb_lab/ci_report.py
       - name: Update one persistent GitHub issue with latest report
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           TITLE="TCB laboratory - automated execution register"
