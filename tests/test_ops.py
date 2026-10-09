@@ -1,33 +1,31 @@
-"""End to end on a simulated world: a vulnerable dependency is measured, a repair commit is crafted and declared,
-the scanner observes that exact commit, the law admits its merge, the guard merges it once, the scanner proves it,
-and the dossier rebuilds from the journal."""
+"""End to end on a simulated world over a real git repository: a vulnerable lock is measured, the agent builds the
+recipe's commit, the scanner recomputes it from the base, the law admits the fast-forward, the guard moves main to
+exactly that commit, the scanner proves it, and the dossier rebuilds from the journal."""
 import json
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fixture import run  # noqa: E402
-from sim import HEAD, Sim  # noqa: E402
+from sim import Sim  # noqa: E402
 from compliance.dossier import build, rows_of, verify  # noqa: E402
 from ops.node import load_keys  # noqa: E402
 
 
-def test_a_vulnerability_is_repaired_under_the_law_and_proven():
-    with Sim({"vulns": "found:3"}) as sim:
-        s = sim.cycle()                                      # measure, craft + declare, nothing to merge yet
-        assert sim.world.proposals == 1 and not s["intents"]
-        s = sim.cycle()                                      # observe the declared commit (CI pending): no ask
-        assert not s["intents"]
-        sim.world.runs[HEAD] = "success"
-        s = sim.cycle(minutes=400)                           # green, dependency scope: asked, merged
-        iid = next(iter(s["intents"]))
-        assert list(s["executed"].values()) == ["ok"] and sim.world.pulls["7"]["merged"]
-        assert f"proof:{iid}" in s["obligations"] and sim.world.proposals == 1
+def test_a_vulnerable_lock_is_repaired_by_its_recipe_and_proven():
+    with Sim({"vulns": "found:2"}) as sim:
+        before = sim.world.main_head()
+        sim.cycle()                                         # measure; the agent builds and declares the recipe
+        (resource, phase), = sim.subjects().items()
+        assert phase == "measuring" and resource.startswith(f"repo:deps:vulns/{before}/")
+        head = resource.rsplit("/", 1)[1]
+        s = sim.cycle(minutes=60)                           # reproduced + green: asked, fast-forwarded
+        assert sim.world.main_head() == head and list(s["executed"].values()) == ["ok"]
+        assert sim.world.blob(sim.world.tree(head)["requirements.txt"]) == b"flask==2.2.5\nrequests==2.31.0\n"
         sim.measured["vulns"] = "none"
-        s = sim.cycle()                                      # read back: proven; main measured clean
-        assert f"proof:{iid}" not in s["obligations"]
-        assert s["observations"]["repo:deps:vulns|high|scanner"]["status"] == "none"
-        assert len(s["executed"]) == 1 and sim.world.proposals == 1   # nothing merged twice, nothing re-proposed
+        s = sim.cycle(minutes=60)
+        assert sim.subjects()[resource] == "proven" and not any(k.startswith("proof:") for k in s["obligations"])
+        assert len(s["executed"]) == 1
         n = sim.node()
         try:
             rows = rows_of(n.journal.path)
@@ -38,12 +36,12 @@ def test_a_vulnerability_is_repaired_under_the_law_and_proven():
             n.close()
 
 
-def test_the_adapter_merges_only_the_judged_commit_and_reports_honestly():
+def test_the_adapter_fast_forwards_only_from_the_judged_base():
     import urllib.error
     from adapters.github import GitHub
-    args = {"area": "deps", "item": "vulns", "pr": "7", "head": HEAD, "method": "squash"}
+    B, H, X = "b" * 40, "c" * 40, "d" * 40
 
-    def with_put(status, merged=False, base="main"):
+    def attempt(main, patch_status=200):
         sent = []
 
         def reply(body):
@@ -51,19 +49,19 @@ def test_the_adapter_merges_only_the_judged_commit_and_reports_honestly():
                                   "__exit__": lambda self, *a: False})()
 
         def opener(req, timeout):
-            sent.append(req.get_method())
+            sent.append((req.get_method(), json.loads(req.data) if req.data else None))
             if req.get_method() == "GET":
-                return reply(json.dumps({"merged": merged, "head": {"sha": HEAD}, "base": {"ref": base}}).encode())
-            if status == 200:
+                return reply(json.dumps({"object": {"sha": main}}).encode())
+            if patch_status == 200:
                 return reply(b"{}")
-            raise urllib.error.HTTPError(req.full_url, status, "x", {}, None)
-        return GitHub("o/demo", "t", opener=opener).remediate("r", dict(args), "k"), sent
-    assert with_put(200) == ("ok", ["GET", "PUT"])
-    assert with_put(409) == ("failed", ["GET", "PUT"])                 # head moved: GitHub merged nothing
-    assert with_put(502) == ("unknown", ["GET", "PUT"])                # may have merged: reconcile
-    assert with_put(200, merged=True) == ("ok", ["GET"])               # already landed: no second send
-    assert with_put(200, base="standard-journal") == ("failed", ["GET"])
-    assert GitHub("o/demo", "t", opener=None).remediate("r", dict(args, head="HEAD"), "k") == "failed"
+            raise urllib.error.HTTPError(req.full_url, patch_status, "x", {}, None)
+        result = GitHub("o/demo", "t", opener=opener).remediate("r", {"area": "deps", "item": "vulns", "base": B,
+                                                                      "head": H}, "k")
+        return result, sent
+    assert attempt(B) == ("ok", [("GET", None), ("PATCH", {"sha": H, "force": False})])
+    assert attempt(H) == ("ok", [("GET", None)])                       # already there: nothing sent
+    assert attempt(X) == ("failed", [("GET", None)])                   # main moved: the judged transition is gone
+    assert attempt(B, 422)[0] == "failed" and attempt(B, 502)[0] == "unknown"
 
 
 def test_unknown_identities_in_key_material_are_refused():

@@ -9,9 +9,10 @@ from test_accountability import health  # noqa: E402
 from tcb.floors import FLOORS  # noqa: E402
 from tcb.law import LawError, _ops, _reaches  # noqa: E402
 
+BASE = "b" * 40
 HEAD = "a" * 40
-ARGS = {"area": "deps", "item": "vulns", "pr": "7", "head": HEAD, "method": "squash"}
-AT = f"repo:deps:vulns/pr/7/{HEAD}"
+ARGS = {"area": "deps", "item": "vulns", "base": BASE, "head": HEAD}
+AT = f"repo:deps:vulns/{BASE}/{HEAD}"
 
 
 def setup(condition="remediate-autonomous"):
@@ -30,20 +31,22 @@ def test_every_technical_floor_is_repairable_by_a_commit_under_it():
     assert all(t.get("human") is True for t in FLOORS["targets"] if t["resource"].startswith("org:"))
 
 
-def test_merge_needs_green_dependency_scope_on_the_exact_commit():
+def test_transition_needs_green_tests_and_reproduction_on_exact_base_and_head():
     w, gid, scan, t = setup()
     w.refuse("LAW.CONDITION", "intent", "agent", t, under=gid, op="remediate", args=ARGS)
-    w.add("observation", "ci", t + 1, under=scan, resource=AT, property="ci", status="green", level="real")
+    w.add("observation", "ci", t + 1, under=scan, resource=AT, property="tests", status="green", level="real")
     w.refuse("LAW.CONDITION", "intent", "agent", t + 2, under=gid, op="remediate", args=ARGS)
-    w.add("observation", "ci", t + 3, under=scan, resource=AT, property="scope", status="dependencies", level="real")
+    w.add("observation", "ci", t + 3, under=scan, resource=AT, property="reproduced", status="yes", level="real")
     w.add("intent", "agent", t + 4, under=gid, op="remediate", args=ARGS)
-    other = dict(ARGS, head="b" * 40)                                     # facts of one commit never cover another
+    other_base = dict(ARGS, base="c" * 40)
+    w.refuse("LAW.CONDITION", "intent", "agent", t + 5, under=gid, op="remediate", args=other_base)
+    other = dict(ARGS, head="c" * 40)                                     # facts of one commit never cover another
     w.refuse("LAW.CONDITION", "intent", "agent", t + 5, under=gid, op="remediate", args=other)
 
 
 def test_code_changes_need_an_independent_review():
     w, gid, scan, t = setup("remediate-reviewed")
-    for i, (prop, status) in enumerate((("ci", "green"), ("scope", "dependencies"))):
+    for i, (prop, status) in enumerate((("tests", "green"), ("reproduced", "yes"))):
         w.add("observation", "ci", t + i, under=scan, resource=AT, property=prop, status=status, level="real")
     t += 2
     w.refuse("LAW.CONDITION", "intent", "agent", t + 1, under=gid, op="remediate", args=ARGS)
@@ -54,7 +57,7 @@ def test_code_changes_need_an_independent_review():
 def test_the_agent_cannot_observe_its_own_commit():
     w, gid, scan, t = setup()
     own, t = w.grant("agent", ["observe", "certify:real"], ["repo:*"], t)
-    for i, (prop, status) in enumerate((("ci", "green"), ("scope", "dependencies"))):
+    for i, (prop, status) in enumerate((("tests", "green"), ("reproduced", "yes"))):
         w.add("observation", "agent", t + i, under=own, resource=AT, property=prop, status=status, level="real")
     t += 2
     w.refuse("LAW.CONDITION", "intent", "agent", t + 1, under=gid, op="remediate", args=ARGS)

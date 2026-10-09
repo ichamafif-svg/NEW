@@ -1,12 +1,14 @@
 # Revue V6 : attaques, réduction, budgets
 
+> Archive historique V6. Les chiffres, statuts de release et interfaces ci-dessous décrivent cette revue, pas le code actif. État courant : [README](../README.md), [M2](M2.md), [TCB](TCB.md) et [validation](../validation/summary.json).
+
 Trois travaux sur la V6 telle que fournie, sans modifier le code de `tcb/`.
 
 1. Une revue adversariale, menée par un relecteur indépendant. Elle a trouvé **9 violations confirmées** de garanties revendiquées, dont **2 hautes**.
 2. Une relecture ligne à ligne de `kernel.py` et de `law.py`. Elle ne dégage qu'**environ 20 lignes** de réduction réelle, ce qui ne règle pas le budget.
 3. Un **découpage du budget en trois**, chacun nommé par la garantie qu'il porte. Il est vérifié mécaniquement, et la sûreté tient en 2 246 lignes sur 2 942.
 
-Les scripts de reproduction sont dans `validation/adversarial/`. On les lance depuis la racine avec `python3 validation/adversarial/<script>.py`.
+La revue utilisait des scripts sous `validation/adversarial/` dans son environnement historique. Ce répertoire n'est pas fourni dans l'arbre courant ; les scénarios de régression présents sont sous `tests/`. Les reproductions M2 disponibles sont séparément conservées dans `validation/review-m2/`.
 
 ## 1. Revue adversariale
 

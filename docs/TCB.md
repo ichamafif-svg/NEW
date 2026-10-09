@@ -1,4 +1,4 @@
-# TCB V6 : garanties et frontières réelles
+# Cœur actuel : garanties et frontières réelles
 
 La TCB locale inclut tous les modules Python de `tcb/`, le bootstrap et les éventuels adaptateurs déployés.
 Chaque ligne est comptée dans exactement un budget, selon la garantie qu'un défaut de ce code peut casser :
@@ -54,7 +54,7 @@ Une restriction admise avant l'envoi bloque l'effet. Après l'envoi, elle ne rap
 
 Les arguments sont typés, la ressource est dérivée et une clé fournisseur lie la genèse à la réservation.
 Une tentative locale unique ne prouve pas un effet distant unique ; la déduplication distante exige un fournisseur
-qui honore cette clé. Aucun adaptateur fournisseur réel n'est inclus.
+qui honore cette clé. L'adaptateur GitHub réel est inclus et compté en sûreté. Il réalise GET puis PATCH `force=false`, sans compare-and-swap atomique de la base : l'exclusivité réelle du guard reste une hypothèse de déploiement.
 
 ## Contrôles et dépendances
 
@@ -85,7 +85,7 @@ signées par trames, puis seulement les ajouts. Une entrée reste limitée à 1 
 
 Par défaut, une épingle qui avance pendant l'audit empêche de présenter l'ancien verdict comme actuel.
 `health(prefix=True)` autorise explicitement un verdict pour son préfixe, avec `current: false` s'il est dépassé.
-Chaque verdict nomme sa tête, sa taille, son temps signé et son horizon d'évaluation. Une horloge externe passée
+Chaque verdict réussi nomme sa tête, sa taille, son temps signé et son horizon d'évaluation. Le retour FAULT peut seulement fournir `state`, `fault`, `as_of`, `head` ; les consommateurs ne doivent pas présumer les autres champs. Le rapport ops actuel doit encore être adapté à cette variante. Une horloge externe passée
 par `required_at` révèle l'expiration des preuves même si les témoins restent silencieux, sans créer de droit.
 Les états normaux sont PROVEN, IN_PROGRESS et ESCALATED ; FAULT reste un quatrième résultat d'exécution observable.
 
@@ -93,3 +93,11 @@ Une route de réparation est seulement une possibilité structurelle typée. Ell
 agent capable, ni ses permissions, ni un adaptateur implémenté, ni la réussite de la réparation. Une signature ne
 prouve pas la vérité d'une source. Une escalade enregistrée ne prouve ni notification ni réponse humaine.
 Il n'y a pas de preuve formelle de convergence, de certification réglementaire ou de consensus multi-hôte.
+
+## État des intégrations M2
+
+`remediate` porte maintenant `area`, `item`, `base`, `head` : l'effet proposé est une transition exacte, avec faits `tests` et `reproduced` ou `review`. Les recettes, le runner, le scanner et les commandes sont décrits dans [M2.md](M2.md). Leurs producteurs de faits restent des dépendances de sûreté du système, même hors du comptage local de la TCB.
+
+Le manifeste couvre bootstrap, tcb, adaptateurs et identité de runtime ; il ne couvre pas tous les modules ops. Le chemin `python -m ops` importe encore du code avant vérification et n'établit pas le contrôle physique des credentials. Les témoins logiques du workflow ne démontrent pas deux domaines indépendants. La persistance Git de l'état après effet ne remplace pas un service d'admission durable.
+
+La reprise du tour 2 ne corrige pas toutes les limites de la revue V7 : delta obligatoire des restrictions, seconde évaluation de flag/prudence, horloge ops plafonnée, contrats de preuve, non-application définitive et unité du travail restent notamment ouverts. La qualification de l'ensemble des garanties exige une nouvelle revue, pas uniquement `make check`.

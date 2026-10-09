@@ -1,6 +1,6 @@
 # Revue adversariale de M2 : scripts de reproduction
 
-Chaque tour a été mené par un agent indépendant, qui n'avait pas écrit le code relu. Ses scripts sont conservés tels qu'il les a écrits, contre l'état du code **à ce tour**. Ils ne suivent pas les API actuelles et ne font pas partie de `make test`. Les règles qui en découlent sont des propriétés dans `tests/test_m2_review.py`.
+Chaque tour a été mené par un agent indépendant, qui n'avait pas écrit le code relu. Ses scripts sont conservés tels qu'il les a écrits, contre l'état du code **à ce tour**. Ils ne suivent pas les API actuelles et ne font pas partie de `make test`. Des règles qui en découlent sont testées dans `tests/test_m2_review.py`; cela ne signifie pas que tous les constats et contrats de production sont résolus.
 
 Le contexte de chaque tour est dans `docs/M2.md`, section « Registre des tours ».
 
@@ -11,7 +11,7 @@ Le contexte de chaque tour est dans `docs/M2.md`, section « Registre des tours 
 
 ## Exécution
 
-Ce conteneur ne peut pas activer seccomp. On lance donc les scripts sur une copie où `lock_down` est neutralisé. Les scripts de `round1/` importent `harness.py`, qui est dans le même dossier.
+L'environnement de la revue historique ne pouvait pas activer seccomp. Les auteurs avaient donc lancé les scripts sur une copie où `lock_down` était neutralisé. Ce contournement historique n'est pas une procédure de validation de la version actuelle, dont `make check` garde le confinement actif. Les scripts de `round1/` importent `harness.py`, qui est dans le même dossier.
 
 ```sh
 PYTHONPATH=<copie>:<copie>/tests python3 validation/review-m2/round2/r1_review_binds_wrong_head.py

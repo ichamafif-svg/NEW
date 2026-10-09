@@ -1,7 +1,7 @@
 """The maintenance agent's craft: turn a measured gap into one commit, as data.
 
 Principle (cause 3 of the M2 review): what the model writes is hostile data. It never reaches a working tree, a git
-process or a shell: the commit is built through the GitHub API (world.propose) from a map {path: text} whose paths
+process or a shell: the commit is built through the GitHub API (world.commit) from a map {path: text} whose paths
 must belong to the target's declared write scope. Whether the commit may then be merged is not decided here but by
 the law, from facts an independent scanner observes about that exact commit."""
 from __future__ import annotations
@@ -10,7 +10,6 @@ import json
 import os
 import re
 import urllib.request
-import uuid
 from pathlib import Path
 
 from . import probes
@@ -18,7 +17,7 @@ from . import probes
 API = "https://api.anthropic.com/v1/messages"
 MODEL = os.environ.get("STANDARD_AGENT_MODEL", "claude-sonnet-5-5")
 SEGMENT = r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,99}"
-SOURCE = rf"(?!tests/)({SEGMENT}/){{0,8}}{SEGMENT}\.(py|txt|toml|cfg|json|md)"
+SOURCE = rf"(?!tests/)(?!requirements)({SEGMENT}/){{0,8}}{SEGMENT}\.(py|md)"
 DEPENDENCIES = r"requirements[A-Za-z0-9_.-]*\.txt|sbom\.json"
 # target -> paths a repair of it may write. Nothing else is ever proposed, whatever the model answers.
 WRITE_SCOPE = {
@@ -65,21 +64,14 @@ def context(repo: Path, limit=120_000) -> str:
 
 
 def craft(repo: Path, target: str, status: str, key: str) -> dict:
-    """{title, body, files} for one repair; files are checked against the write scope before anything leaves."""
-    if target == "sbom":                                  # deterministic: no model is needed to list pinned packages
-        files = {"sbom.json": json.dumps(probes.sbom_document(repo), indent=2) + "\n"}
-        title, body = "Regenerate the SBOM", "sbom.json lists exactly the pinned dependencies."
-    else:
-        reply = claude(f"Repository files follow. Maintenance target `{target}` reads `{status}`.\nTask: {TASK[target]}"
-                       f"\nReturn JSON {{\"title\": str, \"body\": str, \"files\": {{path: full new content}}}}, "
-                       f"changing as few files as possible.\n\n{context(repo)}", key)
-        files = reply.get("files") if isinstance(reply, dict) else None
-        title, body = str(reply.get("title", ""))[:200], str(reply.get("body", ""))[:4000]
+    """{title, body, files} for one repair that needs judgment; files are checked against the write scope before
+    anything leaves. Deterministic repairs are recipes (ops/recipes.py), not crafts."""
+    reply = claude(f"Repository files follow. Maintenance target `{target}` reads `{status}`.\nTask: {TASK[target]}"
+                   f"\nReturn JSON {{\"title\": str, \"body\": str, \"files\": {{path: full new content}}}}, "
+                   f"changing as few files as possible.\n\n{context(repo)}", key)
+    files = reply.get("files") if isinstance(reply, dict) else None
     if (not isinstance(files, dict) or not files
             or not all(in_scope(target, p) and isinstance(t, str) for p, t in files.items())):
         raise ValueError(f"the repair of {target} leaves its write scope")
-    return {"title": title or f"Remediate {target}", "body": body, "files": files}
-
-
-def branch_for(area: str, item: str) -> str:
-    return f"standard/{area}/{item}/{uuid.uuid4().hex[:8]}"
+    return {"title": str(reply.get("title", ""))[:200] or f"Remediate {target}",
+            "body": str(reply.get("body", ""))[:4000], "files": files}

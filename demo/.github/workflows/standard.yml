@@ -1,146 +1,326 @@
-# Standard maintenance cycle: one job per role, each with only its role's keys and tokens.
-#   scan    scanner + witnesses  measure main; observe declared commits; reconcile and prove effects
-#   agent   agent                ask the law for ready commits; craft and declare at most one repair (Claude)
-#   guard   guard                merge the exact judged commit through the guard App, the only one allowed on main
-#   report  none                 health, work plan, compliance dossier
-# The journal and the pins travel on two branches of this repository. The genesis pin is an admin-only variable, so
-# a replaced journal is refused. Role secrets live in environments only main may use: no pull request reads them.
+# Demonstration only: Git state exports are not production durability.
+# Adopt an immutable STANDARD_REF and a fresh genesis for these floors.
+# Instrument jobs receive no Standard signing keys and no write credentials.
 name: standard
-on:
+'on':
   schedule:
-    - cron: "17 */6 * * *"
-  workflow_dispatch:
+  - cron: 17 */6 * * *
+  workflow_dispatch: null
 concurrency:
   group: standard
   cancel-in-progress: false
 permissions: {}
 env:
   STANDARD_REPO: ichamafif-svg/NEW
-  STANDARD_REF: STANDARD_REF_PLACEHOLDER
+  STANDARD_REF: ${{ vars.STANDARD_REF }}
   STANDARD_GENESIS: ${{ vars.STANDARD_GENESIS }}
   PYTHONPATH: ${{ github.workspace }}/standard
   REPO: ${{ github.repository }}
 jobs:
-  scan:
+  instruments:
     runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: false
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
+
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - name: Measure without signing keys
+      run: python -m ops measure --state state --repo "$REPO" --checkout repo --measured measured.json
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+    - name: Test without signing keys or write credentials
+      run: python -m ops test --state state --checkout repo --tested tested.json
+    - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+      with:
+        name: instruments
+        path: 'measured.json
+
+          tested.json'
+        if-no-files-found: error
+  witness-scan:
+    needs: instruments
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: standard-witness
+    permissions:
+      contents: write
+    steps:
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: true
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
+
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - run: python -m ops witness --state state
+      env:
+        STANDARD_KEYS: ${{ secrets.WITNESS_KEYS }}
+    - if: always() && steps.load.outcome == 'success'
+      run: standard/ops/state.sh save repo state "standard witness"
+  scan:
+    needs:
+    - instruments
+    - witness-scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     environment: standard-scan
     permissions:
       contents: write
-      pull-requests: read
-      actions: read
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          fetch-depth: 0
-          path: repo
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          repository: ${{ env.STANDARD_REPO }}
-          ref: ${{ env.STANDARD_REF }}
-          path: standard
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: "3.12"
-      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4
-      - run: standard/ops/state.sh load repo state
-      - run: python -m ops scan --state state --repo "$REPO" --checkout repo
-        env:
-          STANDARD_KEYS: ${{ secrets.SCANNER_KEYS }}
-          GITHUB_TOKEN: ${{ github.token }}
-      - if: always()
-        run: standard/ops/state.sh save repo state "standard scan"
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: true
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
 
-  agent:
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+      with:
+        name: instruments
+        path: .
+    - run: python -m ops scan --state state --repo "$REPO" --measured measured.json --tested tested.json
+      env:
+        STANDARD_KEYS: ${{ secrets.SCANNER_KEYS }}
+        GITHUB_TOKEN: ${{ github.token }}
+    - if: always() && steps.load.outcome == 'success'
+      run: standard/ops/state.sh save repo state "standard scan"
+  witness-agent:
     needs: scan
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: standard-witness
+    permissions:
+      contents: write
+    steps:
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: true
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
+
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - run: python -m ops witness --state state
+      env:
+        STANDARD_KEYS: ${{ secrets.WITNESS_KEYS }}
+    - if: always() && steps.load.outcome == 'success'
+      run: standard/ops/state.sh save repo state "standard witness"
+  agent:
+    needs: witness-agent
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
     environment: standard-agent
     permissions:
       contents: write
     steps:
-      - id: app
-        uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b # v2.1.1
-        with:
-          app-id: ${{ vars.AGENT_APP_ID }}
-          private-key: ${{ secrets.AGENT_APP_KEY }}
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          fetch-depth: 0
-          path: repo
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          repository: ${{ env.STANDARD_REPO }}
-          ref: ${{ env.STANDARD_REF }}
-          path: standard
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: "3.12"
-      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
-      - run: standard/ops/state.sh load repo state
-      - run: python -m ops agent --state state --repo "$REPO" --checkout repo
-        env:
-          STANDARD_KEYS: ${{ secrets.AGENT_KEYS }}
-          AGENT_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      - if: always()
-        run: standard/ops/state.sh save repo state "standard agent"
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: true
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
 
-  guard:
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - id: app
+      uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b
+      with:
+        app-id: ${{ vars.AGENT_APP_ID }}
+        private-key: ${{ secrets.AGENT_APP_KEY }}
+    - run: python -m ops agent --state state --repo "$REPO" --checkout repo
+      env:
+        STANDARD_KEYS: ${{ secrets.AGENT_KEYS }}
+        AGENT_GITHUB_TOKEN: ${{ steps.app.outputs.token }}
+        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    - if: always() && steps.load.outcome == 'success'
+      run: standard/ops/state.sh save repo state "standard agent"
+  witness-guard:
     needs: agent
     runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: standard-witness
+    permissions:
+      contents: write
+    steps:
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: true
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
+
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - run: python -m ops witness --state state
+      env:
+        STANDARD_KEYS: ${{ secrets.WITNESS_KEYS }}
+    - if: always() && steps.load.outcome == 'success'
+      run: standard/ops/state.sh save repo state "standard witness"
+  guard:
+    needs: witness-guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     environment: standard-guard
     permissions:
       contents: write
     steps:
-      - id: app
-        uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b # v2.1.1
-        with:
-          app-id: ${{ vars.GUARD_APP_ID }}
-          private-key: ${{ secrets.GUARD_APP_KEY }}
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          fetch-depth: 0
-          path: repo
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          repository: ${{ env.STANDARD_REPO }}
-          ref: ${{ env.STANDARD_REF }}
-          path: standard
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: "3.12"
-      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
-      - run: standard/ops/state.sh load repo state
-      - run: python -m ops guard --state state --repo "$REPO"
-        env:
-          STANDARD_KEYS: ${{ secrets.GUARD_KEYS }}
-          MERGE_TOKEN: ${{ steps.app.outputs.token }}
-      - if: always()
-        run: standard/ops/state.sh save repo state "standard guard"
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: true
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
 
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - id: app
+      uses: actions/create-github-app-token@a8d616148505b5069dccd32f177bb87d7f39123b
+      with:
+        app-id: ${{ vars.GUARD_APP_ID }}
+        private-key: ${{ secrets.GUARD_APP_KEY }}
+    - run: python -m ops guard --state state --repo "$REPO"
+      env:
+        STANDARD_KEYS: ${{ secrets.GUARD_KEYS }}
+        MERGE_TOKEN: ${{ steps.app.outputs.token }}
+    - if: always() && steps.load.outcome == 'success'
+      run: standard/ops/state.sh save repo state "standard guard"
   report:
-    needs: guard
+    if: always()
+    needs:
+    - scan
+    - agent
+    - guard
     runs-on: ubuntu-24.04
+    timeout-minutes: 15
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          fetch-depth: 0
-          path: repo
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
-        with:
-          repository: ${{ env.STANDARD_REPO }}
-          ref: ${{ env.STANDARD_REF }}
-          path: standard
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
-        with:
-          python-version: "3.12"
-      - run: sudo apt-get install -y libseccomp2 >/dev/null && pip install -q -r standard/requirements.txt
-      - run: standard/ops/state.sh load repo state
-      - run: python -m ops report --state state --out state/report
-      - if: always()
-        run: standard/ops/state.sh save repo state "standard report"
+    - name: Require an adopted release
+      run: '[[ "$STANDARD_REF" =~ ^[0-9a-f]{40}$ ]] && test -n "$STANDARD_GENESIS"'
+      shell: bash
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        fetch-depth: 0
+        path: repo
+        persist-credentials: true
+    - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      with:
+        repository: ${{ env.STANDARD_REPO }}
+        ref: ${{ env.STANDARD_REF }}
+        path: standard
+        persist-credentials: false
+    - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      with:
+        python-version: '3.12'
+    - run: 'sudo apt-get update -qq && sudo apt-get install -y libseccomp2 python3-venv >/dev/null
+
+        pip install -q -r standard/requirements.txt pip-audit==2.10.1 bandit==1.9.4'
+    - id: load
+      run: standard/ops/state.sh load repo state
+    - run: python -m ops report --state state --out state/report
+    - if: always() && steps.load.outcome == 'success'
+      run: standard/ops/state.sh save repo state "standard report"

@@ -1,13 +1,9 @@
 # standard-demo
 
-Un petit service de factures, volontairement imparfait, maintenu par des agents sous la loi signée de
-[Standard](https://github.com/ichamafif-svg/NEW).
+Service de factures volontairement imparfait : dépendances anciennes, MD5, secret en dur, actions non épinglées et SBOM absent. Il sert de sujet de maintenance ; il n'est pas un service à déployer comme référence de sécurité.
 
-Au départ :
-- dépendances vulnérables et en retard d'une version majeure ;
-- un hachage MD5 pour les mots de passe et une clé d'API en dur ;
-- des actions GitHub non épinglées et aucun SBOM.
+Le workflow fourni suit le cycle M2 actuel : instruments sans clés Standard → checkpoint → scan signé → checkpoint → agent → checkpoint → guard → rapport. L'agent prépare une transition `base → head`; il n'ouvre plus de PR. Les recettes reproductibles avec tests verts peuvent satisfaire la condition autonome ; les autres changements demandent une revue signée `review --head SHA`.
 
-Le workflow `standard` tourne toutes les six heures. Le scanner mesure, l'agent ouvre des pull requests, le guard
-fusionne le commit exact que la loi admet, et le dossier de conformité est publié sur la branche `standard-journal`
-(`report/dossier.html`).
+Pour l'utiliser dans un dépôt séparé, adopter `STANDARD_REF` (SHA de release) et une nouvelle `STANDARD_GENESIS`, créer les environnements et leurs secrets/Apps selon [docs/M2.md](../docs/M2.md), puis amorcer l'état signé. Le workflow refuse un pin absent ou non immuable. La programmation toutes les six heures ne démontre pas que ces paramètres sont configurés ni que le fournisseur autorise l'effet.
+
+Les branches `standard-journal` et `standard-pins` transportent l'état et le dossier (`report/dossier.html`). Leur stockage après les effets reste une limite de durabilité ; le workflow n'est pas une architecture de production. Les protections guard-only, le temps, l'egress et le confinement du runner restent à établir.

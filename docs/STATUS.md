@@ -6,8 +6,8 @@
 
 - **Produit visé** : service géré, AI-first, destiné à construire puis surtout maintenir des dépôts sous une loi explicite.
 - **Socle existant** : prototype Python V7 de la TCB, avec admission déterministe, loi composée FLOOR-0 / floors / loi client, journal signé et épinglé, second vérificateur restrictif, réservation et contrôle du passage à l'effet, projection de redevabilité.
-- **M2** : outillage de démonstration et de projection de maintenance, non équivalent à un service autonome déployé et validé.
-- **Refonte** : `docs/COEUR-STABLE.md` formule les contrats cibles après les 18 constats V7/M2. **Proposé, non implémenté** ; les constats ne sont pas clos par la documentation.
+- **M2 actif** : refonte du tour 2 intégrée, transitions `base → head`, recettes reproductibles, instruments de mesure/tests séparés et retrait des propositions rejetées. L’outillage reste un prototype de démonstration, non équivalent à un service autonome déployé et validé.
+- **Refonte** : `docs/COEUR-STABLE.md` formule les contrats cibles après les 18 constats V7/M2. **Cible partiellement réalisée** ; l’intégration du tour 2 ne clôt pas les 18 constats.
 - **Production** : aucune garantie de contrôle exclusif d'un fournisseur réel, de consensus multi-hôte, de certification réglementaire ou de preuve formelle n'est établie par le seul dépôt.
 
 ## Architecture : deux périmètres à ne pas confondre
@@ -32,7 +32,7 @@ Le cœur devrait gouverner la relation **exigence — sujet — preuve — oblig
 
 `tcb-budget.json` définit trois **plafonds**, pas des métriques d'utilisation actuelle : sûreté **2 942**, restrictif seul **537**, visibilité **500**, soit **3 979** lignes physiques de plafonds cumulés. Les adaptateurs déployés capables d'effets appartiennent au périmètre de confiance, quel que soit leur dossier.
 
-`validation/summary.json` est un **instantané historique V6** (3 244 lignes, 121 tests, statut bloqué). Il ne prouve pas le budget, les tests ni le statut courant de V7/M2. Pour une mesure actuelle, exécuter `make check` sur le commit évalué et archiver les sorties avec le SHA.
+`validation/summary.json` décrit la validation locale de cette intégration : **156 tests réussis**, sûreté **2 473 / 2 942**, restrictif seul **537 / 537**, visibilité **500 / 500**, soit **3 510** lignes mesurées. Le manifeste et le runtime évalué y sont nommés. Ces résultats ne constituent pas une validation fournisseur ou production. L’ancien instantané V6 est conservé dans `validation/summary-v6.json`.
 
 ## Sources documentaires
 
@@ -41,6 +41,6 @@ Le cœur devrait gouverner la relation **exigence — sujet — preuve — oblig
 - `docs/TCB.md` : garanties et limites de la frontière de confiance.
 - `docs/COEUR-STABLE.md` : cible architecturale et portes de validation des 18 constats.
 - `docs/M2.md` : scénario M2, composants et limites de la démonstration.
-- `docs/REVUE-V6.md`, `docs/ANALYSE-V6.md` et `validation/summary.json` : archives de contexte V6, **non** statut de la branche main actuelle.
+- `docs/REVUE-V6.md`, `docs/ANALYSE-V6.md` et `validation/summary-v6.json` : archives de contexte V6, **non** statut de la branche main actuelle.
 
-Aucune mise à jour documentaire ne modifie la release adoptée, la genèse, les journaux, les preuves ni les autorisations.
+Les documents ne constituent pas une adoption. La refonte active change les floors et les arguments de `remediate` : une nouvelle release et une nouvelle genèse doivent être adoptées ; les journaux et capacités PR précédents ne sont pas réutilisables.

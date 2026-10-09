@@ -12,7 +12,7 @@ Le travail vient de la différence entre les exigences applicables et les preuve
 | Floors | Exigences communes et mesurables | Même adoption de release ; le client ne peut pas les affaiblir |
 | Loi client | Identités, contexte, exigences supplémentaires et resserrements | Quorum, délai attesté, activation explicite dans le journal |
 
-La V6 ne migre pas une release dans un journal existant. Une nouvelle genèse demande une sélection externe du code et de la loi. Une mise à jour de Standard ne remplace pas automatiquement ce choix. Modifier une loi client utilise le protocole gouverné même quand la modification envisagée resserre seulement les exigences.
+La version actuelle ne migre pas une release dans un journal existant. Une nouvelle genèse demande une sélection externe du code et de la loi. Une mise à jour de Standard ne remplace pas automatiquement ce choix. Modifier une loi client utilise le protocole gouverné même quand la modification envisagée resserre seulement les exigences.
 
 ## Boucle produit
 
@@ -24,18 +24,20 @@ La V6 ne migre pas une release dans un journal existant. Une nouvelle genèse de
 6. Le passage physique réserve, rejuge et envoie l'effet typé.
 7. Une source indépendante atteste le résultat ; seule la preuve admise peut satisfaire le contrat de clôture.
 
+M2 réalise une partie de cette boucle sur des transitions `base → head` : tests de la base, recettes reproductibles ou revue du head, réservation et fast-forward. Les cinq contrats complets de `COEUR-STABLE.md` restent la cible ; ils ne sont pas tous réalisés.
+
 Les étapes de préparation, de sélection du travail et de présentation peuvent être riches et faillibles. Elles ne contournent jamais l'admission. La construction d'un dépôt vide utilise les mêmes contrôles : BUILD ne donne pas carte blanche. Le passage à RUN se caractérise par les cibles et les preuves de préparation, pas par une exemption générale de sécurité.
 
 ## Frontières
 
-| Couche | Autorité permise | État V6 |
+| Couche | Autorité permise | État actuel |
 |---|---|---|
 | Noyau | Jugement déterministe et delta d'état ; aucune action physique | Présent ; initialisation du digest et caches distincts du jugement |
 | Intégrité | Conserver le préfixe admis et ses épingles ; bloquer un désaccord | Présent |
-| Effets | Au plus une tentative locale par réservation, requête canonique rejugée | Présent ; adaptateurs réels absents |
+| Effets | Au plus une tentative locale par réservation, requête canonique rejugée | Présent ; adaptateur GitHub fast-forward, garanties de déploiement conditionnelles |
 | Redevabilité | Lire, dériver et exposer des preuves manquantes | Présente et confinée ; langage fini actuel |
-| Maintenance | Proposer du travail ou une revue humaine | Projection en lecture seule dans `maintenance/` |
-| Sources, agents et interface | Préparer des propositions et les faire signer par les identités autorisées | Pas de service complet livré |
+| Maintenance | Proposer du travail ou une revue humaine | Projection en lecture seule dans `maintenance/`, cycle opérationnel M2 dans `ops/` |
+| Sources, agents et interface | Préparer des propositions et les faire signer par les identités autorisées | Recettes, instruments, agent et workflow de démonstration ; service géré complet non livré |
 
 `maintenance/` n'est pas importé par la TCB. Il ne reçoit ni journal mutable, ni signataire, ni credential. Sa sortie n'est pas une preuve et ne ferme rien. Il peut être remplacé sans changer le code épinglé. Un plan erroné peut mal prioriser ou masquer du travail dans une interface : la vue canonique reste celle de l'auditeur épinglé et doit être accessible séparément.
 
@@ -52,7 +54,7 @@ CAP, OBL, NIV, PROV, TYPE et HIST désignent les primitives du modèle. Leur suf
 
 ## Capacités à construire hors du cœur
 
-La V6 fournit un floor de couverture d'inventaire et de preuve des effets, pas un ensemble complet de garanties SRE, sécurité et conformité. Les cibles CI, vulnérabilités, dépendances et secrets doivent être déclarées, mesurées et reliées à des sources et réparations réelles. La conformité réglementaire ne se déduit pas d'un simple statut PROVEN.
+Les floors actuels déclarent inventaire, huit mesures techniques, protection de main, lignée et attestations organisationnelles. M2 fournit des sondes Python, des recettes et un adaptateur GitHub ; leur présence ne démontre pas des garanties complètes SRE, sécurité et conformité. La conformité réglementaire ne se déduit pas d'un simple statut PROVEN.
 
 Les intégrations doivent reprendre la CI, l'IAM, les scanners et les procédures du dépôt, exprimer leur rôle dans la loi et vérifier leurs contrats. Elles doivent rendre visible ce qui manque. Toute intégration capable d'un effet physique reste dans le périmètre de confiance et dans le budget ; déplacer un adaptateur hors de `tcb/` ne le rend pas non fiable.
 
@@ -64,4 +66,4 @@ L'interface met en avant le périmètre maintenu, les preuves manquantes, les é
 
 ## Critère de prochaine refonte
 
-Budget inchangé : 2 942 lignes. La V6 actuelle en compte 3 244 et reste bloquée. Toute nouvelle abstraction doit conserver les scénarios adversariaux exécutables et déclarer les dépendances communes. Les règles métier se développent par déclarations et intégrations ; les mécanismes de confiance ne doivent pas croître au même rythme. Aucun comptage artificiel ni déplacement de code de confiance ne constitue une réduction.
+Le plafond de sûreté reste 2 942 lignes, avec deux budgets distincts de 537 lignes restrictives et 500 de visibilité. Le résultat courant est dans `validation/summary.json`; les 3 244 lignes et le blocage V6 sont historiques. Toute nouvelle abstraction doit conserver les scénarios adversariaux exécutables et déclarer les dépendances communes. Les règles métier se développent par déclarations et intégrations ; les mécanismes de confiance ne doivent pas croître au même rythme. Aucun comptage artificiel ni déplacement de code de confiance ne constitue une réduction.

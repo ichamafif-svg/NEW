@@ -2,8 +2,8 @@
 
 Proposition d'architecture issue des 18 constats de la revue V7/M2.
 Base examinée : `9b1fe507f718ef49c624f940c2d1f14ca08809d4`.
-Statut : **contrats proposés, non implémentés**. Ce document ne clôt aucun constat.
-Il ne change ni la release, ni la loi, ni les journaux existants.
+Statut : **architecture cible, partiellement réalisée**. Ce document ne clôt aucun constat.
+Le texte reste une spécification. La reprise du tour 2 modifie désormais les floors du code actif et requiert une nouvelle genèse ; son état réel est dans [M2.md](M2.md).
 
 ## Décision centrale
 
@@ -443,8 +443,7 @@ se transforme pas en hypothèse silencieuse pour permettre un départ.
 ## État de cette livraison
 
 Cette proposition corrige le **modèle attendu**. Elle fournit une correspondance
-complète avec les 18 constats et des critères de réfutation. Le comportement
-du commit examiné reste inchangé ; ses constats restent ouverts. Le prochain
+complète avec les 18 constats et des critères de réfutation. Le commit examiné reste la référence historique de ces constats. La reprise de la refonte M2 apporte des mécanismes de sujet, reproduction et retrait ; elle ne réalise pas entièrement les cinq contrats et ne vaut pas clôture globale des constats. Le prochain
 travail d'implémentation doit s'évaluer contre ces contrats, et non contre le
 nombre de constats marqués comme patchés.
 

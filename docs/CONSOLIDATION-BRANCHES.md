@@ -1,5 +1,7 @@
 # Consolidation des branches — 9 octobre 2026
 
+> Ce document décrit la consolidation initiale, qui avait conservé le WIP sans l'activer. Après correction de ce choix, la refonte `e6ec30e` est reprise dans le code actif avec alignement des tests, dépendances, workflow et docs. Les deux anciennes branches de développement ont été supprimées ; leurs commits restent accessibles. Voir [M2.md](M2.md) et la validation courante. Les constats ci-dessous expliquent les points d'intégration alors manquants ; ils ne sont pas tous des limites encore actuelles.
+
 ## Périmètre examiné
 
 Inventaire distant complet avant consolidation : trois branches, sans autre
@@ -77,3 +79,9 @@ dans le runtime de `main`.
 Cette consolidation ne ferme aucun constat de sûreté de la revue V7/M2 et ne
 revendique pas une mise en production. Elle fournit une seule branche active,
 les preuves de revue et le travail expérimental conservé pour la refonte.
+
+## Reprise après consolidation
+
+La reprise rétablit les modules ops, l'adaptateur, les floors et les tests du tour 2. Les tests de contrat utilisent désormais `base/head` et les faits `tests/reproduced`. PyYAML et packaging sont déclarés. Le workflow produit les mesures/tests avant signature, sépare les jobs témoins et ne fournit pas de clé Standard aux instruments. Une transition retirée ne peut plus être rouverte par la recréation du même head.
+
+Ces corrections lèvent les incohérences d'intégration identifiées dans la consolidation initiale. Les limites de modes Git, du runner, de compare-and-swap fournisseur, de temps et de preuves restent explicites dans M2 ; elles ne sont pas déclarées résolues. Le manifeste est régénéré pour la nouvelle identité de code ; aucune ancienne genèse n'est migrée implicitement.

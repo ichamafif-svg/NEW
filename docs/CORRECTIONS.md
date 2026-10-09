@@ -1,7 +1,9 @@
 # V6 : corrections vérifiées de la fusion
 
+> Archive historique V6. Les chiffres, statuts de release et interfaces ci-dessous décrivent cette revue, pas le code actif. État courant : [README](../README.md), [M2](M2.md), [TCB](TCB.md) et [validation](../validation/summary.json).
+
 La source jointe est V5 ; aucune V6 antérieure n'a été supposée ou utilisée. La seconde base est notre V0.
-Le bilan, les choix et les limites sont dans `ANALYSE-V6.md` ; les résultats dans `validation/summary.json`.
+Le bilan, les choix et les limites sont dans `ANALYSE-V6.md` ; les résultats dans `validation/summary-v6.json`.
 
 - Veto, dépassement gouverné et k+2 humains de V0 conservés.
 - Floors, changement de loi par activation et redevabilité injectée de V5 conservés.

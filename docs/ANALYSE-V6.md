@@ -1,11 +1,13 @@
 # Analyse de la fusion V6
 
+> Archive historique V6. Les chiffres, statuts de release et interfaces ci-dessous décrivent cette revue, pas le code actif. État courant : [README](../README.md), [M2](M2.md), [TCB](TCB.md) et [validation](../validation/summary.json).
+
 ## Conclusion et statut
 
 V6 fusionne notre V0 et l'archive jointe `tcb-v5.zip`. Aucun contenu d'une V6 externe non fournie n'a été supposé.
 La fusion conserve les protections de V0, reprend les lois en couches et la redevabilité injectée de V5, puis corrige
 les changements de contrat et le départ physique. Le bilan exact des tests, du code et du budget est dans
-`validation/summary.json`. Les scénarios adversariaux supplémentaires sont exécutables dans `tests/test_v6.py`.
+`validation/summary-v6.json`. Les scénarios adversariaux supplémentaires sont exécutables dans `tests/test_v6.py`.
 
 Cette livraison reste un prototype à examiner. Le plafond historique de 2 942 lignes physiques n'est pas atteint
 et n'a pas été relevé : le contrôle de budget échoue, même si les tests fonctionnels passent. Le résultat ne doit
