@@ -41,3 +41,7 @@ Chaque cellule porte : `NOT_STARTED | TESTED_LOCAL | TESTED_MULTI_PROCESS | TEST
 ## Mise en garde — recherche III
 
 La campagne III cible les lacunes empiriques de la phase II mais n'atteint pas les niveaux D4–D7 physiques/distribués. Les critères de clôture restent **non remplis**, quelle que soit la couleur de la CI. Interpréter les rapports avec [l'arbre vivant](EXPERIMENT_TREE_DEPTH_COVERAGE.md) et [la synthèse empirique](findings/P3_LAB_STATUS.md), sans transformer les findings en architecture.
+
+## IV-D — complément aux critères de sortie
+
+La validation du scope fonctionnel requiert des réponses satisfaisantes pour G08 (obligation stable sous remplacement de proposition et changement de cible) et G16 (liveness conditionnelle, possibilité d'escalade sans agent souverain). Les scénarios [IV-D G08/G16](findings/P3_G08_G16_CAMPAIGN.md) sont exploratoires et ne suffisent pas, seuls, à la clôture.
