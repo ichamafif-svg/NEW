@@ -29,8 +29,16 @@ for filename,desc in names.items():
     try:
         d=json.loads(path.read_text())
         cases=d.get("attacks",d.get("experiments",d.get("observations",[])))
-        flagged=[str(x.get("id","?")) for x in cases if x.get("status",x.get("outcome")) in
-                 {"INCONCLUSIVE","CONFIRMED","VIOLATION_OBSERVED","error"}]
+        flagged=[]
+        for x in cases:
+            status=x.get("status",x.get("outcome"))
+            evidence=x.get("evidence",x.get("observation",{}))
+            broken=isinstance(evidence,dict) and (
+                evidence.get("historic_assertions_hold") is False or
+                (isinstance(evidence.get("historic_rule6_assertions"),dict) and
+                 not all(evidence["historic_rule6_assertions"].values())))
+            if status in {"INCONCLUSIVE","CONFIRMED","VIOLATION_OBSERVED","error"} or broken:
+                flagged.append(str(x.get("id","?"))+(" (historical mismatch)" if broken else ""))
         rows.append((desc,"PARSED",len(cases),len(flagged),", ".join(flagged[:25]) or "none"))
     except Exception:
         rows.append((desc,"INVALID_JSON",0,0,"unreadable"))
@@ -47,7 +55,7 @@ lines=["# Standard TCB - automatic CI execution register","",
        "|---|---|---:|---:|---|"]
 for row in rows:
     lines.append("| "+" | ".join(map(cell,row))+" |")
-lines+=["","Flagged means inconclusive, violation observed, or reported error. No artifact does not mean PASS.","",
+lines+=["","Flagged includes inconclusive, violation/error and OBSERVED scenarios diverging from a historical assertion. A green CI job can contain a scientific finding. No artifact does not mean PASS.","",
         "## Repository workflow history (last 100 runs)","",
         "| Workflow | Run | Branch | Conclusion | SHA |",
         "|---|---|---|---|---|"]
