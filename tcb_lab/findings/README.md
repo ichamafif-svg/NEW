@@ -26,3 +26,7 @@ Source vivante des runs, dont les rouges : [registre Actions #2](https://github.
 ## Statut de l'étape
 
 **Phase 3 : ACTIVE.** Pas de pourcentage artificiel d'achèvement, pas de déclaration « béton ». La prochaine action se déduit des trous expérimentaux dans [P3_DEPTH_COVERAGE_BACKLOG.md](P3_DEPTH_COVERAGE_BACKLOG.md).
+
+## Première récolte des trois priorités
+
+Lire [P3_PRIORITY_FIRST_RESULTS.md](P3_PRIORITY_FIRST_RESULTS.md) : les quatre témoins O1, quatre permutations d'effet E1 et trois expériences de preuve P1 ont été **observés dans des logs CI réels**. La réexécution du témoin rouge O1 à deux cycles donne cette fois les assertions satisfaites ; l'ancienne panne reste à expliquer. Le résultat le plus instructif sur P1 est la différence entre *signature sur bon sujet* et *vérité physique non attestée* ; sur E1, c'est la distinction entre `failed` et un effet vraiment non appliqué.
