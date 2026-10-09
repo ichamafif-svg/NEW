@@ -1,170 +1,125 @@
-# Phase 3 — Arbre expérimental : PROFONDEUR × COUVERTURE
+# Phase 3 — Arbre expérimental vivant : PROFONDEUR × COUVERTURE
 
-**Mandat strict : observation et nouvelles expériences, pas de refactoring, pas de choix d'abstraction, pas de changement du scope constitutionnel.** Le scope figé dans [SCOPE.md](SCOPE.md) sert de référentiel ; une lacune de connaissance engendre des *questions*, pas automatiquement un nouveau concept.
+**Version 3 (2026-10-09). Source de vérité du plan expérimental et de ses dépendances.** Le scope constitutionnel [SCOPE.md](SCOPE.md) est figé. Les résultats servent **seulement** à trouver les questions suivantes : ni choix d'abstraction, ni refactoring, ni modifications du noyau historique.
 
-## 1. Structure de l'arbre
+## 1. Principe : un arbre de connaissance, pas une liste de tests
 
-```text
-P3 : comprendre ce que la TCB fait, doit garantir et suppose
-├─ COUVERTURE — quels pouvoirs et frontières sont effectivement explorés ?
-│  ├─ A. Identité / autorité              G01 G02 G05 G14
-│  ├─ L. Loi / constitution              G03 G04 G14
-│  ├─ T. État / temps / historique        G04 G06 G11
-│  ├─ P. Preuves / indépendance          G07 G12 G13
-│  ├─ O. Obligations / continuité        G08 G13 G16
-│  ├─ E. Effets / fournisseurs           G02 G09 G10 G15
-│  ├─ B. Bootstrap / privilèges          G05 G11 G14 G15
-│  └─ R. Autonomie BUILD + RUN           G02 G07 G08 G09 G13 G16
-└─ PROFONDEUR — à chaque feuille de couverture :
-   D0 question exacte, oracle safety et oracle de progression, hypothèses
-   D1 test atomique / contrefactuel (+ témoin positif et négatif)
-   D2 composition de 2–3 responsabilités, deux ordres opposés
-   D3 séquence longue avec obligations et progression suivies dans le temps
-   D4 concurrence ordonnancée : point d'interruption avant/après chaque frontière
-   D5 panne / redémarrage / reprise / partition / rollback / délais
-   D6 frontière physique : autre processus, hôte, secret ou fournisseur
-   D7 adversaire adaptatif, oracle indépendant et réplication contradictoire
-```
+Une feuille suit toujours : **question falsifiable → hypothèses concurrentes → observations avec run+oracle → état de compréhension → expérience discriminante → nouveaux enfants**. Un test vert ne ferme pas une branche. Un résultat `OBSERVED` signifie mesuré, **pas sûr**. Une variation du résultat historique est un *finding* même si le workflow est vert.
 
-Un arbre n'est **pas** profond parce qu'il contient 500 mutations atomiques. Une feuille D1 ne couvre ni D5 ni D6. Inversement un test d'effet physique ne remplace pas l'audit des décisions exactes.
+Chaque nœud porte les champs : `id`, `parent`, `Gxx`, `responsibility`, `frontier`, `assumptions`, `safety_oracle`, `progress_oracle`, `competing_hypotheses`, `experiment_id`, `commit`, `run`, `actual_depth`, `status`, `what_would_falsify`, `children`. **Niveau exécuté ≠ niveau envisagé.** Les nœuds sans expérience sont `NOT_RUN`. Les expériences sans observation restent `CODED_NOT_OBSERVED`.
 
-## 2. Matrice de couverture, sous forme d'arbres falsifiables
+## 2. COUVERTURE — huit familles, seize garanties
 
-| Branche | Garanties | Ce que l'on veut comprendre | Oracle safety (violation cherchée) | Oracle autonomie/progrès | Extensions à attaquer |
-|---|---|---|---|---|---|
-| **A** Autorité et identité | G01 G02 G05 G14 | Quorum, delegation, revoke, freeze, rotation, separation physique | un seul acteur ouvre des droits; révocation contournée | agent habilité poursuit après refus hors scope | multi-clés, collusion, rotation, ancienne racine, recovery |
-| **L** Loi et changements | G03 G04 G14 | Floors, client law, compatibilité temporelle de contrats | ancienne loi permet un effet devenu interdit | nouvel intent valable aboutit après changement gouverné | proposition/activation entre token reservation et départ |
-| **T** Temps et historique | G04 G06 G11 | Horloges, checkpoint, antirollback, prefix signé | temps accorde un droit ou préfixe divergent accepté | progrès après recovery légitime et nouvelle ancre | clock skew, witness silence, restore journal/pins |
-| **P** Faits, preuves, indépendance | G07 G12 G13 | Sujet exact, méthode, couverture, fraîcheur, oracles | assertion fausse ou partielle autorise/ferme | preuve valide reste utilisable sans approbation superflue | signatures communes, false green, faux univers, oracle compromis |
-| **O** Obligations et redevabilité | G08 G13 G16 | Gap, dette continue, expiry, retry, repair, escalation | dette effacée, délai déplacé, fermeture sur faux succès | tentative échouée suivie de nouvelle réparation gouvernée | 100 renommages, CI flapping, downtime, multiples agents |
-| **E** Effets et fournisseurs | G02 G09 G10 G15 | Intent, token, reservation, egress, response, reconcile | double effet, mauvais endpoint, effet après restriction | effet unique possible lorsque toutes conditions vraies | timeout post-application, failover, concurrent guards, side channel |
-| **B** Bootstrap / domaines physiques | G05 G11 G14 G15 | Runtime, code pin, key custody, privileged writer, backups | run ancien privilégié, faux rollback, autre credential | restauration intègre sans god mode | 2 hosts, split-brain, credential leak, pin rollback |
-| **R** Autonomie globale BUILD/RUN | G02 G07 G08 G09 G13 G16 | Discover→gap→work→check→effect→verify→close | agent auto-valide ou agit hors loi | maintenance autonome continue sous contraintes | repo vide/mature, 2 agents, incident, scanner offline, policy conflicts |
-
-## 3. Développer chaque feuille selon les mêmes questions
-
-**D0 — Définir sans présumer.** Entrée et préfixe exacts ; capacités des attaquants, acteurs indépendants, ressources, effet attendu, point de confiance ; prédire explicitement *ce qui serait une violation* et *ce qui serait une impasse injustifiée*. Toujours noter si le problème exige une hypothèse externe.
-
-**D1 — Contrastes minimaux.** Candidat légitime, candidat identique avec un paramètre hostile, contrôle négatif et positif. Vérifier le refus/admission et la non-mutation après décision refusée.
-
-**D2 — Composition.** A puis B, B puis A. Exemples : token → revoke et revoke → token ; evidence → law change et law change → evidence ; freeze → retry et retry → freeze. Un refus conditionnel peut être attendu ; le consigner.
-
-**D3 — Durée.** Répéter les transitions d'un même *sujet* sur de nombreuses tentatives, pas seulement 80 sujets indépendants. Examiner obligation.opened/due, clôtures qualifiées, WorkItems échoués, nouvelles preuves et éventuelles escalades ; capter le préfixe et la dernière preuve après chaque étape.
-
-**D4 — Interleavings.** Injecter une pause avant/après : admission, pin, reservation, re-jugement, send, ACK, observation, reconciliation. Tester chaque permutation déterministe, sans déduire d'une race aléatoire un ordre prouvé.
-
-**D5 — Failles et reprise.** Kill entre deux écritures, horloge incohérente, disque plein, pin durable mais journal en retard, fournisseur appliqué mais ACK absent, scanner offline, quorum temporairement indisponible. Déterminer si le système *refuse*, *attend*, *escalade* ou *perd l'obligation*.
-
-**D6 — Physique.** Déplacer la deuxième instance sur un vrai autre hôte ou un autre domaine de panne. Vérifier les permissions d'egress et les chemins alternatifs : un test local SQLite et un faux fournisseur ne démontrent aucune exclusivité globale.
-
-**D7 — Contradiction indépendante.** Un deuxième instrument, une assertion externe au noyau, un adversaire qui change de stratégie à partir des refus observés. Reproduction du contre-exemple minimal et tests de non-trivialité (mutation délibérément dangereuse détectée).
-
-## 4. Sous-arbres prioritaires : déclencheur → embranchements
-
-### O1 — Réparation retirée mais cible encore dégradée (red test historique)
-
-```text
-red test_rule6_red_tests_withdraw_and_free_the_target
-├─ H1 : oracle / fixture inexact
-│  ├─ reproduire le même état avec une entrée contrôlée
-│  └─ varier uniquement le SHA ou l'identité du sujet
-├─ H2 : retrait correct, nouvelle proposition incorrecte
-│  ├─ 1 seul agent / 2 agents
-│  ├─ même cible / cible sœur / nouveau commit
-│  └─ ordre retrait→réobservation / réobservation→retrait
-├─ H3 : erreur de continuité d'obligation
-│  ├─ retrouver opened / due / subject avant et après retrait
-│  ├─ répéter 20 retraits, puis 100, observer dette et délais
-│  └─ introduire des preuves indépendantes contradictoires
-└─ H4 : arrêt volontaire par law ou restriction
-   ├─ contrôle positif avec permissions disponibles
-   └─ contrôle négatif sous freeze / revoke / budget épuisé
-```
-
-**Succès empirique :** comprendre précisément l'assertion qui échoue, avec un cas minimal et des témoins positifs/négatifs ; *pas* « rendre le test vert ».
-
-### E1 — Effet inconnu et retry automatique
-
-```text
-intent → token → réservation → envoi → ACK perdu
-├─ fournisseur n'a jamais reçu
-├─ fournisseur a appliqué entièrement
-├─ fournisseur a appliqué partiellement
-└─ fournisseur répond tardivement
-   ├─ même guard, même journal
-   ├─ autre guard, journal partagé
-   ├─ autre hôte, journal/credentials dissociés
-   └─ revoke/freeze/expiration pendant incertitude
-```
-
-À chaque feuille : *nombre exact d'egress*, état durable de la dette, décision de retry, contrôle de progrès légitime après réconciliation.
-
-### P1 — Preuve signé correctement mais trompeuse
-
-```text
-preuve signée sur sujet X
-├─ faux contenu (instrument compromis)
-├─ vrai contenu mais sujet Y
-├─ bon sujet, mauvais SHA / mauvaise méthode
-├─ preuve partielle annoncée comme couverture complète
-├─ preuve périmée acceptée comme fraîche
-└─ plusieurs oracles partageant source/clé/runner
-```
-
-À chaque feuille : permission ouverte ? obligation fermée ? trace de la source ? changement de résultat avec oracle extérieur ?
-
-### R1 — Maintenance autonome prolongée
-
-```text
-repo dégradé → obligation → agent propose réparation
-├─ CI rouge après réparation
-│  ├─ réessayer légalement
-│  ├─ budget épuisé → attente / escalade
-│  └─ fail continuel sans redémarrer l'échéance
-├─ scanner indisponible → absence de preuve ≠ preuve d'absence
-├─ conflit avec autre agent → retrait + nouvelle tentative
-├─ contrôle sec/SRE existant → ne pas créer autorité concurrente
-└─ effet ok mais contrôle encore dégradé → dette reste ouverte
-```
-
-À chaque feuille : **aucun accès hors loi**, mais aussi état de la réparation, prochaine action possible et raison vérifiable des blocages.
-
-## 5. Registre expérimental (une ligne par feuille, pas par famille)
-
-| Champ | Obligatoire |
-|---|---|
-| ID parent/enfant | Exemple `P3/O1/H3/D3/rename-20` |
-| Garantie et frontière | Gxx + décision, temps, egress, obligation, etc. |
-| Hypothèses concurrentes | Au moins deux explications, incluant un défaut de test quand plausible |
-| Oracle safety | Condition observable de violation |
-| Oracle progression | Condition observable de possibilité d'action légitime ou de blocage justifié |
-| Variables | Une dimension modifiée et les facteurs maintenus constants |
-| Plan reproductible | script, seed, pause/fault point, processus, commit |
-| Évidence | run, logs, JSON, head/size, effet simulé/réel, sujets exacts |
-| Statut | NOT_RUN / CONFIRMED / REFUTED_UNDER_ASSUMPTIONS / INCONCLUSIVE / BLOCKED |
-| Question suivante | Quelle expérience différente départage le reste ? |
-
-## 6. Critère de COUVERTURE : pas uniquement G01–G16
-
-On mesure séparément les couvertures **responsabilités (7), frontières (3), contrats transversaux (5), modes BUILD/RUN/recovery, dépendances physiques, chemins positifs et négatifs**. Une garantie attachée à trois composants exige des épreuves à chaque frontière et *entre* les frontières. Revoir les dépendances non visibles dans les fichiers TCB (credentials, scanners, sources de temps, OS, fournisseurs).
-
-## 7. Critère de PROFONDEUR : refus du comptage superficiel
-
-Pour chaque branche, enregistrer le Dmax **observé**, non le Dmax des fichiers écrits. Le niveau D7 n'est pas automatiquement nécessaire pour une propriété sans frontière physique ; noter pourquoi. Priorité P0 à toute feuille capable d'autoriser un effet interdit, de déclarer une dette close sans preuve, de masquer un écart durable ou de bloquer une action légitime sans motif. Les expérimentations peuvent ouvrir de nouveaux enfants indéfiniment : pas de promesse d'exhaustivité absolue.
-
-## 8. Tableau initial d'avancement (conservateur)
-
-| Branche | Niveau local documenté | Niveau observé certifié | Prochaine profondeur prioritaire |
+| Branche | Garanties croisées | Domaine et question dominante | Lacune actuelle |
 |---|---|---|---|
-| A — Autorité et identité | D1–D2 selon expériences existantes | **à attribuer par cas** | D2 rotation/collusion |
-| L — Loi et changements | D1–D2 selon expériences existantes | **à attribuer par cas** | D2–D4 changement au départ |
-| T — Temps et historique | D1–D2 selon expériences existantes | **à attribuer par cas** | D4–D5 ancre/pin |
-| P — Faits, preuves, indépendance | D1–D2 selon expériences existantes | **à attribuer par cas** | D3–D6 faux oracle |
-| O — Obligations et redevabilité | D1–D2 selon expériences existantes | **à attribuer par cas** | D3 obligations réelles |
-| E — Effets et fournisseurs | D1–D2 selon expériences existantes | **à attribuer par cas** | D4–D6 départ + panne |
-| B — Bootstrap / domaines physiques | D1–D2 selon expériences existantes | **à attribuer par cas** | D5–D6 reprise physique |
-| R — Autonomie globale BUILD/RUN | D1–D2 selon expériences existantes | **à attribuer par cas** | D3 même sujet BUILD/RUN |
+| **A** | G01 G02 G05 G14 | Identité, quorum, délégation, révocation, clés | séparation réelle des personnes et détenteurs de clés |
+| **L** | G03 G04 G14 | Loi, floors, transitions et changement constitutionnel | loi modifiée entre autorisation et effet |
+| **T** | G04 G06 G11 | Horloges, journal, pins, rollback et recovery | panne coordonnée, temps attesté divergent |
+| **P** | G07 G12 G13 | Provenance, sujet, méthode, couverture, indépendance | différence authentification / qualification / vérité |
+| **O** | G08 G13 G16 | Dette, délais, retrait, réparation, escalade | persistance d'un même sujet à travers multiples cycles |
+| **E** | G02 G09 G10 G15 | Token, réservation, départ, incertitude et retry | anti-double-dispatch isolé, hôte/fournisseur réel |
+| **B** | G05 G11 G14 G15 | Bootstrap, secrets, code pin et egress privilégié | frontière physique, credential alternatif, multi-hôte |
+| **R** | G02 G07 G08 G09 G13 G16 | Maintenance autonome BUILD/RUN, incidents | liveness sous échec répété et sans autorité souveraine |
 
-### Discipline finale
+Croiser chaque branche avec les **7 responsabilités**, **3 frontières**, **5 contrats transversaux**, modes BUILD/RUN/recovery et contrôles négatifs **et positifs**. Cette matrice **n'implique pas** que chaque cellule est effectivement couverte.
 
-Les expériences en réussite montrent uniquement que les attaques tentées sont bloquées **sous leurs hypothèses**. Les tests rouges déclenchent une exploration des hypothèses et de l'oracle. Aucune conclusion de phase 3 ne modifie le scope ni ne présélectionne une abstraction. L'arbre décrit **le travail empirique restant**, pas une implémentation à construire.
+## 3. PROFONDEUR — D0 à D7 (attribuer sur preuves uniquement)
+
+| Niveau | Preuve expérimentale attendue | Ce que le niveau ne prouve pas |
+|---|---|---|
+| D0 | énoncé précis, hypothèses et oracles indépendants safety/progrès | comportement exécuté |
+| D1 | cas atomique et deux témoins contrôlés | composition |
+| D2 | mécanismes combinés et ordre inversé | concurrence réelle |
+| D3 | séquence longue **sur le même sujet**, dette/échéance/progrès suivis | crash, multi-hôte |
+| D4 | interleavings déterministes à chaque frontière critique | durabilité sous panne |
+| D5 | kill/crash/recovery/pin et résultat d'effet inconnus | séparation physique |
+| D6 | autre hôte/processus/fournisseur/secret réel et chemins alternatifs | vérification indépendante |
+| D7 | adversaire adaptatif, contre-modèle et vérificateur réellement distinct | perfection ou absence universelle de défaut |
+
+Nos premières séries de 400 demandes concernent **des ressources distinctes** ; elles ne démontrent donc pas D3 sur les obligations d'une cible. Les huit reprises E2 refusaient à cause de `HIST.TIME` ; elles ne démontraient **pas** un anti-double-dispatch.
+
+## 4. Trois arbres actifs et prioritaires — campagne III
+
+### O/R — Retrait et continuité autonome
+
+```text
+O1 — Repair red → withdrawn → cible encore dégradée
+├─ O1.H1 : nouvelle tentative légitime parce que gap persiste
+│  ├─ contrôle : gap toujours présent → nouvelle tentative permise
+│  └─ contrôle : gap disparu → pas de nouvelle tentative inutile
+├─ O1.H2 : loop/churn anormal d'une cible inchangée
+│  ├─ vérifier même SHA, sujet, cause et échéance
+│  └─ répéter 2, 3, 5, 20 cycles sur même cible
+├─ O1.H3 : variabilité d'exécution / temps / fixture
+│  ├─ même SHA + mêmes inputs + mêmes horloges → répétition
+│  └─ capture IDs individuels et ordre des transitions
+└─ O1.H4 : continuité d'obligation et escalade
+   ├─ retain opened/due si réparer échoue
+   └─ blocage justifié vs blocage silencieux
+```
+
+**Observé (campagne II) :** 10/10 essais à 2 cycles ont deux sujets `withdrawn` + `measuring`, `live=true`. Certains témoins à 3 cycles divergent. **Nouveau test III :** `p3_iii_autonomy_subjects.py` (18 variations avec sujets/temps exacts), `NOT_RUN` jusqu'à validation CI. Voir [Midpoint II](findings/P3_MIDPOINT_II.md). Les anciens rouges sont un signal de divergence de règle historique, **pas une vulnérabilité du noyau démontrée**.
+
+### E — Effet incertain et protection réellement exercée
+
+```text
+E1 — intent → token → reservation → send → ACK
+├─ E1.H1 : clock invalide produit le refus
+│  └─ III : second temps = dernier événement durable + 1
+├─ E1.H2 : barrière reservation/fencing bloque réellement replay
+│  ├─ second guard / même journal
+│  ├─ second journal / même SQLite
+│  └─ deux processus / deux hôtes → non testé
+├─ E1.H3 : provider "failed" après application partielle
+│  ├─ pas envoyé / envoyé sans ACK / appliqué partiellement
+│  └─ exigence de preuve externe pour statut non-appliqué
+└─ E1.H4 : reprise après crash, law/revoke entre deux effets
+   ├─ pause avant/après pin, send, ACK
+   └─ re-jugement et reconciliation avant nouvel effet
+```
+
+**Observé (campagne II) :** huit répétitions refusées par `HIST.TIME`, pas par une garde anti-replay identifiable. **Nouveau test III :** `p3_iii_effect_clock.py` (8 cas à temps post-commit monotone), résultats `NOT_RUN` jusqu'à validation CI. Aucune garantie multi-hôte déduite.
+
+### P — Preuve signée et vérité extérieure
+
+```text
+P1 — déclaration signée sur le sujet X
+├─ P1.H1 : sujet/identité/niveau/temps sont correctement qualifiés
+│  └─ contrôles séparés bon/mauvais sujet, auteur, grade, clock
+├─ P1.H2 : l'oracle ment mais signature valide
+│  ├─ contenu signé identique, "vérité" change hors noyau
+│  └─ contenu signé mensonger, méthode vérifiable par second oracle
+├─ P1.H3 : couverture, fraîcheur et méthode mal attestées
+│  ├─ bon SHA, couverture insuffisante → refus / dette ?
+│  └─ fausse couverture attestée par source partagée ?
+└─ P1.H4 : preuve utilisée comme permission de clôture
+   ├─ effet ok ≠ vérité indépendante sur cible
+   └─ restauration/replay d'une attestation ancienne
+```
+
+**Observé (campagne II) :** `CAP.HOLDER`, `PROV.SUBJECT`, `NIV.CERTIFY`, `HIST.AHEAD` refusent les mauvaises déclarations ; `false_exact` est admise car l'indicateur de vérité externe ne figure **pas** dans la signature. **Nouveau test III :** `p3_iii_proof_epistemic.py` (6 contrastes et contrôle inter-cas), `NOT_RUN` jusqu'à validation CI. Il ne démontre pas à lui seul la vérité de l'oracle.
+
+## 5. Arbres complémentaires indispensables
+
+- **A :** quorum, veto, override, rotation et reconstitution des identités, collusion par clés physiquement communes.
+- **L :** floor non affaibli, lois client, activation simultanée à un effet préparé, reprise d'un mandat expiré.
+- **T :** temps signé / réalité discordants, pin/journal en décalage, rollback, restauration, préfixes partiellement écrits.
+- **B :** bootstrap sans god-mode, egress alternatifs, secrets, runtime non pinné, fournisseur et hôtes indépendants.
+- **R (transversal) :** maintenance de repo sans SRE, mixte, mature ; scanner absent, CI flapping, obligation non masquée, escalade justifiée.
+
+Les parents sont documentés dans [GARANTEE_MATRIX.md](GUARANTEE_MATRIX.md), [ATTACK_CATALOG.md](ATTACK_CATALOG.md), [ATTACK_EXPANSION.md](ATTACK_EXPANSION.md) et [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md). Chaque nouvelle campagne doit **attribuer une feuille à toutes les garanties pertinentes**, et conserver les hypothèses de confiance non testées.
+
+## 6. Ordonnanceur de recherche (pas d'agent autonome de production)
+
+1. Choisir la feuille avec **signal rouge, oracle ambigu ou frontière la moins couverte**.
+2. Vérifier le verdict de la mesure elle-même (pipefail, JSON, horloge monotone, anti-oracle tautologique).
+3. Exécuter témoin positif, négatif et cas différentiel (un seul facteur).
+4. Ajouter un interleaving puis une panne ; conserver les variations qui expliquent la divergence.
+5. Publier `OBSERVED` / `INCONCLUSIVE` / `VIOLATION_OBSERVED` avec CI, SHA, fixture, signataires, sujet et effet.
+6. Mettre à jour nœud parent et enfants, matrice empirique, midpoint et **limites**. **Jamais conclure un choix de design à partir du résultat.**
+
+## 7. Convention de statut et critère de profondeur
+
+`NOT_RUN` ; `CODED_NOT_OBSERVED` ; `OBSERVED` (mesuré, pas garanti) ; `INCONCLUSIVE` (mesure non discriminante) ; `VIOLATION_OBSERVED` (contre-exemple d'une propriété exactement énoncée) ; `BLOCKED` (exige infrastructure physique). Ne jamais classer `OBSERVED` comme `PASS` sans oracle indépendant. Les runs, cas et interprétations sont consignés dans [findings/README.md](findings/README.md) et le [registre automatique](https://github.com/ichamafif-svg/NEW/issues/2).
+
+**La phase 3 reste ouverte.** Aucune couverture intégrale ou sécurité formelle revendiquée.
