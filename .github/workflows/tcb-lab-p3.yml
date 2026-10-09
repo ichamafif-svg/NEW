@@ -139,17 +139,22 @@ jobs:
         continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_ive_g08_g16_plan.py | tee p3-ive-reasons.json
+      - name: IV-F G08/G16 24-hour backoff contrast
+        id: ivf_backoff
+        continue-on-error: true
+        shell: bash
+        run: python tcb_lab/experiments/p3_ivf_backoff.py | tee p3-ivf-backoff.json
       - name: Validate all experiment reports are parseable JSON
         id: jsoncheck
         continue-on-error: true
         shell: bash
         run: |
-          for file in g1-output.json p3-output.json p3-effects-output.json p3-mutation-output.json p3-autonomy-output.json p3-compositions-output.json p3-counter-output.json p3-long-horizon-output.json p3-priority-o1-output.json p3-priority-e1-output.json p3-priority-p1-output.json p3-depth-proof.json p3-depth-effect.json p3-depth-autonomy.json p3-iii-effect.json p3-iii-autonomy.json p3-iii-proof.json p3-iv-boundary.json p3-iv-matrix.json p3-ivb-pairs.json p3-ivc-scope.json p3-ivc-target.json p3-ivd-g0816.json p3-ive-reasons.json; do
+          for file in g1-output.json p3-output.json p3-effects-output.json p3-mutation-output.json p3-autonomy-output.json p3-compositions-output.json p3-counter-output.json p3-long-horizon-output.json p3-priority-o1-output.json p3-priority-e1-output.json p3-priority-p1-output.json p3-depth-proof.json p3-depth-effect.json p3-depth-autonomy.json p3-iii-effect.json p3-iii-autonomy.json p3-iii-proof.json p3-iv-boundary.json p3-iv-matrix.json p3-ivb-pairs.json p3-ivc-scope.json p3-ivc-target.json p3-ivd-g0816.json p3-ive-reasons.json p3-ivf-backoff.json; do
             test -s "$file" || exit 1
             python -m json.tool "$file" > /dev/null || exit 1
           done
       - name: Reject any failed suite, while retaining all suite outputs
-        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure' || steps.proofdepth.outcome == 'failure' || steps.effectdepth.outcome == 'failure' || steps.autonomydepth.outcome == 'failure' || steps.jsoncheck.outcome == 'failure' || steps.iii_effect.outcome == 'failure' || steps.iii_autonomy.outcome == 'failure' || steps.iii_proof.outcome == 'failure' || steps.iv_boundary.outcome == 'failure' || steps.iv_matrix.outcome == 'failure' || steps.ivb_pairs.outcome == 'failure' || steps.ivc_scope.outcome == 'failure' || steps.ivc_target.outcome == 'failure' || steps.ivd_g0816.outcome == 'failure' || steps.ive_reasons.outcome == 'failure')
+        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure' || steps.proofdepth.outcome == 'failure' || steps.effectdepth.outcome == 'failure' || steps.autonomydepth.outcome == 'failure' || steps.jsoncheck.outcome == 'failure' || steps.iii_effect.outcome == 'failure' || steps.iii_autonomy.outcome == 'failure' || steps.iii_proof.outcome == 'failure' || steps.iv_boundary.outcome == 'failure' || steps.iv_matrix.outcome == 'failure' || steps.ivb_pairs.outcome == 'failure' || steps.ivc_scope.outcome == 'failure' || steps.ivc_target.outcome == 'failure' || steps.ivd_g0816.outcome == 'failure' || steps.ive_reasons.outcome == 'failure' || steps.ivf_backoff.outcome == 'failure')
         run: exit 1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
@@ -178,6 +183,7 @@ jobs:
             p3-ivc-target.json
             p3-ivd-g0816.json
             p3-ive-reasons.json
+            p3-ivf-backoff.json
             p3-iii-autonomy.json
             p3-iii-effect.json
           if-no-files-found: warn
