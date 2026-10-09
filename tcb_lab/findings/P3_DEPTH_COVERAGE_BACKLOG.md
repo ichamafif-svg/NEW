@@ -27,3 +27,11 @@ Le travail reste **Phase 3 uniquement** ; aucun changement du scope, du noyau, d
 ## Interprétation Midpoint II — ordre d'attaque ajusté (sans clôture)
 
 Après analyse des 31 expériences ([P3_MIDPOINT_II.md](P3_MIDPOINT_II.md)) : **O1** dix divergences de l'assertion historique après deux cycles, capturer identité et justification des deux sujets ; **E1** refus `HIST.TIME` masque la cause de redémission, refaire avec temps strictement monotone ; **P1** changer réellement les assertions signées (méthode / coverage / provenance), et non seulement le drapeau de vérité local hors message. Priorités 1–3 **toujours ouvertes**.
+
+## Campagne III : dédoublement des feuilles et statut
+
+- `O1.H1–H4` : 18 séquences codées (`p3_iii_autonomy_subjects.py`), capturent sujets et temps exacts, mais **ne démontrent pas encore** la persistance d'une obligation sur 100 réparations.
+- `E1.H1–H4` : 8 séquences codées (`p3_iii_effect_clock.py`), éliminent l'erreur simple de `t+3` en utilisant le dernier horodatage durable, mais pas de crash ni multi-hôte.
+- `P1.H1–H4` : 6 contrastes codés (`p3_iii_proof_epistemic.py`) explicitent la séparation entre label de vérité extérieur et contenu signé ; restent ouverts les tests de couverture et méthode attestées par sources distinctes.
+
+Les 6 branches A/L/T/B et croisements demeurent ouverts ; **ne pas promouvoir D4–D7** sur la seule base d'un nouveau rapport vert. Sources : [arbre](../EXPERIMENT_TREE_DEPTH_COVERAGE.md) et [campagne III](P3_CAMPAIGN_III.md).
