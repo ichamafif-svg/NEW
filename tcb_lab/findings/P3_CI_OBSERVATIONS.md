@@ -1,0 +1,26 @@
+# Phase 3 — Première exploitation automatique des exécutions GitHub
+
+**Preuves consultées :** GitHub Actions jobs de la branche de laboratoire et registre CI automatique (issue #2). **Ce document contient des constats OBSERVÉS, pas une évaluation générale de la sûreté.**
+
+## Rétablissement de l'accès aux résultats
+
+Le connecteur GitHub de recherche « workflows par SHA » interroge un sous-ensemble de runs et ne retrouvait pas les runs `push`. Nous avons désormais un **job CI secondaire** qui consulte l'API Actions, agrège l'historique des exécutions (y compris en rouge), récupère automatiquement les JSON d'attaque puis actualise l'issue [#2](https://github.com/ichamafif-svg/NEW/issues/2). Aucune manipulation de fichiers par l'utilisateur n'est nécessaire.
+
+Avec les identifiants de runs publiés dans cette issue, le connecteur GitHub peut récupérer les jobs et les logs complets. Le job de rapport est distinct du job de tests : l'autorisation de publication d'issue ne doit pas être accessible au processus d'attaque.
+
+## Constats observés
+
+**P3-OBS-01 — faux vert du workflow expérimental** (**CONFIRMED** : défaut d'instrumentation CI, pas vulnérabilité constitutionnelle). Sur le run #19 (`37948321004`), la suite de mutations `p3_mutation_fuzz.py` a produit une traceback, mais le job de test restait marqué success. Cause directe : `python … | tee fichier` sans `pipefail` explicite ; le code de sortie de Python pouvait être masqué par `tee`. Action dans la branche : préciser `shell: bash` pour les six étapes de tests afin de faire appliquer `-e -o pipefail`. **À confirmer par le prochain run.**
+
+**P3-OBS-02 — oracles d'expérience incompatibles avec l'état interne** (**CONFIRMED** : défaut de harnais). Les suites de mutations et plusieurs scénarios signalés `INCONCLUSIVE` tentaient `canon(w.state)`, alors que le snapshot interne contient des tuples (hors JSON canonique). Il ne s'agit pas d'une violation de canonicalisation d'une entrée, mais d'une erreur du test lui-même. Action : comparer une copie profonde du snapshot et non une représentation JSON, sans modifier la TCB. **À confirmer par exécution.**
+
+**P3-OBS-03 — régression de maintenance sur `make check`** (**CONFIRMED**, périmètre non-core mais pertinent pour l'autonomie). Plusieurs runs rouges `TCB boundary checks` (par exemple #60, #59, #55, #53, #51, #50 et #49 selon le registre Actions) échouent au même test : `test_rule6_red_tests_withdraw_and_free_the_target` dans la suite existante. Les logs attestent qu'une proposition est retirée puis qu'une nouvelle cible semble immédiatement proposée, alors que l'assertion du test échoue. **Hypothèse** : défaut de recyclage d'un état de réparation/target, ou test mal aligné avec la politique attendue ; ni cause racine ni propriété violée ne sont encore établies. Ne pas masquer ce test et ne pas le patcher dans ce laboratoire.
+
+**P3-OBS-04 — le vert de P3 ne signifie pas verdicts tous favorables.** Le registre de l'issue #2 a compté deux `INCONCLUSIVE` sur P3 signed (`P3-02`, `P3-07`), un sur compositions (`P3-X06`), et un fichier mutations non-JSON pour #19. Les corrections de harnais sont soumises ; les nouveaux résultats doivent être lus avant toute requalification.
+
+## Suite de l'investigation
+
+- Rechercher via le registre automatique les nouvelles exécutions et anomalies sur les six suites.
+- Vérifier si la régression `test_rule6_red_tests_withdraw_and_free_the_target` est reproductible sur une base de code non altérée avant de l'attribuer au cœur constitutionnel.
+- Conserver les modes de panne `false green` et `autonomy repair withdraw` dans les dimensions de couverture de P3, sans les assimiler arbitrairement à des vulnérabilités FLOOR-0.
+- P3 reste ouverte. Le choix de la représentation vNext demeure hors phase 3.
