@@ -97,11 +97,11 @@ def self_attestation_cannot_authorize_own_intent():
     self_obs, t = w.grant("agent", ["observe", "certify:real"], ["repo:*"], T0 + 1)
     actor, t = w.grant("agent", ["effect:merge"], ["repo:pr:*"], t, conditions=["ci-green"])
     args = {"pr": "42", "method": "squash"}
-    w.add("observation", "agent", t, under=self_obs, resource="repo:pr:42",
+    w.add("observation", "agent", t + 1, under=self_obs, resource="repo:pr:42",
           property="ci", status="green", level="real")
-    entry, _ = w.signed("intent", "agent", t + 1, under=actor, op="merge", args=args)
+    entry, _ = w.signed("intent", "agent", t + 2, under=actor, op="merge", args=args)
     refusal = require_refusal(w, entry)
-    external, t = w.grant("ci", ["observe", "certify:real"], ["repo:*"], t + 2)
+    external, t = w.grant("ci", ["observe", "certify:real"], ["repo:*"], t + 3)
     w.add("observation", "ci", t + 1, under=external, resource="repo:pr:42",
           property="ci", status="green", level="real")
     assert w.kernel.admit(w.state, w.signed("intent", "agent", t + 2, under=actor, op="merge", args=args)[0])[0]
