@@ -34,3 +34,7 @@ Lire [P3_PRIORITY_FIRST_RESULTS.md](P3_PRIORITY_FIRST_RESULTS.md) : les quatre t
 ## Deuxième campagne de profondeur — résultats observés
 
 [Plan et hypothèses](P3_SECOND_DEPTH_CAMPAIGN.md) · [Résultats et limites](P3_SECOND_DEPTH_RESULTS.md). Les trois familles approfondies sont **P1 (7 attestations), E1 (8 séquences port/journal) et O1 (16 variations de maintien/withdraw)**. Le run [#74](https://github.com/ichamafif-svg/NEW/actions/runs/37953933593) a publié 14 rapports JSON analysables sans expérience `INCONCLUSIVE` signalée. **Cela ne ferme aucune des trois priorités** : vérité physique, frontière de sortie et même cible en temps long exigent davantage d'attaques.
+
+## Deuxième campagne — contradiction empirique
+
+[P3_CAMPAIGN_II_CONTRADICTIONS.md](P3_CAMPAIGN_II_CONTRADICTIONS.md) documente **les résultats opposés du retrait après deux cycles sur plusieurs reprises dans un même run**, sans supposer un état initial identique, ainsi que les huit comparaisons de départ et sept variations de preuve. La campagne a également révélé que le rapport CI ne signalait pas les écarts `OBSERVED` vis-à-vis de l'assertion historique. La sortie automatisée a été enrichie pour afficher ces écarts plutôt que de les classer silencieusement parmi les tests verts.
