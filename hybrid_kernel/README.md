@@ -66,3 +66,7 @@ Les trois documents de conception désormais prioritaires sont :
 3. [KERNEL_EXECUTION_PROTOCOL.md](KERNEL_EXECUTION_PROTOCOL.md) — admission, preuve, décision, commit, contrôle d'effet, incertitude, réconciliation et audit.
 
 **Ordre d'autorité :** le scope et le découpage fonctionnel figés dans `tcb_lab/` sont normatifs ; les trois documents représentent la conception candidate ; le prototype actuel est une implémentation partielle qui **doit converger** vers celle-ci sans faire passer ses simplifications (`allowed=true`, SQLite local, effet abstrait) pour des propriétés de production. Aucun nouveau module fonctionnel ne doit être adopté sans traçabilité vers le modèle et les contrats T correspondants.
+
+## Production gap / plan de réutilisation
+
+La [matrice de réemploi et d'écarts](PRODUCTION_GAP_AND_REUSE.md) confronte directement `tcb/`, `hybrid_kernel/` et les trois contrats conceptuels. Elle distingue ce qu'on **réutilise**, ce qu'on **adapte**, ce qui doit rester **Trusted External** et ce qui reste hors du noyau pour préserver le produit BUILD/RUN. **Premier bloqueur P0** : l'admission signée `allowed=true` n'est pas encore un jugement constitutionnel d'autorité ; elle doit être remplacée par le pouvoir réellement dérivé des floors, du quorum et des délégations dans K. Statut : analyse d'écart enregistrée, aucun déploiement de production autorisé.
