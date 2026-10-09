@@ -1,6 +1,6 @@
 # P3 — Matrice de profondeur vivante
 
-> **Ce tableau indique le niveau d'expérience disponible, PAS une garantie prouvée.** Aucun harnais distant/fournisseur réel exécuté. Les résultats des nouveaux scripts ne sont pas observés. Échelle : S=entrée/décision ; C=compositions temporelles ; F=pannes ; P=frontière physique ; A=progression autonome. `Coded` signifie seulement qu'un test existe.
+> **Ce tableau indique le niveau d'expérience disponible, PAS une garantie prouvée.** Aucun harnais distant/fournisseur réel exécuté. Les scripts atomiques et de séquences locales ont des exécutions observées en CI ; les niveaux physiques/multi-hôtes restent non testés. Échelle : S=entrée/décision ; C=compositions temporelles ; F=pannes ; P=frontière physique ; A=progression autonome. `Coded` signifie seulement qu'un test existe.
 
 | Garanties | S | C | F | P | A | Priorité manquante |
 |---|---|---|---|---|---|---|
@@ -23,8 +23,12 @@
 
 ## Règle de lecture
 
-Chaque cellule ne devient `TESTED_*` qu'avec trace vérifiée et identifiant d'expérience. Un scénario de simulation ne prouve aucune propriété d'un hébergement multi-hôte ni d'un fournisseur réel. Les trous les plus critiques sont P pour G09–G11/G14–G15 et F+A pour G08/G16.
+Les cellules `Coded` sont un inventaire historique de présence du code, et non le statut empirique actualisé ; les runs réellement observés sont indexés dans [findings/P3_EVIDENCE_REGISTER.md](findings/P3_EVIDENCE_REGISTER.md). Chaque cellule ne devient `TESTED_*` qu'avec trace vérifiée et identifiant d'expérience. Un scénario de simulation ne prouve aucune propriété d'un hébergement multi-hôte ni d'un fournisseur réel. Les trous les plus critiques sont P pour G09–G11/G14–G15 et F+A pour G08/G16.
 
 ## Fin de phase
 
 Se référer à [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md). Une absence de scénarios n'est jamais une preuve d'absence de faute. Un refus conservateur dépourvu de chemin d'escalade peut être un défaut de progression, même si safety tient.
+
+## Débordement empirique et prochaine lecture
+
+Le midpoint et les hypothèses à départager sont désormais dans [findings/README.md](findings/README.md), [findings/P3_MIDPOINT.md](findings/P3_MIDPOINT.md) et [findings/P3_DEPTH_COVERAGE_BACKLOG.md](findings/P3_DEPTH_COVERAGE_BACKLOG.md). Les nouvelles expériences doivent remplir les dimensions manquantes **sans attribuer automatiquement D3 à cinq longues séries D1 sur sujets distincts**.
