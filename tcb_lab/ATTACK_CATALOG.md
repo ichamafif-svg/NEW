@@ -77,3 +77,7 @@ Les **80 nouvelles hypothèses** se trouvent dans [ATTACK_EXPANSION.md](ATTACK_E
 Harnais additionnels : `experiments/p3_mutation_fuzz.py` réalise trente variantes d'entrées signées sur fixtures locales ; `experiments/p3_autonomy.py` examine dix propriétés *autorisation/progrès*. Les deux sont intégrés à la CI `.github/workflows/tcb-lab-p3.yml`. La stratégie de tests *safety et progression* se trouve dans [AUTONOMY_THREAT_MODEL.md](AUTONOMY_THREAT_MODEL.md).
 
 **État des résultats :** NOT_RUN jusqu'à constat explicite de logs et d'oracles. Ne pas compter les hypothèses statiques comme des vulnérabilités, ni les tests écrits comme des réussites. Un fail de harnais peut être INCONCLUSIVE ; seule une reproduction isolée permet CONFIRMED.
+
+## Extension opérationnelle — campagne III
+
+Les sous-arbres O/R, E et P sont détaillés dans [EXPERIMENT_TREE_DEPTH_COVERAGE.md](EXPERIMENT_TREE_DEPTH_COVERAGE.md). Les 32 nouvelles variantes ciblent des oracles de mesure auparavant trompeurs ou insuffisants (horodatage de retry, identité de sujet après retrait, vérité extérieure aux signatures). Consulter [findings/P3_CAMPAIGN_III.md](findings/P3_CAMPAIGN_III.md) pour statut et liens. Les attaques historiques du catalogue conservent leur statut propre ; ni corriger le noyau, ni inférer D4–D7.
