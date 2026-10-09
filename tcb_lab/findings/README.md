@@ -30,3 +30,7 @@ Source vivante des runs, dont les rouges : [registre Actions #2](https://github.
 ## Première récolte des trois priorités
 
 Lire [P3_PRIORITY_FIRST_RESULTS.md](P3_PRIORITY_FIRST_RESULTS.md) : les quatre témoins O1, quatre permutations d'effet E1 et trois expériences de preuve P1 ont été **observés dans des logs CI réels**. La réexécution du témoin rouge O1 à deux cycles donne cette fois les assertions satisfaites ; l'ancienne panne reste à expliquer. Le résultat le plus instructif sur P1 est la différence entre *signature sur bon sujet* et *vérité physique non attestée* ; sur E1, c'est la distinction entre `failed` et un effet vraiment non appliqué.
+
+## Deuxième campagne de profondeur — résultats observés
+
+[Plan et hypothèses](P3_SECOND_DEPTH_CAMPAIGN.md) · [Résultats et limites](P3_SECOND_DEPTH_RESULTS.md). Les trois familles approfondies sont **P1 (7 attestations), E1 (8 séquences port/journal) et O1 (16 variations de maintien/withdraw)**. Le run [#74](https://github.com/ichamafif-svg/NEW/actions/runs/37953933593) a publié 14 rapports JSON analysables sans expérience `INCONCLUSIVE` signalée. **Cela ne ferme aucune des trois priorités** : vérité physique, frontière de sortie et même cible en temps long exigent davantage d'attaques.
