@@ -1,3 +1,5 @@
+> **NOTE DE LECTURE — 2026-10-09.** Ce document conserve son contenu historique. Pour l'état **actuel**, consulter [l'accueil canonique](../README.md), [la charte / transfert](../LAB_CHARTER_AND_HANDOFF.md) et [la décision fonctionnelle 16/16](../FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md). Les étapes de comparaison architecturale A/B/C ou les verdicts 14/2 éventuellement mentionnés ci-dessous ne sont **plus** la feuille de route active. La production du noyau hybride est sur la branche `prototype/hybrid-kernel-v1`, non dans le lab ; les critères P3 physiques restent ouverts.
+
 # Phase 3 — État vivant du laboratoire
 
 **Version datée : 2026-10-09.** En cas de désaccord, les résultats d'Actions et les fichiers de preuve datés prévalent sur un README historique. Ce fichier n'est pas un statut produit.
