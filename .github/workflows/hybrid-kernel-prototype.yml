@@ -24,3 +24,5 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_hybrid_kernel*.py' -v
       - name: Run legacy constitutional regressions
         run: python -m unittest discover -s tests -p 'test_kernel*.py' -v
+      - name: Check release-readiness inventory (blocked until independently verified)
+        run: python -m hybrid_kernel.release_gate
