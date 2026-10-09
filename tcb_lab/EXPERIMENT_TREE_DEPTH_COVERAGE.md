@@ -139,3 +139,7 @@ La [revue IV-B](IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CL
 ## IV-D — enfants actifs O/G08 et R/G16
 
 **O.G08.D3** : une même cible sur 20 cycles, avec fail persistant vs signal scanner guéri à l'étape 6 ; comparer nouvelles propositions, identités de dette, âge et clôture. **R.G16.D3** : dégradation persistante vs contrôle sain sur 20 cycles ; séparer activité, progression effective et escalade. Expériences dans [P3_G08_G16_CAMPAIGN.md](findings/P3_G08_G16_CAMPAIGN.md). Le niveau D3 **n'est revendiqué qu'au titre de la durée de l'observation opérationnelle**, pas pour le suivi de dette constitutionnelle qui demeure non établi. Éviter d'inférer une garantie G08 ou G16 à partir de l'état `OBSERVED`.
+
+## G08/G16 — lecture des résultats réels (après Actions 37964069387)
+
+Voir [l'interprétation complète](findings/P3_G08_G16_FIRST_INTERPRETATION.md). Dans les scénarios à écart persistant, deux propositions sont retirées puis **18 cycles / 20 sans sujet live** sont observés, sans modification de main. Les obligations constitutionnelles ne peuvent pas être déduites de la seule liste `state["obligations"]` vide : **G08 reste ouvert**. **G16 reste ouvert** en attente du contrôle des escalades et de la fairness. Le prétendu contrôle sain était **invalide** (le runner `none` n'enlevait pas `vulns=found:2`) et a été rectifié dans le harnais ; ne pas citer l'ancien résultat comme témoin sain. Aucune modification du noyau ou du scope.
