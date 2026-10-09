@@ -3,7 +3,8 @@
 Record outcomes without assuming that the test's expected no-live outcome
 must always hold, and distinguish deterministic replay from changed timing.
 """
-import json,sys
+import json,sys,io
+from contextlib import redirect_stdout
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT),str(ROOT/"tests")]
