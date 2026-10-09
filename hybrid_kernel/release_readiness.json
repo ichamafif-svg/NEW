@@ -1,0 +1,203 @@
+{
+  "schema": "standard.hybrid.release-readiness/v1",
+  "release_candidate": "prototype/hybrid-kernel-v1",
+  "code_path": "hybrid_kernel",
+  "legacy_admission": "tcb.Kernel -> tcb.Journal -> tcb.Invariants",
+  "no_dual_authority": true,
+  "policy": "ALL_CRITICAL_GATES_REQUIRED",
+  "criteria": [
+    {
+      "id": "K01",
+      "name": "Full root, authority, quorum and revocation",
+      "owner": "K",
+      "status": "INTEGRATED_LEGACY",
+      "evidence": [
+        "tcb/kernel.py",
+        "tcb/floor0.py",
+        "tcb/law.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "K02",
+      "name": "Canonical model without hard business mapping",
+      "owner": "K",
+      "status": "PARTIAL",
+      "evidence": [
+        "hybrid_kernel/core.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "K03",
+      "name": "Independent proof qualification",
+      "owner": "K+T06",
+      "status": "PARTIAL",
+      "evidence": [
+        "tcb/kernel.py",
+        "tcb/accountability.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "K04",
+      "name": "Stable debts, closure and escalation",
+      "owner": "K+T09",
+      "status": "PARTIAL",
+      "evidence": [
+        "tcb/obligations.py",
+        "tcb/accountability.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "K05",
+      "name": "Deterministic exhaustive transitions",
+      "owner": "K",
+      "status": "INTEGRATED_LEGACY",
+      "evidence": [
+        "tcb/kernel.py",
+        "tcb/invariants.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "K06",
+      "name": "Exact effect grant and unknown reconciliation",
+      "owner": "K+T07+T08",
+      "status": "INTEGRATED_LEGACY",
+      "evidence": [
+        "tcb/guard.py",
+        "tcb/effects.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T01",
+      "name": "Pinned code/genesis and runtime attestation",
+      "owner": "T01",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/release.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T02",
+      "name": "Keys and distinct physical principals",
+      "owner": "T02",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/crypto.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T03",
+      "name": "Trusted time and witness availability",
+      "owner": "T03",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/kernel.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T04",
+      "name": "Independent anti-rollback trust domain",
+      "owner": "T04",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/ledger.py",
+        "tcb/pins.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T05",
+      "name": "Independent verifier and isolated failure domain",
+      "owner": "T05",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/invariants.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T06",
+      "name": "Independent evidence attestors, actual coverage",
+      "owner": "T06",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/accountability.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T07",
+      "name": "Exclusive privileged egress and credential custody",
+      "owner": "T07",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/guard.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T08",
+      "name": "Provider idempotency and independent readback",
+      "owner": "T08",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/guard.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "T09",
+      "name": "Reliable escalation delivery and fairness assumptions",
+      "owner": "T09",
+      "status": "UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "tcb/health.py"
+      ],
+      "verified": false
+    },
+    {
+      "id": "V01",
+      "name": "GitHub CI green for all legacy and hybrid tests",
+      "owner": "QA",
+      "status": "UNVERIFIED",
+      "evidence": [
+        ".github/workflows/hybrid-kernel-prototype.yml"
+      ],
+      "verified": false
+    },
+    {
+      "id": "V02",
+      "name": "Fault injection, recovery, concurrency, bypass tests",
+      "owner": "QA",
+      "status": "NOT_DONE",
+      "evidence": [],
+      "verified": false
+    },
+    {
+      "id": "V03",
+      "name": "Independent assessment of G01 through G16",
+      "owner": "QA",
+      "status": "NOT_DONE",
+      "evidence": [
+        "tcb_lab/FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md"
+      ],
+      "verified": false
+    },
+    {
+      "id": "V04",
+      "name": "Performance, latency budgets and load evidence",
+      "owner": "QA",
+      "status": "NOT_DONE",
+      "evidence": [],
+      "verified": false
+    }
+  ]
+}
