@@ -54,3 +54,7 @@ Pour distinguer ce qui relève de la décision du noyau, de la confiance physiqu
 ## IV-B — revue des frontières et critères de fermeture
 
 La [revue IV-B](../IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CLOSED_CONDITIONAL`, `OPEN_CRITICAL` et `OPEN_SEMANTIC` pour **G01–G16**, avec les contre-exemples et dépendances physiques. Quatre nouvelles expériences signées (effet révoqué, retry inconnu, preuve bon/mauvais sujet) sont intégrées à la CI via `p3_ivb_boundary_pairs.py`. **La classification ne constitue pas une validation de sûreté ; aucun scope ou noyau n'a été modifié.**
+
+## IV-D — continuité des obligations et autonomie
+
+[Nouveaux tests G08/G16](P3_G08_G16_CAMPAIGN.md) · [Consolidation et sources de vérité](P3_LAB_CHANGELOG.md) · [Registre CI](https://github.com/ichamafif-svg/NEW/issues/2). Conserver les findings antérieurs comme historiques, jamais comme preuve de la validation actuelle.
