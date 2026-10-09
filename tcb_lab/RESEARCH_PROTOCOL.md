@@ -25,3 +25,7 @@
 Une décision est exacte seulement relativement à ses entrées et hypothèses ; des données authentifiées peuvent être fausses. Toute preuve qui ouvre un droit doit être qualifiée selon son sujet et sa méthode. Toute sécurité prétendument « hors noyau » qui peut permettre un effet reste dans la revue de confiance. Une faille ouverte ne devient pas « résolue » parce qu'une documentation a été ajoutée.
 
 **Aucun code de production vNext n'est autorisé à prétendre à une garantie supérieure sans démonstration correspondante.**
+
+## Phase 3 — protocole vivant depuis campagne III
+
+Pendant cette phase, appliquer [l'arbre empirique profondeur × couverture](EXPERIMENT_TREE_DEPTH_COVERAGE.md) et le [statut daté](findings/P3_LAB_STATUS.md). Toute affirmation doit distinguer observation, compréhension conditionnelle et hypothèse externe. Les résultats ne déterminent ni scope ni abstraction. Les priorités actuelles sont [campagne III](findings/P3_CAMPAIGN_III.md) et sa documentation des findings ; les étapes de conception décrites plus loin dans le protocole ne sont **pas ouvertes**.
