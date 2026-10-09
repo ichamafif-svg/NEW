@@ -31,6 +31,11 @@ def experiment(verdict,cycles,repeat):
                 "historical_expectation":cycles==2 and verdict=="found:1",
                 "historic_assertions_hold":(sum(p=="withdrawn" for p in trace[-1]["phases"])==1
                 and not trace[-1]["head_changed"] and not trace[-1]["live"]) if cycles==2 and verdict=="found:1" else None}
+
+def quiet_probe(*args):
+    with redirect_stdout(io.StringIO()):
+        return experiment(*args)
+
 def main():
     rows=[]
     variants=[("red_two", "found:1",2,10),("red_three","found:1",3,3),
@@ -38,7 +43,7 @@ def main():
     for name,verdict,cycles,count in variants:
         for n in range(count):
             ident=f"P3-O2-{name}-{n+1}"
-            try:rows.append({"id":ident,"status":"OBSERVED","evidence":experiment(verdict,cycles,n)})
+            try:rows.append({"id":ident,"status":"OBSERVED","evidence":quiet_probe(verdict,cycles,n)})
             except Exception as exc:rows.append({"id":ident,"status":"INCONCLUSIVE","evidence":{"error":type(exc).__name__,"detail":str(exc)[:220]}})
     print(json.dumps({"priority":"O1/R1","experiments":rows},indent=2))
     return int(any(x["status"]=="INCONCLUSIVE" for x in rows))
