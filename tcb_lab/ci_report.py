@@ -27,7 +27,7 @@ for filename,desc in names.items():
     except Exception:
         rows.append((desc,"INVALID_JSON",0,0,"unreadable"))
 def cell(v):
-    return str(v or "").replace("|","/").replace("\n"," ")[:110]
+    return str(v if v is not None else "").replace("|","/").replace("\n"," ")[:110]
 run=os.environ["REPORT_RUN_ID"]
 repo=os.environ["GITHUB_REPOSITORY"]
 lines=["# Standard TCB - automatic CI execution register","",
