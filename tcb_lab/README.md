@@ -102,3 +102,7 @@ La [revue IV-B](IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières `CL
 ## Campagne IV-C — conclusion de délimitation (pas une preuve physique)
 
 [IVC_BOUNDARY_DECISIONS.md](IVC_BOUNDARY_DECISIONS.md) passe en revue les **12 frontières antérieurement ouvertes** : dix allocations K/T/U deviennent **conditionnelles** sur la base de leurs contrats d'information et d'application ; **G08** (continuité des obligations) et **G16** (progression autonome) restent sémantiquement ouvertes. Avec les quatre allocations déjà conditionnelles en IV-B, on obtient **14 délimitations conditionnelles / 2 ouvertes**, *et non 14 garanties vérifiées*. Les contrats externes restent non validés physiquement. `p3_ivc_scope_audit.py` vérifie seulement la cohérence documentaire dans la CI, sans se substituer aux expériences adversariales manquantes. Aucun changement du scope sémantique [SCOPE.md](SCOPE.md) ou du noyau.
+
+## Consolidation IV-D — G08 / G16 (2026-10-09)
+
+Pour l'état actualisé, voir le [journal de consolidation](findings/P3_LAB_CHANGELOG.md), la [campagne G08/G16](findings/P3_G08_G16_CAMPAIGN.md) et le [registre des runs](https://github.com/ichamafif-svg/NEW/issues/2). Les nouvelles expériences opposent 20 cycles de dégradation persistante, 20 cycles avec signal de guérison et 20 cycles de contrôle sain ; `G08` et `G16` restent ouvertes tant que dette canonique/échéance et progrès conditionnel ne sont pas démontrés.
