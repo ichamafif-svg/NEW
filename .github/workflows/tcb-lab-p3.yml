@@ -43,3 +43,46 @@ jobs:
             p3-autonomy-output.json
             p3-compositions-output.json
           if-no-files-found: warn
+
+  report:
+    name: Publish TCB test results (automatic)
+    if: always()
+    needs: [adversarial]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      actions: read
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TEST_JOB_RESULT: ${{ needs.adversarial.result }}
+      REPORT_RUN_ID: ${{ github.run_id }}
+      REPORT_RUN_NUMBER: ${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+        with:
+          persist-credentials: false
+      - name: Download available run reports, no manual exports
+        shell: bash
+        run: |
+          mkdir -p p3-artifacts
+          gh run download "$REPORT_RUN_ID" --name tcb-lab-g1-p3-results --dir p3-artifacts || true
+      - name: Retrieve repository workflow history, including red runs
+        shell: bash
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs?per_page=100" > ci-history.json
+      - name: Build complete concise report
+        run: python3 tcb_lab/ci_report.py
+      - name: Update one persistent GitHub issue with latest report
+        shell: bash
+        run: |
+          TITLE="TCB laboratory - automated execution register"
+          gh issue list --state all --limit 100 --json number,title > issue-index.json
+          ISSUE_NUMBER=$(python3 -c 'import json; print(next((i["number"] for i in json.load(open("issue-index.json")) if i["title"] == "TCB laboratory - automated execution register"), ""))')
+          if [ -n "$ISSUE_NUMBER" ]; then
+            gh issue edit "$ISSUE_NUMBER" --body-file ci-summary.md
+          else
+            gh issue create --title "$TITLE" --body-file ci-summary.md
+          fi
+          cat ci-summary.md >> "$GITHUB_STEP_SUMMARY"
