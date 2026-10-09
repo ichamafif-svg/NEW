@@ -20,23 +20,38 @@ jobs:
       - run: sudo apt-get update -qq && sudo apt-get install -y libseccomp2
       - run: python -m pip install -r requirements.txt
       - name: Run G1 probes
+        id: g1
+        continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/g1_decision_probes.py | tee g1-output.json
       - name: Run P3 signed-core attacks
+        id: signed
+        continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_signed_core.py | tee p3-output.json
       - name: Run P3 effect-boundary attacks
+        id: effects
+        continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_effect_line.py | tee p3-effects-output.json
       - name: Run 30 signed mutation attacks
+        id: mutation
+        continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_mutation_fuzz.py | tee p3-mutation-output.json
       - name: Run ten autonomy safety/liveness probes
+        id: autonomy
+        continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_autonomy.py | tee p3-autonomy-output.json
       - name: Run compositional adversarial sequences
+        id: compositions
+        continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_compositions.py | tee p3-compositions-output.json
+      - name: Reject any failed suite, while retaining all suite outputs
+        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure')
+        run: exit 1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
