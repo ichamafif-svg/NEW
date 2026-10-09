@@ -28,6 +28,7 @@ names={
 "p3-ivc-scope.json":"IV-C conditional boundary scope audit",
 "p3-ivc-target.json":"IV-C same target liveness",
 "p3-ivd-g0816.json":"IV-D G08/G16 longitudinal",
+"p3-ive-reasons.json":"IV-E G08/G16 reason tracing",
 }
 rows=[]
 for filename,desc in names.items():
