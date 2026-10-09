@@ -40,3 +40,11 @@ Nombre de concepts internes, représentation constitutionnelle, DSL/CIR, algèbr
 **G5 — Noyau candidat validé : NON.**
 
 Le but est de découvrir **la meilleure abstraction pour satisfaire les garanties**, non de réécrire l'existant avec d'autres noms.
+
+## Phase 3 — campagne active (9 octobre 2026)
+
+Plan complet des huit phases : [PLAN.md](PLAN.md). Inventaire des garanties : [GUARANTEE_MATRIX.md](GUARANTEE_MATRIX.md). Hypothèses de menace : [THREAT_MODEL.md](THREAT_MODEL.md). Campagne adversariale, scénarios et limites : [ATTACK_CATALOG.md](ATTACK_CATALOG.md).
+
+Les suites `experiments/p3_signed_core.py` et `experiments/p3_effect_line.py` fournissent **12 exercices adversariaux** (huit sur les décisions signées et quatre sur les frontières d'effet). Les scénarios complémentaires du catalogue exigent encore des harness dédiés, notamment pour multi-hôte, fournisseur et restauration. `python tcb_lab/experiments/g1_decision_probes.py` constitue une première expérience de scope additionnelle.
+
+Une CI lecture seule `.github/workflows/tcb-lab-p3.yml` exécute ces suites sur un environnement isolé sans clés Standard ni droit d'écriture. **Aucun succès d'exécution n'est revendiqué tant que les logs ne sont pas vérifiés.** Les résultats sont distingués des hypothèses de lecture de code. Les phases 1–2 restent ouvertes à l'affinement, la phase 3 est en cours et **aucune abstraction centrale n'a été adoptée**.
