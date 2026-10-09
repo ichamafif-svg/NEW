@@ -198,6 +198,18 @@
       "status": "NOT_DONE",
       "evidence": [],
       "verified": false
+    },
+    {
+      "id": "V05",
+      "name": "Deployment attestation bound to release, genesis, ledger, registry and external verifier",
+      "owner": "T01+T02+T04+T07",
+      "status": "PARTIAL_UNVERIFIED_PHYSICAL",
+      "evidence": [
+        "hybrid_kernel/attestation.py",
+        "hybrid_kernel/deployment.py",
+        "tests/test_hybrid_kernel_attestation.py"
+      ],
+      "verified": false
     }
   ]
 }
