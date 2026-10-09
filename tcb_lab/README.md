@@ -56,3 +56,11 @@ La campagne possède désormais [80 nouvelles hypothèses structurées](ATTACK_E
 Au total, **52 exercices locaux sont codés dans les quatre scripts P3** : huit entrées signées, quatre effets locaux, trente mutations et dix expériences sur l'autonomie. Les quatre expériences G1 restent séparées. Les hypothèses non codées restent une file de recherche, et non des résultats. La CI déclenche ces suites sur push. L'accès GitHub disponible ici ne fournit pas encore de compte rendu d'exécution validé : **aucun résultat vert ni vulnérabilité confirmée n'est annoncé**.
 
 L'objectif de Standard est l'**autonomie gouvernée**, pas seulement le refus de toute action : chaque campagne doit examiner si un agent habilité peut progresser en respectant les protections, et si toute impossibilité de progresser devient un état, une obligation ou une escalade explicite. Le noyau ne devient pas pour autant le scheduler ou l'agent.
+
+## Phase 3 — profondeur bloquante, pas course au volume
+
+La nouvelle [P3_EXIT_CRITERIA.md](P3_EXIT_CRITERIA.md) définit huit **portes de clôture obligatoires**. La [COVERAGE_DEPTH.md](COVERAGE_DEPTH.md) rend visibles les trous entre les seize familles de garanties et les cinq dimensions : décision, composition, panne, confiance physique et progression autonome. Chaque cellule `Coded` reste distincte d'un résultat exécuté.
+
+`experiments/p3_compositions.py` ajoute **sept séquences adversariales composées** sur les restrictions, les jetons, les effets inconnus, les preuves et la continuité du travail légitime. La CI inclut ces séquences. Cela porte le laboratoire à **59 exercices P3 codés**, toujours **non validés par un run observé**. Les hypothèses recensées restent au nombre de 104 ; les exercices ne correspondent pas nécessairement un-pour-un aux hypothèses.
+
+**La phase 3 demeure ouverte jusqu'à satisfaction des portes, pas jusqu'à un quota arbitraire de tests.** Le moteur d'autonomie reste extérieur au noyau constitutionnel, mais tout mécanisme autorisant ou clôturant ses effets doit être éprouvé dans la frontière de confiance.
