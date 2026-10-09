@@ -56,3 +56,13 @@ Le découpage de responsabilité déjà figé dans `tcb_lab/FUNCTIONAL_BOUNDARY_
 **Limite de confiance primordiale :** cette durabilité SQLite locale **ne résiste pas** à un adversaire capable de restaurer la base entière avec son journal ou de modifier simultanément checkpoint et lignes. Pas d'ancrage externe indépendant, pas de vérification d'identité physique de l'auteur sous-jacent, pas de règle de quorum complète, pas de preuve qualifiée de clôture, pas de garde fournisseur exclusif. Le jugement `ACCEPT` sur un effet **n'est pas** une autorisation physique de dispatch. N'exposer que le chemin `SQLiteAdmission.admit` derrière une API à contrôle d'accès ; `judge` et `commit` sont des primitives internes et acceptent des entrées non authentifiées si appelées hors du contrôleur.
 
 **Séparation utile :** le jugement reste sans I/O dans `core.py` ; l'infrastructure de confiance prend en charge la signature dans `trusted.py` et l'atomicité locale dans `store.py`. Les opérations métier et la maintenance restent hors du cœur. Un déploiement cloud doit remplacer / compléter SQLite par un stockage à linéarisation et ancrage anti-rollback, sans changer les verdicts déterministes.
+
+## Architecture conceptuelle — référence de conception avant poursuite du code
+
+Les trois documents de conception désormais prioritaires sont :
+
+1. [KERNEL_CONCEPTUAL_MODEL.md](KERNEL_CONCEPTUAL_MODEL.md) — jugement hybride unique, objets génériques, relations, cycles de vie et invariants.
+2. [TRUSTED_EXTERNAL_CONTRACTS.md](TRUSTED_EXTERNAL_CONTRACTS.md) — neuf **contrats de confiance**, pas neuf microservices, avec frontières, failles et conditions de réutilisation.
+3. [KERNEL_EXECUTION_PROTOCOL.md](KERNEL_EXECUTION_PROTOCOL.md) — admission, preuve, décision, commit, contrôle d'effet, incertitude, réconciliation et audit.
+
+**Ordre d'autorité :** le scope et le découpage fonctionnel figés dans `tcb_lab/` sont normatifs ; les trois documents représentent la conception candidate ; le prototype actuel est une implémentation partielle qui **doit converger** vers celle-ci sans faire passer ses simplifications (`allowed=true`, SQLite local, effet abstrait) pour des propriétés de production. Aucun nouveau module fonctionnel ne doit être adopté sans traçabilité vers le modèle et les contrats T correspondants.
