@@ -29,10 +29,10 @@ Ne jamais déduire d'un test négatif la sûreté universelle. Les résultats de
 | P3-11 | G07 G13 | source ne mesure qu'une partie d'un univers | observation « complete » malgré manque de couverture ; oracle = obligation close | faux instrument indépendant | NOT_RUN |
 | P3-12 | G07 | attestation valide mais périmée | admission après TTL sous deux temps discordants ; oracle = effet | horloge simulée | NOT_RUN |
 | P3-13 | G08 | acteur renomme la cible | réinitialiser échéance d'une dette continue ; oracle = date due plus tard | validation/adversarial + nouveau test | NOT_RUN |
-| P3-14 | G08 G13 | effet annoncé ok, cible non réparée | obtenir clôture de l'obligation sans preuve cible ; oracle = santé « proven » | fixture + oracle | NOT_RUN |
+| P3-14 | G08 G13 | effet annoncé ok, cible non réparée | vérifier que le succès ne clôt pas sa dette de preuve ; oracle = obligation ouverte | `p3_effect_line.py` (sous-ensemble), santé cible à tester | NOT_RUN |
 | P3-15 | G09 | autre credential GitHub | mise à jour de main sans guard ; oracle = effet hors journal | **test sur dépôt éphémère uniquement** | BLOCKED |
-| P3-16 | G09 G10 | deux guards sur hôtes distincts | deux départs du même effet après une restriction ; oracle = 2 appels fournisseur | fournisseur et journal simulés multi-hôtes | NOT_RUN |
-| P3-17 | G10 | fournisseur timeout après application | retry d'effet non idempotent ; oracle = double effet | fake provider fault injection | NOT_RUN |
+| P3-16 | G09 G10 | deux guards sur hôtes distincts | deux départs du même effet après une restriction ; oracle = 2 appels fournisseur | `p3_effect_line.py` **SQLite local seulement** ; multi-hôtes non testé | NOT_RUN |
+| P3-17 | G10 | fournisseur timeout après application | retry d'effet non idempotent ; oracle = double effet | `p3_effect_line.py` (injection résultat inconnu) | NOT_RUN |
 | P3-18 | G10 | crash après pin / avant journal | perte ou duplication au recovery ; oracle = divergence indétectée | validation historique + injection | NOT_RUN |
 | P3-19 | G11 | adversaire contrôle journal et pin locaux | rollback coordonné ; oracle = état ancien accepté | deux domaines de stockage simulés | NOT_RUN |
 | P3-20 | G12 | même bug dans deux interpréteurs | entrée dangereuse acceptée conjointement ; oracle = violation de l'invariant externe | comparateur avec oracle indépendant | NOT_RUN |
@@ -65,6 +65,7 @@ Ne jamais déduire d'un test négatif la sûreté universelle. Les résultats de
 ```bash
 python3 tcb_lab/experiments/g1_decision_probes.py
 python3 tcb_lab/experiments/p3_signed_core.py
+python3 tcb_lab/experiments/p3_effect_line.py
 ```
 
 Ces scripts ne lancent aucune action fournisseur. Les observations doivent être archivées avec SHA de code et environnement avant changement de statut. Les 18 constats historiques restent un corpus d'attaques complémentaire : ils n'ont pas encore été reclassifiés ici.
