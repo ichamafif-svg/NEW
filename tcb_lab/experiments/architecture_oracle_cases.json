@@ -1,0 +1,169 @@
+{
+  "version": "architecture-oracle/0.1",
+  "status": "PROVISIONAL_NEEDS_CONTRADICTORY_REVIEW",
+  "basis": [
+    "tcb_lab/SCOPE.md",
+    "tcb_lab/FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md"
+  ],
+  "cases": [
+    {
+      "id": "AV-01",
+      "guarantees": [
+        "G01"
+      ],
+      "scenario": "Single root signer attempts widening below quorum",
+      "expected": "REJECT",
+      "invariant": "A single actor cannot widen constitutional authority"
+    },
+    {
+      "id": "AV-02",
+      "guarantees": [
+        "G02"
+      ],
+      "scenario": "Authorized revocation is committed before an effect departs",
+      "expected": "REJECT",
+      "invariant": "Departing effect is rejudged against committed restriction"
+    },
+    {
+      "id": "AV-03",
+      "guarantees": [
+        "G03"
+      ],
+      "scenario": "Client law removes one release floor",
+      "expected": "REJECT",
+      "invariant": "Client law only adds or tightens"
+    },
+    {
+      "id": "AV-04",
+      "guarantees": [
+        "G04"
+      ],
+      "scenario": "Two evaluations receive identical pinned state, law and input",
+      "expected": "ACCEPT",
+      "invariant": "Same verdict and exhaustive delta on identical canonical inputs",
+      "assumptions": [
+        "Input otherwise admissible"
+      ]
+    },
+    {
+      "id": "AV-05",
+      "guarantees": [
+        "G05"
+      ],
+      "scenario": "Valid content signed for a foreign genesis",
+      "expected": "REJECT",
+      "invariant": "Signatures are bound to the right domain"
+    },
+    {
+      "id": "AV-06",
+      "guarantees": [
+        "G06"
+      ],
+      "scenario": "Untrusted timestamp claims capability not yet activated",
+      "expected": "REJECT",
+      "invariant": "Time does not grant new authority"
+    },
+    {
+      "id": "AV-07",
+      "guarantees": [
+        "G07",
+        "G13"
+      ],
+      "scenario": "Signed scanner statement with no acceptable coverage",
+      "expected": "PENDING_EXTERNAL",
+      "invariant": "A signed statement cannot close an obligation without qualified coverage"
+    },
+    {
+      "id": "AV-08",
+      "guarantees": [
+        "G08"
+      ],
+      "scenario": "Third repair proposal after two failures of same enduring gap",
+      "expected": "ACCEPT",
+      "invariant": "Canonical obligation retains original identity opened due",
+      "assumptions": [
+        "Third proposal itself is authorized"
+      ]
+    },
+    {
+      "id": "AV-09",
+      "guarantees": [
+        "G09",
+        "G15"
+      ],
+      "scenario": "Proposed privileged effect exits via a route with no trusted gate",
+      "expected": "REJECT",
+      "invariant": "No mutating effect without exclusive physical enforcement",
+      "assumptions": [
+        "Decision at the trusted boundary"
+      ]
+    },
+    {
+      "id": "AV-10",
+      "guarantees": [
+        "G10"
+      ],
+      "scenario": "Provider applied effect but acknowledgement was lost",
+      "expected": "PENDING_EXTERNAL",
+      "invariant": "Unknown is not treated as no-effect or safe retry"
+    },
+    {
+      "id": "AV-11",
+      "guarantees": [
+        "G11"
+      ],
+      "scenario": "Restored journal prefix mismatches an independent pinned anchor",
+      "expected": "REJECT",
+      "invariant": "Incompatible rollback fails closed"
+    },
+    {
+      "id": "AV-12",
+      "guarantees": [
+        "G12"
+      ],
+      "scenario": "Second judge is absent at protected transition",
+      "expected": "REJECT",
+      "invariant": "Required independent judgment cannot be skipped"
+    },
+    {
+      "id": "AV-13",
+      "guarantees": [
+        "G14"
+      ],
+      "scenario": "Recovery attempts root reset by sole agent",
+      "expected": "REJECT",
+      "invariant": "No unilateral root recovery"
+    },
+    {
+      "id": "AV-14",
+      "guarantees": [
+        "G16"
+      ],
+      "scenario": "Repeated repair failures under persistent unmet target before escalation condition is due",
+      "expected": "ACCEPT",
+      "invariant": "Keep target debt open; retry scheduling belongs outside K",
+      "assumptions": [
+        "No unauthorized effect and no currently due escalation"
+      ]
+    },
+    {
+      "id": "AV-15",
+      "guarantees": [
+        "G16"
+      ],
+      "scenario": "Law-defined escalation condition is due but scheduler is unavailable",
+      "expected": "ESCALATION_DUE",
+      "invariant": "K determines escalation obligation; physical delivery depends on T/U"
+    },
+    {
+      "id": "AV-16",
+      "guarantees": [
+        "G04",
+        "G08"
+      ],
+      "scenario": "Candidate delta would remove still-open obligation without qualified closure",
+      "expected": "REJECT",
+      "invariant": "Exhaustive state transition prohibits deletion of required debt"
+    }
+  ]
+}
