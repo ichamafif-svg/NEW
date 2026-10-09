@@ -29,7 +29,7 @@ def execute(ident, family, mutate):
     try:
         altered = mutate(copy.deepcopy(entry), w)
         accepted, reason, _ = w.kernel.admit(w.state, altered)
-        assert w.state == before, "admission mutated caller state"
+        assert copy.deepcopy(w.state) == before, "admission mutated caller state"
         if accepted:
             outcome = "VIOLATION_OBSERVED"
             detail = "malformed or forged signed entry admitted"
