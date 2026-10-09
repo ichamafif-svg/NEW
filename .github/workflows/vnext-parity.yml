@@ -1,0 +1,29 @@
+name: vNext deterministic parity
+on:
+  push:
+    branches:
+      - feat/vnext-deterministic-core
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: sudo apt-get update -qq && sudo apt-get install -y libseccomp2
+      - run: python -m pip install -r requirements.txt
+      - name: Compare identical historical tests in baseline and vNext shadow
+        run: python tools/compare_vnext.py
+      - name: Execute new vNext boundary unit tests
+        run: python tests/test_vnext_decision.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vnext-parity
+          path: validation/vnext-differential.json
+          if-no-files-found: warn
