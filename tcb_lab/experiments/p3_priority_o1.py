@@ -5,6 +5,8 @@ Record BOTH the expected test assertions and actual transitions. Comparison
 across default_test variations separates runner behaviour from kernel verdict.
 """
 import json
+import io
+from contextlib import redirect_stdout
 import sys
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
@@ -18,7 +20,8 @@ def probe(label,verdict,cycles):
         sim.default_test=verdict
         history=[]
         for n in range(cycles):
-            sim.cycle()
+            with redirect_stdout(io.StringIO()):
+                sim.cycle()
             phases=sim.subjects()
             node=sim.node()
             try: live=bool(lifecycle.live(node.state,node.now()))
