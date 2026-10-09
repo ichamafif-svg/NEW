@@ -53,7 +53,7 @@ def replay_does_not_apply_twice():
     w.journal.append(e)
     after = copy.deepcopy(w.state)
     reason = require_refusal(w, e, reason="HIST.CHAIN")
-    assert w.state == after
+    assert copy.deepcopy(w.state) == after
     return {"refusal": reason, "state_unchanged": True}
 
 
@@ -118,7 +118,7 @@ def malformed_entries_fail_closed():
         permitted, code, _ = w.kernel.admit(w.state, candidate)
         assert not permitted, f"malformed entry admitted: {candidate!r}"
         refused.append(code)
-    assert w.state == original
+    assert copy.deepcopy(w.state) == original
     return {"refusal_codes": refused, "no_side_effect": True}
 
 
