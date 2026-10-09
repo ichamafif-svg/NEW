@@ -29,6 +29,8 @@ jobs:
         run: python tcb_lab/experiments/p3_mutation_fuzz.py | tee p3-mutation-output.json
       - name: Run ten autonomy safety/liveness probes
         run: python tcb_lab/experiments/p3_autonomy.py | tee p3-autonomy-output.json
+      - name: Run compositional adversarial sequences
+        run: python tcb_lab/experiments/p3_compositions.py | tee p3-compositions-output.json
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
         with:
@@ -39,4 +41,5 @@ jobs:
             p3-effects-output.json
             p3-mutation-output.json
             p3-autonomy-output.json
+            p3-compositions-output.json
           if-no-files-found: warn
