@@ -7,24 +7,38 @@ environment and independently verified evidence for all required contracts.
 from __future__ import annotations
 from .runtime import ConstitutionalRuntime,IntegrationError
 from .externals import CapabilityRegistry,ContractError,CONTRACTS
+from .attestation import DeploymentAttestation,AttestationError,registry_fingerprint
+from tcb.release import code_digest
 
 class ProductionBlocked(RuntimeError):
     pass
 
 class GovernedDeployment:
-    """Guarded entry point; NOT a production attestation authority.\n\n    Deployment callers are trusted operators. There is no secure public method\n    to set physical_enforcement_confirmed using an arbitrary boolean.\n    """
+    """Guarded entry point; NOT a production attestation authority.
+
+    The deployment attestation must originate in an independent trusted verifier,
+    not from user-controlled data or an agent-side constructor.
+    """
 
     def __init__(self,*,ledger_path,pin_store,genesis_pin,registry,attested_now,
-                 physical_enforcement_confirmed=False):
+                 deployment_attestation=None):
         if not isinstance(registry,CapabilityRegistry):
             raise ProductionBlocked("TRUST.NO_REGISTRY")
         try:registry.validate(attested_now)
         except ContractError as e:raise ProductionBlocked("TRUST.UNVERIFIED:"+str(e)) from e
-        if physical_enforcement_confirmed is not True:
-            raise ProductionBlocked("TRUST.PHYSICAL_ATTESTATION_REQUIRED")
-        # Boolean physical_enforcement_confirmed is operator-controlled and
-        # cannot be treated as cryptographic proof of isolation. Do not expose
-        # this as an internet-facing production API absent an external attestor.
+        if not isinstance(deployment_attestation,DeploymentAttestation):
+            raise ProductionBlocked("TRUST.ATTESTATION_REQUIRED")
+        try:
+            deployment_attestation.validate(
+                release_digest=code_digest(),genesis_pin=genesis_pin,
+                ledger_path=ledger_path,registry_digest=registry_fingerprint(registry),
+                now=attested_now)
+        except AttestationError as e:
+            raise ProductionBlocked("TRUST.ATTESTATION_INVALID") from e
+        # WARNING: arbitrary construction of DeploymentAttestation is NOT
+        # trustworthy. Callers must be confined to an authenticated attestation
+        # verifier/operational boundary; no public endpoint may accept this as
+        # raw caller-supplied object.
         self._runtime=ConstitutionalRuntime(ledger_path=ledger_path,pin_store=pin_store,
                                            genesis_pin=genesis_pin)
 
