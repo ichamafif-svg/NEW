@@ -58,3 +58,7 @@ La [revue IV-B](../IVB_BOUNDARY_CLOSURE.md) classe séparément les frontières 
 ## IV-D — continuité des obligations et autonomie
 
 [Nouveaux tests G08/G16](P3_G08_G16_CAMPAIGN.md) · [Consolidation et sources de vérité](P3_LAB_CHANGELOG.md) · [Registre CI](https://github.com/ichamafif-svg/NEW/issues/2). Conserver les findings antérieurs comme historiques, jamais comme preuve de la validation actuelle.
+
+## G08/G16 — lecture des résultats réels (après Actions 37964069387)
+
+Voir [l'interprétation complète](P3_G08_G16_FIRST_INTERPRETATION.md). Dans les scénarios à écart persistant, deux propositions sont retirées puis **18 cycles / 20 sans sujet live** sont observés, sans modification de main. Les obligations constitutionnelles ne peuvent pas être déduites de la seule liste `state["obligations"]` vide : **G08 reste ouvert**. **G16 reste ouvert** en attente du contrôle des escalades et de la fairness. Le prétendu contrôle sain était **invalide** (le runner `none` n'enlevait pas `vulns=found:2`) et a été rectifié dans le harnais ; ne pas citer l'ancien résultat comme témoin sain. Aucune modification du noyau ou du scope.
