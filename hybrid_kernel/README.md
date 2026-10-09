@@ -1,88 +1,30 @@
-# Standard — prototype de noyau hybride (branche isolée)
+# Noyau constitutionnel hybride de Standard
 
-**Branche :** `prototype/hybrid-kernel-v1`. **Statut : prototype fonctionnel partiel, architecture visée production ; NON production-ready.**
+**Référence produit :** [Architecture de Standard](../STANDARD_ARCHITECTURE.md). **Statut : conception cible définie ; qualification de production non acquise.**
 
-Ce prototype **réutilise** les primitives éprouvées des versions précédentes (`tcb.canon`, `tcb.policy`, `tcb.crypto`) au lieu de recoder une pile de cryptographie ou d'inventer un DSL. Il ne modifie pas `tcb/`, `ops/` ni le laboratoire figé. L'ancienne implémentation n'est pas remplacée.
+Le noyau garantit un **jugement déterministe unique** sur les sept responsabilités : **Identity, Authority, Law, State, Evidence, Obligation, Effect**. Ces responsabilités ne prescrivent ni sept moteurs ni une ontologie métier. Une constitution versionnée définit floors et loi client ; aucune règle client ne peut affaiblir les protections de la release.
 
-## Architecture choisie
+## Principe interne
 
-Une seule opération de **jugement** combine :
-1. **Modèle canonique** : loi/version épinglées, état, obligations et demandes sur des ressources génériques ;
-2. **Contraintes bornées** : programme positif fini validé par `tcb.policy`, pas de callbacks de règles arbitraires ;
-3. **Transitions exhaustives** : chaque changement déclare son ancienne et sa nouvelle valeur, résultat `Decision` immuable avec delta complet ;
-4. **Obligations autonomes par identité canonique** : ouverture et `due` préservés sous répétition des tentatives ; clôture impossible par simple affirmation ;
-5. **Port d'admission Trusted External** : `hybrid_kernel.trusted.judge_signed` vérifie DSSE, signature Ed25519/WebAuthn selon clé épinglée, domaine, genèse logique du contrat, digest de la requête, état et loi ; `hybrid_kernel.core.judge` est **une primitive interne non sûre à exposer** ;
-6. **Effets** : le jugement émet une description d'autorisation mais ne contacte aucun fournisseur. L'application réelle doit impérativement passer par une frontière externe exclusive.
+Une déclaration authentifiée et un préfixe d'état authentique entrent dans un système de relations typées et de contraintes finies. Le noyau établit l'autorité, qualifie les preuves déjà attestées par les frontières requises, dérive les obligations et le delta complet, puis rend un verdict reproductible. Aucun travail métier, réseau ou outil fournisseur ne s'exécute dans le jugement pur.
 
-Il n'existe **aucune table `type métier → handler`**. Un nouvel objet métier est une ressource générique et les règles sont des données de constitution validées. Le modèle constitutionnel, lui, conserve des primitives closes.
+Une décision peut refuser, attendre une entrée qualifiée ou autoriser un **changement exact**. Les obligations demeurent indépendantes des WorkItems et des tentatives ; une clôture exige une preuve qualifiée. Une décision favorable n'est jamais un droit général d'appeler un fournisseur : l'effet est une intention bornée, contrôlée au départ par une garde exclusive.
 
-## Contrat et fichiers
+## Architecture de confiance
 
-- `hybrid_kernel/core.py` — validation de loi, décision pure, dette canonique, delta complet, vérification de commit en mémoire ;
-- `hybrid_kernel/trusted.py` — admission via enveloppe DSSE et clé externement épinglée ;
-- `tests/test_hybrid_kernel.py` — cas adversariaux de base ;
-- `.github/workflows/hybrid-kernel-prototype.yml` — tests dédiés sur la branche.
+- **K** : décisions de loi, autorité, preuve admissible, état, obligations et droits d'effet.
+- **T** : ancrage de la release, indépendance des identités et des clés, temps, journal anti-rollback, vérification, qualification factuelle, egress privilégié, résultats et escalade.
+- **U** : création, maintenance BUILD/RUN, diagnostics, scanners, plans, WorkItems, agents et adaptateurs d'infrastructure.
 
-**Important** : `commit` n'est pas un journal durable atomique ni une API sécurisée contre la concurrence. Une décision en mémoire ne doit jamais être interprétée comme une permission physique de déploiement.
+Standard s'intègre à l'outillage existant lorsque ses garanties sont suffisantes ; l'adaptateur ne devient jamais une autorité constitutionnelle par simple traduction de données.
 
-## Critères non négociables avant déploiement
+## Contrats détaillés
 
-- [ ] États et loi en structures vérifiables, limitations de taille et de temps, schéma versionné ; refuser les objets malformés et les ambiguïtés ;
-- [ ] Autorité constitutionnelle intégrale : quorum, restrictions, délégations atténuantes, évolutions de la loi, veto, récupération et bootstrap sans god mode ;
-- [ ] Admission et signatures arrimées à des identités physiques réellement indépendantes et à un code/runtime épinglé ; revue crypto contradictoire ;
-- [ ] Vérification de la provenance, fraîcheur et **indépendance réelle** des observations ; clés de mesures distinctes de celles de l'agent ;
-- [ ] Cycle complet des obligations : création, maintien, échéance, clôture par preuve qualifiée, escalade et migration/renommage sans reset ;
-- [ ] Stockage durable et linéarisable, anti-rollback indépendant, reprise et compare-and-swap atomique ;
-- [ ] Effets exacts physiquement contrôlés : egress fermé, secrets hors agents, fencing, réservation, readback, incertitude des retries et revocation au départ ;
-- [ ] Second juge indépendant et trace de jugement reproductible ;
-- [ ] Tests adversariaux G01–G16, fuzzing, essais de panne, concurrence, replay, race clock/commit, provider mocks et tests d'intégration réels ;
-- [ ] Budget de performance et de ressources défini, reproduit et vérifié sur charges cibles ; suite CI **verte et vérifiée**.
+- [Modèle conceptuel](KERNEL_CONCEPTUAL_MODEL.md) : objets, relations, transitions et invariants.
+- [Trusted External](TRUSTED_EXTERNAL_CONTRACTS.md) : contrats physiques et domaines de confiance.
+- [Protocole](KERNEL_EXECUTION_PROTOCOL.md) : admission, commit, effet et réconciliation.
+- [Architecture globale](../STANDARD_ARCHITECTURE.md) : vision et surfaces produit.
 
-**Ne jamais promouvoir le prototype en production sur la seule base des tests unitaires verts.** L'architecture fonctionnelle visée est solide, mais la frontière de confiance effective n'est pas encore complète.
+## Validation
 
-## Progression de réalisation
-
-1. Construire une constitution/autorité typée et un journal atomique durable autour du jugement ;
-2. Ajouter preuve qualifiée, clôture, escalation et vérification indépendante ;
-3. Brancher un garde physique exclusif des effets sous tests adversariaux ;
-4. Soumettre aux gates de sûreté/performance, puis décider d'une promotion explicite.
-
-Le découpage de responsabilité déjà figé dans `tcb_lab/FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md` reste l'autorité normative.
-
-## Incrément 2 — Admission transactionnelle locale
-
-`hybrid_kernel/store.py` introduit `SQLiteAdmission` : genèse non réinitialisable par l'API, transactions `BEGIN IMMEDIATE`, lecture contrôlée, jugement d'une enveloppe DSSE vérifiée sur l'état le plus récent, commit atomique du checkpoint et de l'enregistrement d'admission, identifiant de demande unique et rejet des reçus périmés. Le lien au `state_head` et à la constitution évite de réutiliser un reçu après une autre transition. `tests/test_hybrid_kernel_store.py` teste genèse unique, réouverture, identité de dette après retry, replay, refus et altération locale du checkpoint.
-
-**Limite de confiance primordiale :** cette durabilité SQLite locale **ne résiste pas** à un adversaire capable de restaurer la base entière avec son journal ou de modifier simultanément checkpoint et lignes. Pas d'ancrage externe indépendant, pas de vérification d'identité physique de l'auteur sous-jacent, pas de règle de quorum complète, pas de preuve qualifiée de clôture, pas de garde fournisseur exclusif. Le jugement `ACCEPT` sur un effet **n'est pas** une autorisation physique de dispatch. N'exposer que le chemin `SQLiteAdmission.admit` derrière une API à contrôle d'accès ; `judge` et `commit` sont des primitives internes et acceptent des entrées non authentifiées si appelées hors du contrôleur.
-
-**Séparation utile :** le jugement reste sans I/O dans `core.py` ; l'infrastructure de confiance prend en charge la signature dans `trusted.py` et l'atomicité locale dans `store.py`. Les opérations métier et la maintenance restent hors du cœur. Un déploiement cloud doit remplacer / compléter SQLite par un stockage à linéarisation et ancrage anti-rollback, sans changer les verdicts déterministes.
-
-## Architecture conceptuelle — référence de conception avant poursuite du code
-
-Les trois documents de conception désormais prioritaires sont :
-
-1. [KERNEL_CONCEPTUAL_MODEL.md](KERNEL_CONCEPTUAL_MODEL.md) — jugement hybride unique, objets génériques, relations, cycles de vie et invariants.
-2. [TRUSTED_EXTERNAL_CONTRACTS.md](TRUSTED_EXTERNAL_CONTRACTS.md) — neuf **contrats de confiance**, pas neuf microservices, avec frontières, failles et conditions de réutilisation.
-3. [KERNEL_EXECUTION_PROTOCOL.md](KERNEL_EXECUTION_PROTOCOL.md) — admission, preuve, décision, commit, contrôle d'effet, incertitude, réconciliation et audit.
-
-**Ordre d'autorité :** le scope et le découpage fonctionnel figés dans `tcb_lab/` sont normatifs ; les trois documents représentent la conception candidate ; le prototype actuel est une implémentation partielle qui **doit converger** vers celle-ci sans faire passer ses simplifications (`allowed=true`, SQLite local, effet abstrait) pour des propriétés de production. Aucun nouveau module fonctionnel ne doit être adopté sans traçabilité vers le modèle et les contrats T correspondants.
-
-## Production gap / plan de réutilisation
-
-La [matrice de réemploi et d'écarts](PRODUCTION_GAP_AND_REUSE.md) confronte directement `tcb/`, `hybrid_kernel/` et les trois contrats conceptuels. Elle distingue ce qu'on **réutilise**, ce qu'on **adapte**, ce qui doit rester **Trusted External** et ce qui reste hors du noyau pour préserver le produit BUILD/RUN. **Premier bloqueur P0** : l'admission signée `allowed=true` n'est pas encore un jugement constitutionnel d'autorité ; elle doit être remplacée par le pouvoir réellement dérivé des floors, du quorum et des délégations dans K. Statut : analyse d'écart enregistrée, aucun déploiement de production autorisé.
-
-## Chemin constitutionnel intégré (incrément 3)
-
-`hybrid_kernel/runtime.py` introduit `ConstitutionalRuntime` : un chemin unique d'admission **réutilisant le noyau historique complet `tcb.Kernel`**, son vérificateur distinct `tcb.invariants.Invariants` au sein de `Journal`, `Accountability`, `SQLitePins` et `Guard/EffectPort`. Il ne reçoit **aucun `allowed=true`** ; une entrée non signée n'a pas d'API d'admission alternative sur cette façade. Le noyau ancien impose effectivement quorum, restrictions, capacités, lois, obligations et effets selon ses règles connues. Cette intégration constitue un **chemin transitoire de non-régression**, pas encore la migration du modèle relationnel hybride : la nouvelle implémentation `core.py` reste un prototype de conception et ne doit PAS devenir une deuxième autorité de production.
-
-La séparation en chemins de fichiers pour les pins est vérifiée logiciellement, mais **n'assure pas leur indépendance physique** ; il faut un domaine de restauration distinct et contrôlé par l'exploitant. L'exclusivité d'egress et le confinement des credentials ne peuvent pas être garantis par une façade Python. Un contexte réseau/OS réel, l'indépendance humaine et la qualification du fournisseur sont requis pour un lancement. Vérifier également le préfixe après redémarrage et l'authenticité du code de release.
-
-**Position provisoire :** utiliser uniquement `ConstitutionalRuntime` comme trajectoire d'intégration constitutionnelle ; ne pas promouvoir `SQLiteAdmission` ni `judge_signed` comme seul contrôleur d'autorité. Le chantier restant est le portage des mécanismes complets dans le modèle générique, sans régression et avec tests d'interface, puis les preuves Trusted External sur le déploiement cible.
-
-## Full-code assessment and Trusted External scaffolding
-
-**Engineering assessment:** [DEEP_ASSESSMENT.md](DEEP_ASSESSMENT.md). **Trusted External ports and fail-closed registry:** [externals.py](externals.py), [deployment.py](deployment.py). **Mandatory independent release evidence:** [release_readiness.json](release_readiness.json) and [release_gate.py](release_gate.py).
-
-The public `hybrid_kernel` package exports the signed and pinned constitutional runtime; the experimental `core.judge` remains a non-privileged research module. The current legacy-backed admission path is the source of constitutional authority while generic hybrid-model convergence is still pending. Contract presence and a green CI are **not proof** that the trusted domain is physically independent or all floors are carried forward. Release status must remain **BLOCKED** until all P0 criteria are demonstrated.
-
-Production migration objective: **one generic constitutional engine** replacing the legacy fixed-kinds admission only once a non-regression verdict is independently verified; no separate God-mode or hidden bypass path.
+Le contrat conceptuel définit la cible, non sa preuve. Avant production il faut : vérifier l'autorité complète et la non-régression des floors, les obligations et preuves indépendantes, la reprise sans rollback, l'exclusivité du chemin d'effet, la seconde vérification, les tests d'incidents et de concurrence, ainsi que la tenue des objectifs de performance. **Tout déploiement non qualifié reste interdit.**
