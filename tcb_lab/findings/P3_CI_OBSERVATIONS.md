@@ -24,3 +24,9 @@ Avec les identifiants de runs publiés dans cette issue, le connecteur GitHub pe
 - Vérifier si la régression `test_rule6_red_tests_withdraw_and_free_the_target` est reproductible sur une base de code non altérée avant de l'attribuer au cœur constitutionnel.
 - Conserver les modes de panne `false green` et `autonomy repair withdraw` dans les dimensions de couverture de P3, sans les assimiler arbitrairement à des vulnérabilités FLOOR-0.
 - P3 reste ouverte. Le choix de la représentation vNext demeure hors phase 3.
+
+## Validation observée après correction des harnais
+
+Le run P3 **#30**, GitHub Actions `37948915737`, a été automatiquement lu dans l'issue #2 avec verdict du job de test **success** et les six artefacts JSON **PARSED** : G1 4/4, signed 8/8, effects 4/4, mutations 30/30, autonomy 10/10, compositions 7/7, **aucun identifiant signalé**. Soit **59 exercices P3 exécutés** et quatre expériences G1, sous les hypothèses locales des fixtures. Cela prouve un fonctionnement de ces scénarios sur ce run, non une sûreté globale ni les frontières physiques non testées. Les runs `TCB boundary checks` restent une piste distincte : l'échec récurrent `test_rule6_red_tests_withdraw_and_free_the_target` ne doit pas être effacé par le vert de P3.
+
+Lien : https://github.com/ichamafif-svg/NEW/actions/runs/37948915737 et https://github.com/ichamafif-svg/NEW/issues/2.
