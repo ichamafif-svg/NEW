@@ -32,6 +32,7 @@ names={
 "p3-ivf-backoff.json":"IV-F G08/G16 24-hour backoff",
 "p3-ivg-health.json":"IV-G G08/G16 health and escalation",
 "p3-ivh-canonical.json":"IV-H G08 canonical vulns and G16 escalation",
+"p3-ivi-deadline.json":"IV-I G16 seven-day deadline",
 }
 rows=[]
 for filename,desc in names.items():
