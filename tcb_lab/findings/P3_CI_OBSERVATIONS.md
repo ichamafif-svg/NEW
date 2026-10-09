@@ -30,3 +30,9 @@ Avec les identifiants de runs publiés dans cette issue, le connecteur GitHub pe
 Le run P3 **#30**, GitHub Actions `37948915737`, a été automatiquement lu dans l'issue #2 avec verdict du job de test **success** et les six artefacts JSON **PARSED** : G1 4/4, signed 8/8, effects 4/4, mutations 30/30, autonomy 10/10, compositions 7/7, **aucun identifiant signalé**. Soit **59 exercices P3 exécutés** et quatre expériences G1, sous les hypothèses locales des fixtures. Cela prouve un fonctionnement de ces scénarios sur ce run, non une sûreté globale ni les frontières physiques non testées. Les runs `TCB boundary checks` restent une piste distincte : l'échec récurrent `test_rule6_red_tests_withdraw_and_free_the_target` ne doit pas être effacé par le vert de P3.
 
 Lien : https://github.com/ichamafif-svg/NEW/actions/runs/37948915737 et https://github.com/ichamafif-svg/NEW/issues/2.
+
+## Consolidation de statut — 9 octobre 2026
+
+La suite des corrections instrumentales a produit ensuite des runs complets avec oracles analysables : voir [EV03–EV05](P3_EVIDENCE_REGISTER.md), notamment [Actions #45](https://github.com/ichamafif-svg/NEW/actions/runs/37951191335). Les constats OBS-01/02 sur la **qualité de mesure** restent historiques, mais les anciennes mentions « à confirmer » ne doivent pas être lues comme le statut du dernier run. Les résultats de 69 cas P3 sont **locaux et conditionnels**.
+
+Le test historique rouge OBS-03 reste une **question ouverte** malgré certains boundary runs verts. Voir [P3_MIDPOINT.md](P3_MIDPOINT.md) puis [P3_DEPTH_COVERAGE_BACKLOG.md](P3_DEPTH_COVERAGE_BACKLOG.md). Ne pas présenter une alternance de runs sur des commits différents comme un comportement non déterministe sur le même binaire. La phase 3 reste exploration uniquement.
