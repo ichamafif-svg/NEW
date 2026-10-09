@@ -22,6 +22,7 @@ names={
 "p3-iii-effect.json":"III E effect monotone retry",
 "p3-iii-autonomy.json":"III O autonomy subjects",
 "p3-iii-proof.json":"III P epistemic proof",
+"p3-iv-boundary.json":"IV K/T/U boundary discriminators",
 }
 rows=[]
 for filename,desc in names.items():
