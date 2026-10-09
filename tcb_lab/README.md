@@ -76,3 +76,7 @@ Le nouveau harnais `experiments/p3_long_horizon.py` soumet le journal de référ
 Le [registre Actions automatique](https://github.com/ichamafif-svg/NEW/issues/2) a publié, pour le run de laboratoire `37950062059`, **8 suites P3, 69 exercices** (8+4+30+10+7+5+5) et quatre G1, tous avec JSON analysable et zéro ID signalé. Les cinq expériences long-horizon ont effectivement été exécutées ; cela ne ferme aucun gate de la phase 3. Le [journal des questions nouvelles](findings/P3_LONG_HORIZON_QUESTIONS.md) décrit les dix expérimentations plus profondes qui restent nécessaires, en particulier les multi-hôtes, le changement de loi en cours de départ et la persistance des dettes.
 
 La règle de [P3_EXPLORATION_PROTOCOL.md](P3_EXPLORATION_PROTOCOL.md) demeure : **explorer et poser de nouvelles questions, jamais modifier le scope ou choisir une abstraction en phase 3**.
+
+## Phase 3 — arbre d'expériences PROFONDEUR × COUVERTURE
+
+[EXPERIMENT_TREE_DEPTH_COVERAGE.md](EXPERIMENT_TREE_DEPTH_COVERAGE.md) est désormais la structure directrice de l'exploration : **8 branches de couverture**, **8 profondeurs D0–D7**, quatre sous-arbres P0 illustrés, oracles safety/progression et exigences de preuve par feuille. Les résultats verts et rouges ouvrent des **enfants expérimentaux** ; ils ne servent pas à redéfinir le scope, réparer le cœur ou préchoisir un modèle. La profondeur effective doit être attribuée sur preuves de run, pas sur la seule présence de fichiers.
