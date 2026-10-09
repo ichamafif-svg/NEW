@@ -19,3 +19,7 @@ Campagne III : 8 expériences d'effet à temps post-commit, 18 expériences d'id
 [Arbre profondeur × couverture](../EXPERIMENT_TREE_DEPTH_COVERAGE.md) → [midpoint II](P3_MIDPOINT_II.md) → [campagne III](P3_CAMPAIGN_III.md) → [backlog](P3_DEPTH_COVERAGE_BACKLOG.md) → [preuves CI](P3_EVIDENCE_REGISTER.md) → [gate de recherche](../P3_EXIT_CRITERIA.md).
 
 **Interdit :** patcher la TCB historique, réduire le scope, choisir CIR/DSL/algèbre, interpréter un vert CI comme une preuve de sûreté.
+
+## Vérification post-correction — 9 octobre 2026
+
+Le [run Actions `37956022363`](https://github.com/ichamafif-svg/NEW/actions/runs/37956022363) est **success** avec artefacts III **PARSED** : E=8 observations, O/R=18 observations, P=6 observations, zéro cas III classé inconclusif dans le registre. L'erreur JSON du premier run est donc résolue pour ce run ; elle reste conservée comme constat d'instrumentation. **Ne pas confondre ce succès CI avec une validation de safety/liveness :** les expériences O/R sont descriptives, le fournisseur E est simulé, et le label de vérité P ne figure pas dans la déclaration signée. Les runs historiques continuent de présenter des divergences aux assertions de cycle ; les trois sous-arbres demeurent **ouverts**.
