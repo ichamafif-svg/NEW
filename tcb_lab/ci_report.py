@@ -13,6 +13,9 @@ names={
 "p3-compositions-output.json":"P3 compositions",
 "p3-counter-output.json":"P3 counterexperiments",
 "p3-long-horizon-output.json":"P3 long horizon",
+"p3-priority-o1-output.json":"Priority O1 withdrawal",
+"p3-priority-e1-output.json":"Priority E1 uncertain effect",
+"p3-priority-p1-output.json":"Priority P1 signed false evidence",
 }
 rows=[]
 for filename,desc in names.items():
@@ -22,7 +25,7 @@ for filename,desc in names.items():
         continue
     try:
         d=json.loads(path.read_text())
-        cases=d.get("attacks",d.get("experiments",[]))
+        cases=d.get("attacks",d.get("experiments",d.get("observations",[])))
         flagged=[str(x.get("id","?")) for x in cases if x.get("status",x.get("outcome")) in
                  {"INCONCLUSIVE","CONFIRMED","VIOLATION_OBSERVED","error"}]
         rows.append((desc,"PARSED",len(cases),len(flagged),", ".join(flagged[:25]) or "none"))
