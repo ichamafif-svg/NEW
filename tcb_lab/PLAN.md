@@ -1,3 +1,5 @@
+> **NOTE DE LECTURE — 2026-10-09.** Ce document conserve son contenu historique. Pour l'état **actuel**, consulter [l'accueil canonique](README.md), [la charte / transfert](LAB_CHARTER_AND_HANDOFF.md) et [la décision fonctionnelle 16/16](FUNCTIONAL_BOUNDARY_FREEZE_DECISION.md). Les étapes de comparaison architecturale A/B/C ou les verdicts 14/2 éventuellement mentionnés ci-dessous ne sont **plus** la feuille de route active. La production du noyau hybride est sur la branche `prototype/hybrid-kernel-v1`, non dans le lab ; les critères P3 physiques restent ouverts.
+
 # Plan directeur du laboratoire — Standard TCB
 
 **Référence immuable d'analyse :** `main@d6347dccec714c0193bbc43af5de7e96e3a9ad27` ; **scope figé** : [SCOPE.md](SCOPE.md). **Mandat :** recherche TCB uniquement, sans chantier d'agent ni M2. Aucune compatibilité d'implémentation exigée ; aucune baisse silencieuse de garanties.
