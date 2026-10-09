@@ -11,6 +11,7 @@ names={
 "p3-mutation-output.json":"P3 mutations",
 "p3-autonomy-output.json":"P3 autonomy",
 "p3-compositions-output.json":"P3 compositions",
+"p3-counter-output.json":"P3 counterexperiments",
 }
 rows=[]
 for filename,desc in names.items():
