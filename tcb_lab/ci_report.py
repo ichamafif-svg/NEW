@@ -26,6 +26,7 @@ names={
 "p3-iv-matrix.json":"IV 16-guarantee matrix inventory",
 "p3-ivb-pairs.json":"IV-B boundary paired contrasts",
 "p3-ivc-scope.json":"IV-C conditional boundary scope audit",
+"p3-ivc-target.json":"IV-C same target liveness",
 }
 rows=[]
 for filename,desc in names.items():
