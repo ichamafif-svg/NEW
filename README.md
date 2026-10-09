@@ -1,59 +1,41 @@
-# Standard — cœur déterministe et maintenance M2
+# Standard
 
-Standard est un prototype de maintenance gouvernée de dépôts. Les agents préparent des changements ; un cœur déterministe vérifie la loi, les capacités, les restrictions et les faits signés. Un guard réserve et rejuge l'effet avant l'appel fournisseur. La preuve d'application et la satisfaction de la cible restent distinctes.
+**Plateforme AI-native pour créer, faire évoluer et surtout maintenir des systèmes logiciels en autonomie, sans donner de pouvoir souverain aux agents.**
 
-La version active reprend la refonte M2 du tour 2 : **transitions `base → head`, recettes reproductibles, instruments séparés, revue du SHA exact et retrait des propositions rejetées**. Elle n'utilise plus les PR et leur scope de fichiers pour autoriser `remediate`.
+**[Lire l'architecture canonique de Standard](STANDARD_ARCHITECTURE.md)**
 
-## Fonctionnement présent
+## Promesse produit
 
-| Surface | Implémentation |
+Standard orchestre des agents qui détectent les écarts, réalisent les évolutions, corrigent les défaillances et vérifient les résultats. L'autonomie est bornée par une constitution déterministe et des frontières de confiance vérifiables. Les décisions humaines n'interviennent que lorsqu'elles sont réellement exigées par l'autorité applicable.
+
+- **BUILD** : construire, transformer, tester et intégrer des systèmes logiciels.
+- **RUN** : observer continuellement, diagnostiquer, réparer, faire évoluer et maintenir la sécurité, la fiabilité et la conformité.
+- **Gouvernance** : floors non affaiblissables, loi client plus stricte, autorité contrôlée, preuves indépendantes, obligations durables et effets privilégiés protégés.
+- **Intégration** : réutiliser les services IAM, CI/CD, monitoring, cloud et outils de conformité existants lorsque leurs garanties sont suffisantes.
+- **Expérience humaine** : montrer ce qui est couvert, ce qui ne l'est pas, les risques, les obligations ouvertes, les résultats et les décisions attendues.
+
+## Architecture
+
+**K — noyau constitutionnel hybride** : modèle relationnel typé, contraintes et conséquences dans un seul jugement déterministe. Il gouverne Identity, Authority, Law, State, Evidence, Obligation et Effect sans mapping métier figé.
+
+**T — Trusted External** : identité physique et clés, release pin, temps, ancrages durables, vérification indépendante, qualification des preuves, egress privilégié, réconciliation et acheminement des escalades. Ils sont dans la frontière de confiance effective.
+
+**U — autonomie non souveraine** : agents, WorkItems, diagnostics, observabilité, planification, workflows BUILD/RUN et adaptateurs. Ils accomplissent le travail sans pouvoir contourner K/T.
+
+La maintenance suit le cycle : **écart → obligation → travail autonome → preuve admissible → clôture ou escalade**.
+
+## Documentation canonique
+
+| Document | Objet |
 |---|---|
-| Loi | FLOOR-0, floors communs, loi client additive ou plus stricte ; quorum, délai attesté et activation |
-| Cœur | Admission pure, delta, second juge restrictif, journal signé et pins monotones |
-| Effet M2 | `remediate(area,item,base,head)` ; ressource `repo:{area}:{item}/{base}/{head}` |
-| Autonomie | Faits indépendants `tests=green` et `reproduced=yes` ; sinon `tests=green` et revue humaine signée |
-| Préparation | Recettes pour vulnérabilités, SBOM et actions ; modèle pour changements nécessitant du jugement |
-| Intégrations | API d'objets Git, adaptateur de fast-forward GitHub, sondes Python, runner de tests |
-| Travail | Automate des propositions dans `ops/lifecycle.py` ; projection de santé en lecture seule dans `maintenance/` |
-| Conformité | Catalogue ISO 27001/NIS2/DORA et dossier rejouable ; projection de preuves, sans certification |
+| [STANDARD_ARCHITECTURE.md](STANDARD_ARCHITECTURE.md) | Produit Standard, architecture générale et garanties |
+| [KERNEL_CONCEPTUAL_MODEL.md](hybrid_kernel/KERNEL_CONCEPTUAL_MODEL.md) | Primitives, relations et jugement déterministe |
+| [TRUSTED_EXTERNAL_CONTRACTS.md](hybrid_kernel/TRUSTED_EXTERNAL_CONTRACTS.md) | Contrats de confiance physiques |
+| [KERNEL_EXECUTION_PROTOCOL.md](hybrid_kernel/KERNEL_EXECUTION_PROTOCOL.md) | Admission, commit, effets et reprise |
+| [hybrid_kernel/README.md](hybrid_kernel/README.md) | Vue synthétique du noyau |
 
-L'adaptateur réel est présent dans les sources. Le service géré, son déploiement et les garanties fournisseur ne sont pas établis par les tests locaux. Le second juge ne couvre pas indépendamment toute la loi. Les limites de temps, de preuves, de reprise et de credentials restent détaillées dans [TCB.md](docs/TCB.md) et [M2.md](docs/M2.md).
+Ces documents forment la **spécification autonome de l'architecture cible**. Ils ne doivent pas être lus comme une déclaration de conformité de l'implémentation courante. La mise en production nécessite des preuves d'implémentation, d'indépendance des composants de confiance, de résistance aux pannes et de performance.
 
-## Lire le dépôt
+## État
 
-- [Statut canonique et frontières](docs/STATUS.md).
-- [État actuel et commandes M2](docs/M2.md).
-- [Garanties et frontières du cœur](docs/TCB.md).
-- [Vision produit](docs/VISION.md).
-- [Cible de stabilisation en cinq contrats](docs/COEUR-STABLE.md), encore partiellement réalisée.
-- [Historique de consolidation et reprise de la refonte](docs/CONSOLIDATION-BRANCHES.md).
-- [Validation actuelle](validation/summary.json) ; analyses V6 et reproductions historiques séparées.
-
-| Répertoire | Responsabilité |
-|---|---|
-| `tcb/`, `bootstrap.py` | Admission, intégrité, effet et redevabilité confinée |
-| `adapters/` | Adaptateurs de confiance, comptés dans le budget de sûreté |
-| `ops/` | Collecte, mesure, recettes, préparation, cycle et lancement des rôles |
-| `maintenance/` | Plan sans pouvoir d'autoriser, de signer ou d'exécuter |
-| `compliance/` | Catalogue et dossier projeté depuis le journal |
-| `demo/` | Dépôt volontairement imparfait et workflow de démonstration |
-| `tests/` | Scénarios du cœur et du cycle M2 |
-| `validation/` | Résultats actuels et archives de revue |
-
-## Vérifier localement
-
-Python, cryptography et Linux/libseccomp sont nécessaires pour les vérifications complètes.
-
-```sh
-python3 -m pip install -r requirements.txt
-make check
-make manifest
-python3 -I -B bootstrap.py DIGEST_APPROUVE --verify
-python3 -I -B bootstrap.py DIGEST_APPROUVE --health configuration.json
-```
-
-Le manifeste dépend du runtime et des sources ; le générer ne l'approuve pas. Le digest et la genèse attendue doivent être sélectionnés extérieurement. Le bootstrap couvre la vérification et la santé ; les commandes `python -m ops` sont encore un chemin opérationnel distinct, pas un launcher vérifié avant import.
-
-La refonte change les floors et les arguments de `remediate` : **nouvelle release adoptée et nouvelle genèse requises**. Les journaux et capacités de la précédente opération PR ne sont pas réutilisables. BUILD et RUN restent une vision de produit ; il n'existe pas encore deux modes complets de service gouverné.
-
-Les budgets restent 2 942 lignes de sûreté, 537 restrictives et 500 de visibilité. Leur mesure actuelle vient de `tools/check_tcb.py`, sans compaction ni transfert artificiel hors confiance.
+**Architecture conceptuelle définie ; qualification de production non acquise.** Les systèmes externes et les effets privilégiés doivent être vérifiés dans leur environnement physique de déploiement.
