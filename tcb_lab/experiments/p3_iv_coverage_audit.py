@@ -31,6 +31,8 @@ print(json.dumps({"campaign":"IV","kind":"research_instrument",
     "missing":missing,"duplicates":duplicate,"incomplete":incomplete,
     "conditional_limits":limit_ids,"errors":errors,
     "status":"INCONCLUSIVE" if errors else "OBSERVED",
+    "cases":[{"id":"IV-boundary-inventory","status":"INCONCLUSIVE" if errors else "OBSERVED",
+               "evidence":{"classified":len(rows),"errors":errors}}],
     "warning":"K/T/U inventory completeness is NOT empirical proof of physical safety"},
     indent=2))
 sys.exit(bool(errors))
