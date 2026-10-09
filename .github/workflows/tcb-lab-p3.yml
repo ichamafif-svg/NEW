@@ -74,8 +74,23 @@ jobs:
         continue-on-error: true
         shell: bash
         run: python tcb_lab/experiments/p3_priority_p1.py | tee p3-priority-p1-output.json
+      - name: P1 deeper signed proof comparisons
+        id: proofdepth
+        continue-on-error: true
+        shell: bash
+        run: python tcb_lab/experiments/p3_depth_proof.py | tee p3-depth-proof.json
+      - name: E1 deeper effect retry contrasts
+        id: effectdepth
+        continue-on-error: true
+        shell: bash
+        run: python tcb_lab/experiments/p3_depth_effect.py | tee p3-depth-effect.json
+      - name: O1 repeated withdrawal comparisons
+        id: autonomydepth
+        continue-on-error: true
+        shell: bash
+        run: python tcb_lab/experiments/p3_depth_autonomy.py | tee p3-depth-autonomy.json
       - name: Reject any failed suite, while retaining all suite outputs
-        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure')
+        if: always() && (steps.g1.outcome == 'failure' || steps.signed.outcome == 'failure' || steps.effects.outcome == 'failure' || steps.mutation.outcome == 'failure' || steps.autonomy.outcome == 'failure' || steps.compositions.outcome == 'failure' || steps.counter.outcome == 'failure' || steps.longhorizon.outcome == 'failure' || steps.o1.outcome == 'failure' || steps.e1.outcome == 'failure' || steps.p1.outcome == 'failure' || steps.proofdepth.outcome == 'failure' || steps.effectdepth.outcome == 'failure' || steps.autonomydepth.outcome == 'failure')
         run: exit 1
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         if: always()
@@ -93,6 +108,9 @@ jobs:
             p3-priority-o1-output.json
             p3-priority-e1-output.json
             p3-priority-p1-output.json
+            p3-depth-proof.json
+            p3-depth-effect.json
+            p3-depth-autonomy.json
           if-no-files-found: warn
 
   report:
