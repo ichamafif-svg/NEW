@@ -20,6 +20,10 @@ class ExternalContractTests(unittest.TestCase):
         reg=CapabilityRegistry([cap(i,until=200 if i==9 else 9999) for i in range(1,10)])
         with self.assertRaises(ContractError):
             reg.validate(200)
+    def test_future_assessment_cannot_grant_current_access(self):
+        reg=CapabilityRegistry([cap(i) for i in range(1,10)])
+        with self.assertRaisesRegex(ContractError,"NOT_YET_VERIFIED"):
+            reg.validate(99)
     def test_self_report_unverified_fails_closed(self):
         reg=CapabilityRegistry([cap(i,Status.INDETERMINATE if i==5 else Status.VERIFIED)
                                 for i in range(1,10)])

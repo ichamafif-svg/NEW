@@ -73,6 +73,7 @@ class CapabilityRegistry:
             c=self._slots.get(name)
             if c is None:problems.append((name,"ABSENT"))
             elif c.status is not Status.VERIFIED:problems.append((name,c.status.value))
+            elif c.verified_at>now:problems.append((name,"NOT_YET_VERIFIED"))
             elif c.expires_at<=now:problems.append((name,"EXPIRED"))
         if problems:raise ContractError("CONTRACT.FAIL_CLOSED:"+repr(problems))
         return True

@@ -33,11 +33,13 @@ class ConstitutionalRuntime:
         self.journal=Journal(lp,self.kernel,genesis_pin=genesis_pin,
                              checkpoints=pin_store,accountability=self.accountability)
 
-    def admit(self,envelope):
+    def admit(self,envelope,*,validity_check=None):
         """Add one independently signed canonical envelope, no caller-controlled allow flag."""
         if not isinstance(envelope,dict):
             raise IntegrationError("A signed envelope is mandatory")
         def build(s):
+            if validity_check is not None:
+                validity_check()
             return entry(s["size"],s["head"],envelope)
         return self.journal.transact(build)
 
@@ -47,9 +49,10 @@ class ConstitutionalRuntime:
     def health(self,*,required_at=None):
         return self.journal.health(required_at=required_at)
 
-    def guard(self,*,identity,signer,operation_handlers):
+    def guard(self,*,identity,signer,operation_handlers,validity_check=None):
         """Privileged adapter only; handler must be physically exclusive."""
-        return Guard(self.journal,identity,signer,EffectPort(operation_handlers))
+        return Guard(self.journal,identity,signer,EffectPort(operation_handlers),
+                     validity_check=validity_check)
 
     def close(self):
         self.journal.close()

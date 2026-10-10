@@ -12,7 +12,7 @@ from .sign import envelope
 
 
 class Guard:
-    def __init__(self, journal, identity, signer, effect_port):
+    def __init__(self, journal, identity, signer, effect_port, validity_check=None):
         if journal.genesis_pin is None or journal.pin_store is None:
             raise ValueError("guard requires external genesis and live durable pins")
         if not isinstance(effect_port, EffectPort):
@@ -22,13 +22,24 @@ class Guard:
             raise ValueError("code release changed")
         self.journal, self.identity, self.signer = journal, identity, signer
         self.effect_port = effect_port
+        self.validity_check = validity_check
+
+    def _valid_at(self, at):
+        if self.validity_check is None:
+            return at
+        now = self.validity_check()
+        if type(at) is not int or at < now:
+            raise Refused("TRUST.TIME", "the supplied time precedes trusted time")
+        return now
 
     def _entry(self, state, kind, body, cosigners=()):
         env = envelope(state["domain"], kind, {"author": self.identity, **body}, [self.signer, *cosigners])
         return entry(state["size"], state["head"], env)
 
     def issue(self, intent_id, at, cosigners=()):
+        self._valid_at(at)
         def build(state):
+            self._valid_at(at)
             it = state["intents"].get(intent_id)
             if it is None:
                 raise Refused("GUARD.UNKNOWN", "the intent is not in this journal")
@@ -37,7 +48,9 @@ class Guard:
         return self.journal.transact(build)[0]
 
     def redeem(self, token_id, at):
+        self._valid_at(at)
         def reserve(state):
+            self._valid_at(at)
             tok = state["tokens"].get(token_id)
             if tok is None or tok["guard"] != self.identity:
                 raise Refused("GUARD.UNKNOWN", "not a token of this guard")
@@ -46,9 +59,10 @@ class Guard:
         # The write gate covers reauthorization and the actual adapter send, never the deferred wait.
         try:
             with self.journal.effect_gate() as state:
+                trusted_at = self._valid_at(at)
                 if state["code"] != code_digest():
                     raise ValueError("code release changed")
-                when = max(at, state["last_at"])
+                when = max(at, trusted_at, state["last_at"])
                 it = self.journal.kernel.judge_dispatch(state, token_id, self.identity, when)
                 try:
                     checked = self.journal.invariants.dispatch(state, token_id, when, self.journal.kernel.law_of(state))
