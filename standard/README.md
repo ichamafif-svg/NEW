@@ -36,6 +36,18 @@ la route et le préfixe puis confie l'enveloppe signée au seul chemin d'admissi
 du déploiement. La socket n'expose ni guard, ni clés, ni ports fournisseur.
 L'agent ne reçoit jamais ces credentials.
 
+La loi effective épinglée porte `ops.<nom>.trusted` : liste de contrats T
+supplémentaires exigés pour l'effet. T07 et T08 sont des minima de toute
+opération et ne peuvent être retirés par la loi client. La projection du
+travail ajoute T06 aux mesures et preuves, T08 à la réconciliation et T07/T08
+à BUILD ; une route installée peut seulement demander davantage. Elle est
+requalifiée sur ce minimum pour chaque tâche. Lors de l'effet, le port du
+guard requalifie le contrat de l'opération sous la loi courante, après le
+jugement du noyau et avant le premier octet fournisseur. Une intention
+signée peut subsister si un port manque ; la route BUILD et le départ de
+l'effet restent bloqués. `submit` refuse une enveloppe qui ne traite pas
+exactement la tâche et sa ressource.
+
 Le processus opérateur est assemblé par `hybrid_kernel.install.install` avec
 un pin externe de genèse, des pins durables, une évaluation signée et des clés
 d'évaluateur épinglées hors agent, une horloge, un port d'effet, un readback

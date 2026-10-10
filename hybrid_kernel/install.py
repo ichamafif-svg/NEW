@@ -1,8 +1,4 @@
-"""Trusted installation assembly; all physical ports come from the operator.
-
-No local defaults are substituted for missing custody, independent assessment,
-fenced effect dispatch, readback or durable restoration anchors.
-"""
+"""Operator-provisioned physical ports; no local trust defaults."""
 from __future__ import annotations
 
 from .assessment import SignedAssessmentBoundary
@@ -14,12 +10,7 @@ def install(*, ledger_path, pin_store, genesis_pin, assessment_bundle,
             pinned_assessors, trusted_now, effect_port, reconciliation_port,
             guard_identity, guard_signer, socket_path, delivery_port=None,
             socket_mode=0o660):
-    """Assemble the operator-owned service after an external constitution ceremony.
-
-    The signed assessment establishes authenticated claims, not their physical
-    truth. The operator is responsible for independent tests of their premises,
-    runtime isolation, and socket/pin/credential custody.
-    """
+    """Assemble the service after an externally controlled constitution ceremony."""
     if (effect_port is None or reconciliation_port is None or not guard_identity
             or guard_signer is None or not pinned_assessors):
         raise ProductionBlocked("INSTALL.MISSING_PHYSICAL_PORT")

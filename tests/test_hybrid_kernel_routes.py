@@ -5,9 +5,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fixture import World, T0
+from fixture import World, T0, make_law
 from tcb.sign import envelope
-from hybrid_kernel.deployment import BASE, TIMED, EFFECT, GovernedDeployment, ProductionBlocked
+from tcb.effects import EffectPort
+from tcb.canon import canon
+from hybrid_kernel.deployment import BASE, TIMED, EFFECT, LawBoundPort, GovernedDeployment, ProductionBlocked
 
 
 class Boundary:
@@ -25,7 +27,7 @@ class Routes(unittest.TestCase):
         self.world = World()
         self.boundary = Boundary(TIMED)
         self.now = [T0]
-        self.effect = object()
+        self.effect = EffectPort({"merge": lambda *_: "ok"})
         with patch("hybrid_kernel.deployment.ConstitutionalRuntime") as runtime:
             self.runtime = runtime.return_value
             self.deployed = GovernedDeployment(
@@ -66,7 +68,7 @@ class Routes(unittest.TestCase):
             self.deployed.guard(identity="guard", signer=object())
         self.boundary.roles.update({"T07", "T08"})
         self.deployed.guard(identity="guard", signer=object())
-        self.assertIs(self.runtime.guard.call_args.kwargs["effect_port"], self.effect)
+        self.assertIs(self.runtime.guard.call_args.kwargs["effect_port"].port, self.effect)
         self.boundary.roles.remove("T08")
         callback = self.runtime.guard.call_args.kwargs["validity_check"]
         with self.assertRaises(ProductionBlocked): callback()
@@ -96,6 +98,26 @@ class Routes(unittest.TestCase):
         deployed.admit(self.signed("freeze"))
         runtime.return_value.admit.assert_called_once()
         with self.assertRaises(ProductionBlocked): deployed.admit(self.signed("intent"))
+
+    def test_law_specific_trust_blocks_before_provider_departure(self):
+        law = make_law(ops={"special": {"args": {"item": "segment"},
+                                      "resource": "repo:special:{item}", "profile": "capability",
+                                      "trusted": ["T09"]}})
+        world = World(law=law)
+        sent = []
+        port = EffectPort({"special": lambda *args: sent.append(args) or "ok"})
+        boundary = Boundary(TIMED | {"T07", "T08"})
+        try:
+            with GovernedDeployment(ledger_path=world.path, pin_store=world.pins,
+                                    genesis_pin=world.state["domain"], trust_boundary=boundary,
+                                    trusted_now=lambda: T0 + 1, effect_port=port) as installed:
+                judged = {"op": "special", "resource": "repo:special:x", "args": {"item": "x"}}
+                from tcb.effects import NotDispatched
+                with self.assertRaises(NotDispatched):
+                    LawBoundPort(port, installed).perform(judged, canon(judged), "reservation")
+                self.assertEqual(sent, [])
+        finally:
+            world.journal.close()
 
 
 if __name__ == "__main__": unittest.main()

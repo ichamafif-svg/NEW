@@ -1,8 +1,4 @@
-"""Operator-owned progress loop for a trusted installation.
-
-The U gateway serves only views, T qualification and signed admission. This
-controller alone holds a guard signer, effect port and escalation delivery port.
-"""
+"""Operator loop; the U gateway never exposes a guard or provider port."""
 from __future__ import annotations
 
 from .gateway import AdmissionGateway

@@ -1,12 +1,10 @@
 """The law the kernel executes: the release's floors composed with the client's law (F0-3).
-
 The floors come with the release and cannot be changed from a journal. The client law lives in the journal: it binds
 the floor roles, adds its own declarations and may only tighten what the floors declare. `compose` enforces that rule
 and the autonomy floor (every target has an autonomous repair route, or is declared human) before `Law` validates the
 result. The law carries declarations and conditions; it carries no authority (authority lives in the ledger).
 
-Kernel part, read at admission:  levels, ops, evidence, discharges, conditions, ttl, delays, witnesses, controls.
-Accountability part, read only by the accountability silo:  targets (kept raw in `release`)."""
+Kernel admission reads levels, ops, evidence, conditions and controls; accountability reads targets."""
 from __future__ import annotations
 
 import copy
@@ -47,8 +45,13 @@ def _ops(raw) -> dict:
     ops = {}
     for name, decl in raw.items():
         if (not isinstance(name, str) or not ID.fullmatch(name) or not isinstance(decl, dict)
-                or set(decl) != {"args", "resource", "profile"} or decl["profile"] not in ("capability", "human_quorum")):
-            raise LawError(f"op {name}: args, resource and a pinned capability or human_quorum profile")
+                or set(decl) not in ({"args", "resource", "profile"}, {"args", "resource", "profile", "trusted"})
+                or decl["profile"] not in ("capability", "human_quorum")):
+            raise LawError(f"op {name}: args, resource, profile and optional trusted contracts")
+        trusted = decl.get("trusted", [])
+        if (not isinstance(trusted, list) or len(set(map(str, trusted))) != len(trusted)
+                or any(not isinstance(t, str) or t not in {f"T{i:02}" for i in range(1, 10)} for t in trusted)):
+            raise LawError(f"op {name}: unknown or duplicate trusted contract")
         try:
             check_spec(decl["args"], SCALARS)
         except ShapeError as exc:
@@ -64,7 +67,8 @@ def _ops(raw) -> dict:
                 raise LawError(f"op {name}: {{{slot}}} fills from a required segment or int argument")
         if not RESOURCE.fullmatch(PLACEHOLDER.sub("x", template)):
             raise LawError(f"op {name}: the template yields an exact resource")
-        ops[name] = {"args": dict(decl["args"]), "resource": template, "profile": decl["profile"]}
+        ops[name] = {"args": dict(decl["args"]), "resource": template, "profile": decl["profile"],
+                     "trusted": sorted(set(trusted) | {"T07", "T08"})}
     return ops
 
 
@@ -151,9 +155,15 @@ def compose(client) -> dict:
     if any(not isinstance(v, dict) for v in tighten.values()):
         raise LawError("tighten sections must be maps")
     for op, change in tighten.get("ops", {}).items():
-        if (op not in FLOORS["ops"] or change != {"profile": "human_quorum"}):
-            raise LawError("tighten.ops only raises a floor operation to human_quorum")
-        release["ops"][op]["profile"] = "human_quorum"
+        if (op not in FLOORS["ops"] or not isinstance(change, dict) or not change
+                or set(change) - {"profile", "trusted"}
+                or ("profile" in change and change["profile"] != "human_quorum")):
+            raise LawError("tighten.ops only raises a floor profile or adds trusted contracts")
+        if "profile" in change:
+            release["ops"][op]["profile"] = "human_quorum"
+        if "trusted" in change:
+            base = release["ops"][op].get("trusted", [])
+            release["ops"][op]["trusted"] = sorted(set(base) | set(change["trusted"])) if isinstance(change["trusted"], list) else change["trusted"]
     rank = {name: i for i, name in enumerate(release["levels"])}
     floor_proof = max(rank[d["min_level"]] for rules in FLOORS["discharges"].values() for d in rules)
     if any(not isinstance(d, dict) or rank.get(d.get("min_level"), -1) < floor_proof

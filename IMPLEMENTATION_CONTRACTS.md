@@ -115,6 +115,8 @@ Les scénarios ci-dessus s'appliquent au [parcours complet](STANDARD_ARCHITECTUR
 
 Une route sans T physiquement qualifié demeure inactive pour les opérations qui en dépendent ; elle peut néanmoins produire du travail de qualification et permettre les restrictions immédiates dont les autres contrats sont disponibles. La qualification est attachée à une release, une genèse, une installation et une route, avec tests de falsification et dépendances communes documentés. Le catalogue T est une liste de responsabilités, non un inventaire automatiquement vérifié de services.
 
+Les opérations de la loi effective portent `trusted`, liste additive des responsabilités T propres à leur effet. T07/T08 restent exigés pour toute opération ; `tighten.ops.<op>.trusted` permet au client d'ajouter des contrats à une opération de floor sans les retirer. La préparation BUILD demande elle aussi T07/T08 à sa route. Le port d'effet requalifie sous la loi courante juste avant le fournisseur ; un contrat manquant arrête le départ et laisse l'obligation visible. Les enveloppes U sont liées au besoin et à la ressource exacte avant l'admission K, qui demeure la seule décision constitutionnelle. La présence d'un port ou d'un assessment signé ne prouve pas à elle seule son confinement physique.
+
 ## VI. Définition de terminé, par incrément et par release
 
 **Pour un composant :** contrat de types/version défini, invariant testable, schéma d'erreur fail-closed, contre-exemple négatif, preuve de non-contournement, métrique de ressources, propriétaire d'intégration, absence de raccourci `allow` ou chemin privilégié secondaire.

@@ -1,6 +1,7 @@
 """The U socket cannot issue effects; real K still judges signed submissions."""
 import stat
 import errno
+import json
 import sys
 import tempfile
 import threading
@@ -43,12 +44,17 @@ class ProductGatewayTests(unittest.TestCase):
                                                       frozenset({"observe"}), frozenset({"T06"}))])
             with tempfile.TemporaryDirectory() as tmp:
                 engine = WorkEngine(Path(tmp) / "work.sqlite3", service)
+                task = next(t for t in service.inspect()["tasks"] if t["state"] == "READY")
+                entry, _ = world.signed("observation", "ci", T0 + 1, under="missing",
+                                        resource=task["resource"], property="coverage",
+                                        status="complete", level="real")
+                candidate = entry["envelope"]
                 worker = Worker("probe", (sys.executable, "-c",
-                    "import json,sys; json.load(sys.stdin); print(json.dumps({'envelope':{'signed':'candidate'}}))"), tmp)
+                    "import json,sys; json.load(sys.stdin); print(json.dumps({'envelope':" + repr(candidate) + "}))"), tmp)
                 result = run_once(engine, [worker], mode="RUN", now=1)
                 self.assertEqual(result["status"], "SUBMITTED")
                 self.assertFalse(result["obligation_closed"])
-                self.assertEqual(client.submissions, [{"signed": "candidate"}])
+                self.assertEqual(client.submissions, [candidate])
                 self.assertTrue(any(t["obligation"] == result["task"].rsplit(":", 1)[0]
                                     for t in service.inspect()["tasks"]))
                 engine.close()

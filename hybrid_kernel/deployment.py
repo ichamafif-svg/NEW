@@ -1,11 +1,8 @@
-"""Route-specific K/T integration; providers are selected by the installation.
-
-The local Python facade is not isolation. Credentials, keys, storage and ports
-must live behind an operator-controlled boundary inaccessible to the agent.
-"""
+"""Route-specific K/T integration; operator-controlled physical ports."""
 from __future__ import annotations
 
 from tcb.crypto import EnvelopeError, open_envelope
+from tcb.effects import EffectPort, NotDispatched
 from tcb.release import code_digest
 from .core import SHAPES
 from .runtime import ConstitutionalRuntime
@@ -15,7 +12,22 @@ class ProductionBlocked(RuntimeError):
     pass
 
 
-# Missing trust stops its dependent operation, not unrelated autonomy.
+class LawBoundPort(EffectPort):
+    """Recheck operation-specific T before the first provider byte leaves."""
+
+    def __init__(self, port, deployment):
+        self.port, self.deployment = port, deployment
+
+    def perform(self, judged, expected_bytes, reservation_key):
+        try:
+            state = self.deployment._runtime.snapshot()
+            op = self.deployment._runtime.kernel.law_of(state).ops[judged["op"]]
+            self.deployment.qualify_route(op["trusted"])
+        except Exception as exc:
+            raise NotDispatched("operation trust unavailable before dispatch") from exc
+        return self.port.perform(judged, expected_bytes, reservation_key)
+
+
 BASE = frozenset({"T01", "T02", "T04", "T05"})
 TIMED = BASE | {"T03"}
 EFFECT = TIMED | {"T07", "T08"}
@@ -59,9 +71,10 @@ class GovernedDeployment:
     def admit(self, envelope):
         required = TIMED
         try:
-            kind, _, _, _ = open_envelope(envelope)
+            kind, body, _, _ = open_envelope(envelope)
         except (EnvelopeError, ValueError, TypeError):
             kind = None  # The kernel still refuses malformed statements.
+            body = {}
         if kind in {"veto", "revoke", "freeze", "flag", "invalidate"}:
             required = BASE
         if kind in EVIDENCE or (kind is not None and kind not in SHAPES):
@@ -107,13 +120,16 @@ class GovernedDeployment:
         if not isinstance(required, (tuple, list, set, frozenset)) or not set(required) <= {f"T{i:02}" for i in range(1, 10)}:
             raise ProductionBlocked("TRUST.UNKNOWN_ROLE")
         self._check(TIMED | set(required))
+        if "T07" in required and not isinstance(self._effect, EffectPort): raise ProductionBlocked("TRUST.EFFECT_PORT_MISSING")
+        if "T08" in required and not callable(getattr(self._reconciliation, "readback", None)): raise ProductionBlocked("TRUST.RECONCILIATION_PORT_MISSING")
+        if "T09" in required and not callable(getattr(self._delivery, "deliver_due", None)): raise ProductionBlocked("TRUST.DELIVERY_PORT_MISSING")
 
     def guard(self, *, identity, signer):
         self._check(EFFECT)
-        if self._effect is None:
+        if not isinstance(self._effect, EffectPort):
             raise ProductionBlocked("TRUST.EFFECT_PORT_MISSING")
         return self._runtime.guard(identity=identity, signer=signer,
-            effect_port=self._effect, validity_check=lambda:self._check(EFFECT))
+            effect_port=LawBoundPort(self._effect, self), validity_check=lambda:self._check(EFFECT))
 
     def deliver_due(self):
         self._check(TIMED | {"T09"})

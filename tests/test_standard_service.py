@@ -5,10 +5,11 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from fixture import World, Refused, T0, DAY
+from fixture import World, Refused, T0, DAY, make_law
 from hybrid_kernel.deployment import GovernedDeployment, ProductionBlocked
 from maintenance.constitution import agent_view
 from standard import Route, StandardService, WorkEngine, WorkError
+from standard.service import _law_trust
 
 
 class Installed:
@@ -68,7 +69,10 @@ class StandardServiceTests(unittest.TestCase):
     def test_submission_requires_current_work_and_qualified_route(self):
         cycle = self.service.inspect()
         task = next(t for t in cycle["tasks"] if t["state"] == "READY")
-        env = {"signed": "proposal"}
+        entry, _ = self.world.signed("observation", "ci", T0 + 1,
+                                     under="missing", resource=task["resource"],
+                                     property="coverage", status="complete", level="real")
+        env = entry["envelope"]
         self.assertEqual(self.service.submit(mode="RUN", task_id=task["id"], route_id="scanner",
                                              basis=cycle["basis"], envelope=env), env)
         self.assertEqual(self.deployment.forwarded, [env])
@@ -89,6 +93,31 @@ class StandardServiceTests(unittest.TestCase):
         with self.assertRaises(WorkError):
             StandardService(self.deployment, [Route("a", "RUN", "*", frozenset({"observe"}))] * 2)
         self.assertNotIn("allowed", self.service.inspect())
+
+    def test_build_route_inherits_effect_trust_from_pinned_law(self):
+        cycle = self.service.inspect(mode="BUILD")
+        law = cycle["law"]
+        self.assertTrue({"T07", "T08"} <= _law_trust(law, "repo:deps:vulns", "build"))
+        self.assertIn("T06", _law_trust(law, "repo:deps:vulns", "observe"))
+
+    def test_client_can_only_add_trust_to_floor_operation(self):
+        world = World(law=make_law(tighten={"ops": {"remediate": {"trusted": ["T09"]}}}))
+        try:
+            effective = world.kernel.law_of(world.state).release
+            self.assertEqual(_law_trust(effective, "repo:deps:vulns", "build"), {"T07", "T08", "T09"})
+        finally:
+            world.journal.close()
+
+    def test_task_cannot_be_satisfied_by_a_signed_unrelated_statement(self):
+        cycle = self.service.inspect()
+        task = next(t for t in cycle["tasks"] if t["state"] == "READY")
+        entry, _ = self.world.signed("observation", "ci", T0 + 1, under="missing",
+                                     resource="repo:other:subject", property="coverage",
+                                     status="complete", level="real")
+        with self.assertRaises(WorkError):
+            self.service.submit(mode="RUN", task_id=task["id"], route_id="scanner",
+                                basis=cycle["basis"], envelope=entry["envelope"])
+        self.assertEqual(self.deployment.forwarded, [])
 
     def test_durable_retry_does_not_close_or_postpone_constitutional_debt(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -123,9 +152,9 @@ class StandardServiceTests(unittest.TestCase):
                 Route("scanner", "RUN", "repo:*", frozenset({"observe"}), frozenset({"T06"}))])
             cycle = service.inspect()
             task = next(t for t in cycle["tasks"] if t["state"] == "READY")
-            entry, _ = self.world.signed("grant", "alice", T0 + 1,
-                                         holder="agent", actions=["effect:merge"],
-                                         resources=["repo:*"], conditions=[], not_after=T0 + DAY)
+            entry, _ = self.world.signed("observation", "ci", T0 + 1,
+                                         under="missing", resource=task["resource"],
+                                         property="coverage", status="complete", level="real")
             with self.assertRaises(Refused):
                 service.submit(mode="RUN", task_id=task["id"], route_id="scanner",
                                basis=cycle["basis"], envelope=entry["envelope"])

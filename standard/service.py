@@ -10,6 +10,8 @@ from dataclasses import dataclass
 from fnmatch import fnmatchcase
 
 from hybrid_kernel.deployment import ProductionBlocked
+from hybrid_kernel.constitution import PLACEHOLDER
+from tcb.crypto import EnvelopeError, open_envelope
 
 
 class WorkError(ValueError):
@@ -42,6 +44,47 @@ class Route:
 def _matches(route, mode, resource, need):
     return (route.mode in (mode, "BOTH") and need in route.needs
             and fnmatchcase(resource, route.resource))
+
+
+def _law_trust(law, resource, need):
+    """Minimum physical contracts are derived from the pinned effective law.
+
+    An installed route may demand more contracts; it cannot subtract these.
+    Preparation of repository changes is a provider write, even before a
+    constitutional intent moves main.
+    """
+    required = {"T06"} if need in {"cover", "observe", "prove"} else set()
+    if need == "reconcile":
+        required.add("T08")
+    if need in {"repair", "build"}:
+        required |= {"T07", "T08"}
+        for target in law.get("targets", []):
+            if target.get("resource") == resource and target.get("repair"):
+                op = law.get("ops", {}).get(target["repair"], {})
+                required.update(op.get("trusted", []))
+    return required
+
+
+def _fits_task(law, task, envelope):
+    try:
+        kind, body, _, _ = open_envelope(envelope)
+        resource, need = task["resource"], task["need"]
+        if need in {"cover", "observe"}:
+            return kind in {"observation", "measurement"} and body.get("resource") == resource
+        if need == "prove":
+            return kind in {"evidence", *law.get("evidence", {})} and body.get("resource") == resource
+        if need in {"repair", "build"} and kind == "intent":
+            op = law.get("ops", {}).get(body.get("op"))
+            args = body.get("args")
+            if not op or not isinstance(args, dict):
+                return False
+            declared = PLACEHOLDER.sub(lambda match: str(args[match.group(1)]), op["resource"])
+            return any(t.get("resource") == resource and t.get("repair") == body["op"]
+                       for t in law.get("targets", [])) and (declared == resource or declared.startswith(resource + "/"))
+        # Reconciliation belongs to the independent T08 operator pass.
+        return False
+    except (EnvelopeError, KeyError, TypeError, ValueError, AttributeError):
+        return False
 
 
 class StandardService:
@@ -97,8 +140,16 @@ class StandardService:
             for need in needs:
                 candidates = sorted((r for r in self._routes if _matches(r, mode, resource, need)),
                                     key=lambda r: r.id)
-                choices = [{"id": route.id, "state": by_route[route.id]["state"],
-                            "required_t": sorted(route.required_t)} for route in candidates]
+                choices = []
+                for route in candidates:
+                    required = route.required_t | _law_trust(view["law"], resource, need)
+                    state = by_route[route.id]["state"]
+                    if state == "AVAILABLE":
+                        try:
+                            self._deployment.qualify_route(required)
+                        except ProductionBlocked:
+                            state = "TRUST_BLOCKED"
+                    choices.append({"id": route.id, "state": state, "required_t": sorted(required)})
                 tasks.append({"id": f"{obligation['obligation']}:{need}",
                               "obligation": obligation["obligation"], "resource": resource,
                               "due": obligation["due"], "need": need, "routes": choices,
@@ -110,13 +161,21 @@ class StandardService:
                               "due": obligation["due"], "need": "review", "routes": [],
                               "state": "HUMAN_REVIEW"})
         tasks.sort(key=lambda t: (t["due"], t["id"]))
+        qualification = [{"id": "qualify:" + r["id"], "route": r["id"],
+                          "required_t": r["required_t"],
+                          "closure": "independent_live_qualification"}
+                         for r in inventory if r["state"] == "TRUST_BLOCKED"]
+        qualification += [{"id": "qualify:" + choice["id"] + ":" + task["id"],
+                           "route": choice["id"], "task": task["id"],
+                           "required_t": choice["required_t"],
+                           "closure": "independent_live_qualification"}
+                          for task in tasks for choice in task["routes"]
+                          if choice["state"] == "TRUST_BLOCKED"
+                          and by_route[choice["id"]]["state"] == "AVAILABLE"]
         return {"format": "standard-cycle/1", "mode": mode, "read_only": True,
                 "basis": basis, "law": copy.deepcopy(view["law"]), "tasks": tasks,
                 "routes": inventory,
-                "qualification_work": [{"id": "qualify:" + r["id"], "route": r["id"],
-                                        "required_t": r["required_t"],
-                                        "closure": "independent_live_qualification"}
-                                       for r in inventory if r["state"] == "TRUST_BLOCKED"],
+                "qualification_work": qualification,
                 "audit_state": work["status"]}
 
     def submit(self, *, mode, task_id, route_id, basis, envelope):
@@ -130,4 +189,6 @@ class StandardService:
             raise WorkError("work has no qualified installed route")
         if not isinstance(envelope, dict):
             raise WorkError("an independently signed statement is required")
+        if not _fits_task(current["law"], task, envelope):
+            raise WorkError("signed statement does not address this exact constitutional task")
         return self._deployment.admit(envelope)
