@@ -3,20 +3,25 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import time
+import tomllib
 from pathlib import Path
 
 from . import GatewayClient, Route, StandardService, WorkEngine
 from .dashboard import render, render_fault
 from .discovery import discover_repository
 from .worker import Worker, run_once
-from .surface import render_overview, render_task
+from .surface import render_entry, render_overview, render_task, render_uninstalled
 from .authoring import proposal_text
 from hybrid_kernel.deployment import ProductionBlocked
 
 
 def load_service(path):
-    cfg = json.loads(Path(path).read_text())
+    source = Path(path)
+    # Old JSON installations remain readable. New agent installations use TOML.
+    cfg = (tomllib.loads(source.read_text(encoding="utf-8")) if source.suffix == ".toml"
+           else json.loads(source.read_text(encoding="utf-8")))
     if not isinstance(cfg, dict) or not {"socket", "work_db", "routes"} <= set(cfg) or set(cfg) - {"socket", "work_db", "routes", "workers"}:
         raise ValueError("configuration requires socket, work_db and routes")
     routes = []
@@ -30,6 +35,28 @@ def load_service(path):
     return StandardService(GatewayClient(cfg["socket"]), routes), cfg["work_db"], workers
 
 
+def agent_config(repo, explicit):
+    """Resolve U's installation without treating a local proposal as active law."""
+    if explicit:
+        return Path(explicit)
+    if os.environ.get("STANDARD_AGENT_CONFIG"):
+        return Path(os.environ["STANDARD_AGENT_CONFIG"])
+    return Path(repo) / ".standard" / "agent.toml"
+
+
+def agent_entry(repo, config, mode):
+    discovery = discover_repository(repo)
+    if not config.is_file():
+        return render_uninstalled(discovery)
+    service, _, _ = load_service(config)
+    try:
+        return render_entry(service.inspect(mode=mode), discovery)
+    except ProductionBlocked:
+        return ("# Standard · contrôle indisponible\n\n"
+                "K/T n'a pas fourni de préfixe courant. Aucun travail n'est déclaré résolu "
+                "et aucun départ autonome n'est possible. Vérifier l'installation.\n")
+
+
 def fault_status(service):
     try:
         return service._deployment.status()
@@ -39,7 +66,7 @@ def fault_status(service):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog="python -m standard")
-    parser.add_argument("command", choices=("discover", "context", "law-source", "status", "claim", "submit", "attempt", "run", "watch", "dashboard"))
+    parser.add_argument("command", nargs="?", default="agent", choices=("agent", "discover", "context", "law-source", "status", "claim", "submit", "attempt", "run", "watch", "dashboard"))
     parser.add_argument("--config", help="unprivileged work configuration")
     parser.add_argument("--mode", choices=("BUILD", "RUN"), default="RUN")
     parser.add_argument("--repo", help="repository path for read-only discovery")
@@ -49,7 +76,10 @@ def main(argv=None):
     parser.add_argument("--output", help="dashboard HTML path")
     parser.add_argument("--interval", type=int, default=60, help="watch interval in seconds")
     args = parser.parse_args(argv)
-    if args.command == "discover":
+    if args.command == "agent":
+        result = agent_entry(Path(args.repo or ".").resolve(),
+                             agent_config(Path(args.repo or ".").resolve(), args.config), args.mode)
+    elif args.command == "discover":
         if not args.repo: parser.error("discover requires --repo")
         result = discover_repository(args.repo)
     elif args.command == "law-source":

@@ -1,7 +1,14 @@
 # Surface commune BUILD/RUN
 
-L'entrée des agents est `python -m standard context --config CONFIG --mode RUN`
-pour voir le travail courant, puis `--task ID` pour ne recevoir que la loi,
+Depuis la racine d'un dépôt équipé, `python -m standard` donne directement
+la première tâche autonome accessible, sa loi et ses preuves. `AGENTS.md`
+est le point d'entrée lu automatiquement par les agents qui prennent en charge
+ce mécanisme. L'installation U peut être déclarée dans `.standard/agent.toml`
+ou par `STANDARD_AGENT_CONFIG`; le contrôleur K/T reste un autre processus.
+En l'absence d'installation, la commande affiche des indices du dépôt
+explicitement non qualifiés, sans prétendre qu'une loi est active.
+Pour une autre tâche, `python -m standard context --config CONFIG --task ID`
+donne uniquement la loi,
 la dette, les preuves et les T pertinents pour cette tâche. Le contexte est
 du texte lisible, lié au préfixe et au digest de la loi signée. L'agent n'a
 pas à parcourir des README ni une sérialisation de la constitution. Le même
@@ -80,8 +87,11 @@ des prérequis physiques à vérifier sur l'hôte, non une propriété du protoc
 
 L'interface U propose `python -m standard discover --repo REPO`, puis
 `context`, `status`, `dashboard`, `claim`, `submit`, `attempt`, `run` et `watch` avec `--config`.
-Le fichier de configuration U contient `socket`, `work_db`, `routes` et
+Le fichier de configuration U en TOML contient `socket`, `work_db`, `routes` et
 éventuellement `workers` (route, commande en tableau, répertoire et timeout).
+Voir [`examples/agent.toml`](examples/agent.toml). Les anciennes configurations
+JSON restent lisibles pour ne pas casser les installations existantes ; elles
+ne sont pas la surface des lois pour les agents.
 Un travailleur externe lit la vue constitutionnelle contextualisée en texte
 sur stdin. Il renvoie une enveloppe signée par son identité U sur stdout ;
 la sérialisation de cette enveloppe reste un protocole interne, pas une loi à

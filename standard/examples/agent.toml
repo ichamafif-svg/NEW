@@ -1,0 +1,18 @@
+# Exemple de configuration U, à adapter à une installation K/T indépendante.
+# Le fichier est un chemin de connexion, jamais une loi ni une preuve.
+socket = "/run/standard/admission.sock"
+work_db = "/var/lib/standard/work.sqlite3"
+
+[[routes]]
+id = "repo-observe"
+mode = "BOTH"
+resource = "repo:*"
+needs = ["cover", "observe", "prove"]
+required_t = ["T06"]
+
+[[routes]]
+id = "repo-build"
+mode = "BUILD"
+resource = "repo:*"
+needs = ["build"]
+required_t = ["T07", "T08"]

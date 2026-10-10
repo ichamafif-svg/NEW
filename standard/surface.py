@@ -148,6 +148,54 @@ def render_overview(cycle):
     return "\n".join(lines) + "\n"
 
 
+def render_entry(cycle, discovery=None):
+    """A single current, scoped entry for an agent in a maintained repository."""
+    _, basis = _law(cycle)
+    tasks = cycle.get("tasks", [])
+    ready = [task for task in tasks if task["state"] == "READY"]
+    if ready:
+        # The constitutional projection already orders debt by due and identity.
+        lines = [render_task(cycle, ready[0]["id"]).rstrip(), "",
+                 "## Suite du travail",
+                 "La tâche ci-dessus est la première échéance accessible. "
+                 "Une proposition signée doit suivre sa route qualifiée ; une réponse de l'agent "
+                 "ne clôt jamais la dette."]
+        if len(ready) > 1:
+            lines.append(f"{len(ready) - 1} autre(s) tâche(s) prête(s) ; "
+                         "demande `python -m standard context --task ID` pour leur loi exacte.")
+    else:
+        lines = [render_overview(cycle).rstrip(), "",
+                 "## Prochaine décision",
+                 "Aucun travail autonome prêt à ce préfixe. Les routes manquantes ou "
+                 "la qualification des T demandent une intervention de l'installation."]
+    if discovery is not None:
+        lines.extend(["", "## Indices du dépôt · non qualifiés"])
+        for row in discovery["categories"]:
+            if row["paths"]:
+                lines.append(f"- {_text(row['kind'])} : " +
+                             ", ".join(f"`{_text(path)}`" for path in row["paths"][:5]) + ".")
+        lines.append("Ces chemins ne prouvent aucune propriété. Seuls les T qualifiés "
+                     "peuvent fournir une preuve recevable.")
+    lines.extend(["", f"Loi effective : `{_text(basis['law_digest'])}`. "
+                  "Les fichiers locaux de proposition ne la remplacent jamais."])
+    return "\n".join(lines) + "\n"
+
+
+def render_uninstalled(discovery):
+    """Repository hints without implying an active constitution or trust."""
+    lines = ["# Standard · installation absente", "",
+             "Aucune connexion K/T installée n'est disponible dans ce dépôt. "
+             "La présence de fichiers ne certifie aucun état et ne permet aucune action autonome.",
+             "", "## Indices du dépôt · non qualifiés"]
+    for row in discovery["categories"]:
+        if row["paths"]:
+            lines.append(f"- {_text(row['kind'])} : " +
+                         ", ".join(f"`{_text(path)}`" for path in row["paths"][:5]) + ".")
+    lines += ["", "Prochaine étape : installer le contrôleur K/T et ses T physiques, "
+              "puis renseigner `.standard/agent.toml`."]
+    return "\n".join(lines) + "\n"
+
+
 def render_m2(view, target_id):
     """The historical M2 agent receives the same contextual surface."""
     law, basis = _law(view)

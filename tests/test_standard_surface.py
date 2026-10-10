@@ -9,7 +9,9 @@ from fixture import World
 from maintenance.constitution import agent_view
 from standard.authoring import AuthoringError, load_source, proposal_text
 from standard.service import Route, StandardService
-from standard.surface import SurfaceError, render_m2, render_overview, render_task
+from standard.surface import (SurfaceError, render_entry, render_m2,
+                              render_overview, render_task, render_uninstalled)
+from standard.__main__ import load_service
 
 
 class Surface(unittest.TestCase):
@@ -44,14 +46,27 @@ class Surface(unittest.TestCase):
             self.assertIn(cycle["basis"]["law_digest"], context)
             self.assertNotIn('"targets":', context)
             self.assertIn("standard context --task", render_overview(cycle))
+            entry = render_entry(cycle, {"categories": [{"kind": "ci", "paths": [".github/workflows/check.yml"]}]})
+            self.assertIn(task["resource"], entry)
+            self.assertIn("non qualifiés", entry)
+            self.assertIn("K/T", render_uninstalled({"categories": []}))
             stale = dict(cycle, basis=dict(cycle["basis"], law_digest="sha256:" + "0" * 64))
             with self.assertRaises(SurfaceError):
                 render_task(stale, task["id"])
+            with self.assertRaises(SurfaceError):
+                render_entry(stale)
             m2 = render_m2(Installed().constitutional_view(), "vulns")
             self.assertIn("remediate-autonomous", m2)
             self.assertNotIn("service-uptime", m2)
         finally:
             world.journal.close()
+
+    def test_agent_configuration_accepts_toml_without_changing_kernel_authority(self):
+        sample = Path(__file__).resolve().parents[1] / "standard/examples/agent.toml"
+        service, path, workers = load_service(sample)
+        self.assertEqual(len(service._routes), 2)
+        self.assertEqual(workers, [])
+        self.assertTrue(path.endswith("work.sqlite3"))
 
 
 if __name__ == "__main__": unittest.main()
