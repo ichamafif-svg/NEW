@@ -1,17 +1,21 @@
 """A deployment trust lease must be live at use, including inside the effect gate."""
 import sys
+import base64
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fixture import T0, World
-from tcb.canon import digest
+from tcb.canon import digest, canon
 from tcb.release import code_digest
 from hybrid_kernel.attestation import DeploymentAttestation, registry_fingerprint
 from hybrid_kernel.deployment import GovernedDeployment, ProductionBlocked
 from hybrid_kernel.externals import Capability, CapabilityRegistry, Status
 from hybrid_kernel.runtime import ConstitutionalRuntime
+from hybrid_kernel.assessment import PREFIX
 
 
 def deployment(now, *, expires=200):
@@ -24,11 +28,19 @@ def deployment(now, *, expires=200):
     attestation = DeploymentAttestation(code_digest(), genesis, digest("/tmp/ledger"),
                                         registry_fingerprint(registry), 100, expires,
                                         digest("operator-assessment"), "independent-verifier")
+    payload = {"schema": "standard.t-assessment/v1", "assessor_id": "independent-verifier",
+               "attestation": vars(attestation),
+               "capabilities": [{**vars(c), "status": c.status.value} for c in registry.inventory()]}
+    private = Ed25519PrivateKey.from_private_bytes(b"\x11" * 32)
+    bundle = {"payload": payload, "signature": base64.b64encode(
+        private.sign(PREFIX + canon(payload))).decode()}
+    keys = {"independent-verifier": private.public_key().public_bytes(
+        Encoding.Raw, PublicFormat.Raw)}
     clock = lambda: now[0]
     with patch("hybrid_kernel.deployment.ConstitutionalRuntime") as runtime:
         instance = GovernedDeployment(ledger_path="/tmp/ledger", pin_store=object(),
-                                      genesis_pin=genesis, registry=registry, attested_now=now[0],
-                                      deployment_attestation=attestation, trusted_now=clock)
+                                      genesis_pin=genesis, signed_assessment=bundle,
+                                      pinned_assessors=keys, attested_now=now[0], trusted_now=clock)
     return instance, runtime.return_value
 
 

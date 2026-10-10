@@ -6,8 +6,10 @@ environment and independently verified evidence for all required contracts.
 """
 from __future__ import annotations
 from .runtime import ConstitutionalRuntime,IntegrationError
-from .externals import CapabilityRegistry,ContractError,CONTRACTS
-from .attestation import DeploymentAttestation,AttestationError,registry_fingerprint
+from .externals import ContractError
+from .attestation import AttestationError,registry_fingerprint
+from .assessment import verify_assessment
+from .delivery import EscalationOutbox
 from tcb.release import code_digest
 
 class ProductionBlocked(RuntimeError):
@@ -20,14 +22,22 @@ class GovernedDeployment:
     not from user-controlled data or an agent-side constructor.
     """
 
-    def __init__(self,*,ledger_path,pin_store,genesis_pin,registry,attested_now,
-                 deployment_attestation=None,trusted_now=None):
+    def __init__(self,*,ledger_path,pin_store,genesis_pin,attested_now,
+                 signed_assessment=None,pinned_assessors=None,trusted_now=None,
+                 registry=None,deployment_attestation=None):
         if not callable(trusted_now):
             raise ProductionBlocked("TRUST.CLOCK_REQUIRED")
-        if not isinstance(registry,CapabilityRegistry):
-            raise ProductionBlocked("TRUST.NO_REGISTRY")
-        if not isinstance(deployment_attestation,DeploymentAttestation):
-            raise ProductionBlocked("TRUST.ATTESTATION_REQUIRED")
+        if registry is not None or deployment_attestation is not None:
+            raise ProductionBlocked("TRUST.UNSIGNED_DECLARATION")
+        if signed_assessment is None or pinned_assessors is None:
+            raise ProductionBlocked("TRUST.SIGNED_ASSESSMENT_REQUIRED")
+        try:
+            installation=verify_assessment(signed_assessment,pinned_assessors=pinned_assessors,
+                release_digest=code_digest(),genesis_pin=genesis_pin,
+                ledger_path=ledger_path,now=attested_now)
+        except AttestationError as e:
+            raise ProductionBlocked("TRUST.ASSESSMENT_INVALID") from e
+        registry,deployment_attestation=installation.registry,installation.attestation
         self._registry,self._attestation,self._trusted_now=registry,deployment_attestation,trusted_now
         self._release,self._genesis=code_digest(),genesis_pin
         self._ledger_path=ledger_path
@@ -75,6 +85,11 @@ class GovernedDeployment:
         self._check()
         return self._runtime.guard(identity=identity,signer=signer,
                                    operation_handlers=operation_handlers,validity_check=self._check)
+    def outbox(self,*,path,transport,provider_keys,create=False):
+        self._check()
+        return EscalationOutbox(path,transport=transport,provider_keys=provider_keys,
+            health_reader=lambda:self.health(),genesis=self._genesis,
+            validity_check=self._check,create=create)
     def close(self):return self._runtime.close()
     def __enter__(self):return self
     def __exit__(self,*_):self.close()

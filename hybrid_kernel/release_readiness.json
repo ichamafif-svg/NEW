@@ -113,7 +113,9 @@
       "owner": "T01",
       "status": "UNVERIFIED_PHYSICAL",
       "evidence": [
-        "tcb/release.py"
+        "tcb/release.py",
+        "hybrid_kernel/assessment.py",
+        "tests/test_hybrid_kernel_assessment.py"
       ],
       "verified": false
     },
@@ -133,7 +135,9 @@
       "owner": "T03",
       "status": "UNVERIFIED_PHYSICAL",
       "evidence": [
-        "tcb/kernel.py"
+        "tcb/kernel.py",
+        "hybrid_kernel/clock.py",
+        "tests/test_hybrid_kernel_clock.py"
       ],
       "verified": false
     },
@@ -194,7 +198,9 @@
       "owner": "T09",
       "status": "UNVERIFIED_PHYSICAL",
       "evidence": [
-        "tcb/health.py"
+        "tcb/health.py",
+        "hybrid_kernel/delivery.py",
+        "tests/test_hybrid_kernel_delivery.py"
       ],
       "verified": false
     },
@@ -241,8 +247,10 @@
       "status": "PARTIAL_UNVERIFIED_PHYSICAL",
       "evidence": [
         "hybrid_kernel/attestation.py",
+        "hybrid_kernel/assessment.py",
         "hybrid_kernel/deployment.py",
-        "tests/test_hybrid_kernel_attestation.py"
+        "tests/test_hybrid_kernel_attestation.py",
+        "tests/test_hybrid_kernel_assessment.py"
       ],
       "verified": false
     }

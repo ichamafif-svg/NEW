@@ -2,7 +2,7 @@
   "scope": "All tcb/*.py, hybrid_kernel/*.py, trusted bootstrap.py and adapters/*.py; compatibility shims and reused primitives count, each line once.",
   "budgets": {
     "safety": {
-      "max_physical_lines": 3400,
+      "max_physical_lines": 3700,
       "modules": "every module not listed in another budget, plus bootstrap.py and adapters/*.py",
       "guarantee": "no forbidden effect, no forbidden widening, no rewritten history: a bug here can let something through"
     },
@@ -67,12 +67,15 @@
       "pins",
       "hybrid_kernel.checker",
       "hybrid_kernel.externals",
-      "hybrid_kernel.attestation"
+      "hybrid_kernel.attestation",
+      "hybrid_kernel.assessment",
+      "hybrid_kernel.clock"
     ],
     "2-effect": [
       "guard",
       "effects",
-      "sign"
+      "sign",
+      "hybrid_kernel.delivery"
     ],
     "3-accountability": [
       "accountability",
@@ -136,6 +139,13 @@
       "date": "2026-10-10",
       "budget": "all",
       "why": "User-authorized unification with K in 1800\u20133200 lines. Count both namespaces; move semantic implementations without copies; include native typed transitions, measurement qualification and independent consequence checker. Effective TCB ceilings include trusted integration and unchanged physical contracts; no line is hidden by relocation."
+    },
+    {
+      "date": "2026-10-10",
+      "budget": "safety",
+      "from": 3400,
+      "to": 3700,
+      "why": "The separate T09 effect boundary adds a persistent one-send outbox and signed delivery readback; the signed T01–T09 assessment verifier also enters the effective TCB. K remains under its original 1800–3200 budget."
     }
   ],
   "constitutional_kernel": {
