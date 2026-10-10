@@ -1,95 +1,97 @@
-"""Strict deployment facade: externally assessed trust contracts are required.
+"""Route-specific K/T integration; providers are selected by the installation.
 
-This facade intentionally does not bootstrap a genesis, create secrets or grant
-a runtime effect entitlement. The operator provisions a trusted physical
-environment and independently verified evidence for all required contracts.
+The local Python facade is not isolation. Credentials, keys, storage and ports
+must live behind an operator-controlled boundary inaccessible to the agent.
 """
 from __future__ import annotations
-from .runtime import ConstitutionalRuntime,IntegrationError
-from .externals import ContractError
-from .attestation import AttestationError,registry_fingerprint
-from .assessment import verify_assessment
-from .delivery import EscalationOutbox
+
+from tcb.crypto import EnvelopeError, open_envelope
 from tcb.release import code_digest
+from .core import SHAPES
+from .runtime import ConstitutionalRuntime
+
 
 class ProductionBlocked(RuntimeError):
     pass
 
+
+# Missing trust stops its dependent operation, not unrelated autonomy.
+BASE = frozenset({"T01", "T02", "T04", "T05"})
+TIMED = BASE | {"T03"}
+EFFECT = TIMED | {"T07", "T08"}
+EVIDENCE = {"measurement", "observation", "evidence"}
+
+
 class GovernedDeployment:
-    """Guarded entry point; NOT a production attestation authority.
+    """Contract boundary. The installation must provision trusted implementations."""
 
-    The deployment attestation must originate in an independent trusted verifier,
-    not from user-controlled data or an agent-side constructor.
-    """
+    def __init__(self, *, ledger_path, pin_store, genesis_pin, trust_boundary,
+                 trusted_now, effect_port=None, delivery_port=None):
+        if not callable(trusted_now) or not callable(getattr(trust_boundary, "check", None)):
+            raise ProductionBlocked("TRUST.BOUNDARY_REQUIRED")
+        self._boundary, self._trusted_now = trust_boundary, trusted_now
+        self._effect, self._delivery = effect_port, delivery_port
+        self._release, self._genesis, self._ledger_path = code_digest(), genesis_pin, str(ledger_path)
+        self._last_at = -1
+        self._check(BASE)
+        self._runtime = ConstitutionalRuntime(ledger_path=ledger_path,
+                                               pin_store=pin_store, genesis_pin=genesis_pin)
 
-    def __init__(self,*,ledger_path,pin_store,genesis_pin,attested_now,
-                 signed_assessment=None,pinned_assessors=None,trusted_now=None,
-                 registry=None,deployment_attestation=None):
-        if not callable(trusted_now):
-            raise ProductionBlocked("TRUST.CLOCK_REQUIRED")
-        if registry is not None or deployment_attestation is not None:
-            raise ProductionBlocked("TRUST.UNSIGNED_DECLARATION")
-        if signed_assessment is None or pinned_assessors is None:
-            raise ProductionBlocked("TRUST.SIGNED_ASSESSMENT_REQUIRED")
-        try:
-            installation=verify_assessment(signed_assessment,pinned_assessors=pinned_assessors,
-                release_digest=code_digest(),genesis_pin=genesis_pin,
-                ledger_path=ledger_path,now=attested_now)
-        except AttestationError as e:
-            raise ProductionBlocked("TRUST.ASSESSMENT_INVALID") from e
-        registry,deployment_attestation=installation.registry,installation.attestation
-        self._registry,self._attestation,self._trusted_now=registry,deployment_attestation,trusted_now
-        self._release,self._genesis=code_digest(),genesis_pin
-        self._ledger_path=ledger_path
-        self._last_at=-1
-        if self._check()!=attested_now:
-            raise ProductionBlocked("TRUST.CLOCK_MISMATCH")
-        self._runtime=ConstitutionalRuntime(ledger_path=ledger_path,pin_store=pin_store,
-                                           genesis_pin=genesis_pin)
-
-    def _check(self):
-        try:
-            now=self._trusted_now()
-        except Exception as e:
-            raise ProductionBlocked("TRUST.CLOCK_UNAVAILABLE") from e
-        if type(now) is not int or now<self._last_at:
-            raise ProductionBlocked("TRUST.CLOCK_ROLLBACK")
-        self._last_at=now
-        if code_digest()!=self._release:
+    def _check(self, required):
+        required = frozenset(required)
+        if "T03" in required:
+            try: now = self._trusted_now()
+            except Exception as exc: raise ProductionBlocked("TRUST.CLOCK_UNAVAILABLE") from exc
+            if type(now) is not int or now < self._last_at:
+                raise ProductionBlocked("TRUST.CLOCK_ROLLBACK")
+            self._last_at = now
+        else:
+            now = None  # no lease freshness can gate a narrowing entry
+        if code_digest() != self._release:
             raise ProductionBlocked("TRUST.RELEASE_CHANGED")
-        try:self._registry.validate(now)
-        except ContractError as e:raise ProductionBlocked("TRUST.UNVERIFIED:"+str(e)) from e
         try:
-            self._attestation.validate(
-                release_digest=self._release,genesis_pin=self._genesis,
-                ledger_path=self._ledger_path,registry_digest=registry_fingerprint(self._registry),
-                now=now)
-        except AttestationError as e:
-            raise ProductionBlocked("TRUST.ATTESTATION_INVALID") from e
-        # WARNING: arbitrary construction of DeploymentAttestation is NOT
-        # trustworthy. Callers must be confined to an authenticated attestation
-        # verifier/operational boundary; no public endpoint may accept this as
-        # raw caller-supplied object.
+            self._boundary.check(required=required, release_digest=self._release,
+                                 genesis_pin=self._genesis, ledger_path=self._ledger_path, now=now)
+        except Exception as exc:
+            raise ProductionBlocked("TRUST.REQUIRED_ROLE_UNAVAILABLE") from exc
         return now
 
-    def admit(self,envelope):
-        self._check()
-        return self._runtime.admit(envelope,validity_check=self._check)
+    def admit(self, envelope):
+        required = TIMED
+        try:
+            kind, _, _, _ = open_envelope(envelope)
+        except (EnvelopeError, ValueError, TypeError):
+            kind = None  # The kernel still refuses malformed statements.
+        if kind in {"veto", "revoke", "freeze", "flag", "invalidate"}:
+            required = BASE
+        if kind in EVIDENCE or (kind is not None and kind not in SHAPES):
+            required |= {"T06"}  # law-declared evidence kinds
+        if kind == "reconciliation": required |= {"T08"}
+        if kind in {"token", "reservation", "execution"}: required |= {"T07", "T08"}
+        self._check(required)
+        return self._runtime.admit(envelope, validity_check=lambda:self._check(required))
+
     def snapshot(self):
-        self._check()
+        self._check(BASE)
         return self._runtime.snapshot()
-    def health(self,*,required_at=None):
-        now=self._check()
-        return self._runtime.health(required_at=max(now,required_at or now))
-    def guard(self,*,identity,signer,operation_handlers):
-        self._check()
-        return self._runtime.guard(identity=identity,signer=signer,
-                                   operation_handlers=operation_handlers,validity_check=self._check)
-    def outbox(self,*,path,transport,provider_keys,create=False):
-        self._check()
-        return EscalationOutbox(path,transport=transport,provider_keys=provider_keys,
-            health_reader=lambda:self.health(),genesis=self._genesis,
-            validity_check=self._check,create=create)
-    def close(self):return self._runtime.close()
-    def __enter__(self):return self
-    def __exit__(self,*_):self.close()
+
+    def health(self, *, required_at=None):
+        now = self._check(TIMED)
+        return self._runtime.health(required_at=max(now, required_at or now))
+
+    def guard(self, *, identity, signer):
+        self._check(EFFECT)
+        if self._effect is None:
+            raise ProductionBlocked("TRUST.EFFECT_PORT_MISSING")
+        return self._runtime.guard(identity=identity, signer=signer,
+            effect_port=self._effect, validity_check=lambda:self._check(EFFECT))
+
+    def deliver_due(self):
+        self._check(TIMED | {"T09"})
+        if not callable(getattr(self._delivery, "deliver_due", None)):
+            raise ProductionBlocked("TRUST.DELIVERY_PORT_MISSING")
+        return self._delivery.deliver_due(self.health())
+
+    def close(self): return self._runtime.close()
+    def __enter__(self): return self
+    def __exit__(self, *_): self.close()

@@ -15,7 +15,8 @@ from hybrid_kernel.attestation import DeploymentAttestation, registry_fingerprin
 from hybrid_kernel.deployment import GovernedDeployment, ProductionBlocked
 from hybrid_kernel.externals import Capability, CapabilityRegistry, Status
 from hybrid_kernel.runtime import ConstitutionalRuntime
-from hybrid_kernel.assessment import PREFIX
+from hybrid_kernel.assessment import PREFIX, SignedAssessmentBoundary
+from tcb.sign import envelope
 
 
 def deployment(now, *, expires=200):
@@ -39,8 +40,9 @@ def deployment(now, *, expires=200):
     clock = lambda: now[0]
     with patch("hybrid_kernel.deployment.ConstitutionalRuntime") as runtime:
         instance = GovernedDeployment(ledger_path="/tmp/ledger", pin_store=object(),
-                                      genesis_pin=genesis, signed_assessment=bundle,
-                                      pinned_assessors=keys, attested_now=now[0], trusted_now=clock)
+                                      genesis_pin=genesis,
+                                      trust_boundary=SignedAssessmentBoundary(bundle, keys),
+                                      trusted_now=clock)
     return instance, runtime.return_value
 
 
@@ -54,13 +56,25 @@ class TrustLeaseTests(unittest.TestCase):
             deployed.admit({"signed": True})
         runtime.admit.assert_called_once()
 
+    def test_expired_lease_does_not_block_signed_restriction(self):
+        now = [150]
+        deployed, runtime = deployment(now)
+        now[0] = 200
+        w = World()
+        restriction = envelope(digest("genesis"), "freeze",
+                               {"id": "freeze-1", "author": "carol", "at": T0 + 1, "scope": "*"},
+                               [w.cosigner("carol")])
+        deployed.admit(restriction)
+        runtime.admit.assert_called_once()
+
     def test_clock_rollback_blocks_existing_instance(self):
         now = [150]
         deployed, runtime = deployment(now)
+        deployed.admit({"signed": True})
         now[0] = 149
         with self.assertRaisesRegex(ProductionBlocked, "CLOCK_ROLLBACK"):
             deployed.admit({"signed": True})
-        runtime.admit.assert_not_called()
+        runtime.admit.assert_called_once()
 
     def test_admission_checks_trust_inside_write_transaction(self):
         w = World()

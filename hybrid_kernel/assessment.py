@@ -1,4 +1,4 @@
-"""Verify an externally signed assessment of all nine Trusted External contracts.
+"""Optional signed assessment adapter for the TrustBoundary protocol.
 
 Assessor public keys must be selected by a trusted installation, never supplied
 by an agent or inside the signed bundle. A signature authenticates an assessment,
@@ -31,7 +31,7 @@ class AssessedInstallation:
 
 
 def verify_assessment(bundle, *, pinned_assessors, release_digest, genesis_pin,
-                      ledger_path, now) -> AssessedInstallation:
+                      ledger_path, now, required=()) -> AssessedInstallation:
     """Reject unknown fields, unsigned status, wrong binding or stale evidence.
 
     `pinned_assessors` maps assessor IDs to raw 32-byte Ed25519 public keys.
@@ -62,7 +62,7 @@ def verify_assessment(bundle, *, pinned_assessors, release_digest, genesis_pin,
         if att_raw["verifier_id"] != assessor_id:
             raise AttestationError("ASSESSMENT.VERIFIER")
         cap_raw = payload["capabilities"]
-        if not isinstance(cap_raw, list) or len(cap_raw) != 9 or any(
+        if not isinstance(cap_raw, list) or not 1 <= len(cap_raw) <= 9 or any(
             not isinstance(c, dict) or set(c) != CAP_FIELDS for c in cap_raw
         ):
             raise AttestationError("ASSESSMENT.CAPABILITY_SHAPE")
@@ -70,7 +70,7 @@ def verify_assessment(bundle, *, pinned_assessors, release_digest, genesis_pin,
             Capability(**{**c, "status": Status(c["status"])}) for c in cap_raw
         ])
         attestation = DeploymentAttestation(**att_raw)
-        registry.validate(now)
+        registry.validate(now, required=required)
         attestation.validate(release_digest=release_digest, genesis_pin=genesis_pin,
                              ledger_path=ledger_path, registry_digest=registry_fingerprint(registry),
                              now=now)
@@ -78,3 +78,23 @@ def verify_assessment(bundle, *, pinned_assessors, release_digest, genesis_pin,
     except (InvalidSignature, binascii.Error, ValueError, TypeError, KeyError, AttributeError,
             CanonError, ContractError) as exc:
         raise AttestationError("ASSESSMENT.INVALID:" + type(exc).__name__) from None
+
+
+class SignedAssessmentBoundary:
+    """One possible provider; other installations can use other trust mechanisms."""
+
+    def __init__(self, bundle, pinned_assessors):
+        self.bundle, self.pinned_assessors = bundle, pinned_assessors
+
+    def check(self, *, required, release_digest, genesis_pin, ledger_path, now):
+        # A clockless check is only used by the caller for narrowing/read paths.
+        # Verify the signed assessment as of its signed issuance, without claiming
+        # that it is currently live; timed operations always pass trusted time.
+        if now is None:
+            try:
+                now = self.bundle["payload"]["attestation"]["issued_at"]
+            except (KeyError, TypeError):
+                raise AttestationError("ASSESSMENT.INVALID_ISSUANCE") from None
+        verify_assessment(self.bundle, pinned_assessors=self.pinned_assessors,
+                          release_digest=release_digest, genesis_pin=genesis_pin,
+                          ledger_path=ledger_path, now=now, required=required)

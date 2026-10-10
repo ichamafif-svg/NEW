@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 
 from hybrid_kernel.delivery import EscalationOutbox, DeliveryError, PREFIX
-from hybrid_kernel.assessment import PREFIX as ASSESSMENT_PREFIX
+from hybrid_kernel.assessment import PREFIX as ASSESSMENT_PREFIX, SignedAssessmentBoundary
 from hybrid_kernel.attestation import DeploymentAttestation, registry_fingerprint
 from hybrid_kernel.deployment import GovernedDeployment
 from hybrid_kernel.externals import Capability, CapabilityRegistry, Status
@@ -120,11 +120,11 @@ class DeliveryTests(unittest.TestCase):
         bundle = {"payload": payload, "signature": base64.b64encode(
             private.sign(ASSESSMENT_PREFIX + canon(payload))).decode()}
         with GovernedDeployment(ledger_path=world.path, pin_store=world.pins,
-            genesis_pin=world.state["domain"], attested_now=now,
-            trusted_now=lambda: now, signed_assessment=bundle,
-            pinned_assessors={"assessor": assessor_key}) as deployed:
-            outbox = deployed.outbox(path=self.path, transport=self.transport,
-                                     provider_keys=self.keys, create=True)
+            genesis_pin=world.state["domain"], trusted_now=lambda: now,
+            trust_boundary=SignedAssessmentBoundary(bundle, {"assessor": assessor_key})) as deployed:
+            outbox = EscalationOutbox(self.path, transport=self.transport,
+                provider_keys=self.keys, health_reader=deployed.health,
+                genesis=world.state["domain"], validity_check=self.live, create=True)
             ids = outbox.enqueue()
             self.assertTrue(ids)
             self.assertTrue(all(outbox.status(key)["state"] == "pending" for key in ids))

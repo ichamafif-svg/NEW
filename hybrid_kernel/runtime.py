@@ -6,7 +6,7 @@ pin restoration domains, key custody and egress exclusivity remain T contracts.
 """
 from __future__ import annotations
 from pathlib import Path
-from tcb import Journal, Auditor, SQLitePins, Guard, EffectPort
+from tcb import Journal, Auditor, Guard, EffectPort
 from .core import Kernel
 from tcb.release import code_digest
 from .core import Refused
@@ -20,12 +20,13 @@ class ConstitutionalRuntime:
     """Single constitutional admission path, never a parallel authority engine."""
 
     def __init__(self, *, ledger_path, pin_store, genesis_pin):
-        if not isinstance(pin_store,SQLitePins):
-            raise IntegrationError("An independently retained pin store is mandatory")
+        if pin_store is None or any(not callable(getattr(pin_store, name, None))
+                                    for name in ("bind", "load", "retain", "keep", "tail", "halt", "halted")):
+            raise IntegrationError("A durable pin port with exact-tail recovery is mandatory")
         if not isinstance(genesis_pin,str) or not DIGEST.fullmatch(genesis_pin):
             raise IntegrationError("An externally supplied genesis digest is mandatory")
         lp=Path(ledger_path).resolve()
-        if lp==pin_store.path:
+        if hasattr(pin_store,"path") and lp==Path(pin_store.path).resolve():
             raise IntegrationError("Journal and pins must be on distinct paths")
         pin_store.bind(genesis_pin)
         self.kernel=Kernel(code_pin=code_digest())
@@ -49,9 +50,12 @@ class ConstitutionalRuntime:
     def health(self,*,required_at=None):
         return self.journal.health(required_at=required_at)
 
-    def guard(self,*,identity,signer,operation_handlers,validity_check=None):
-        """Privileged adapter only; handler must be physically exclusive."""
-        return Guard(self.journal,identity,signer,EffectPort(operation_handlers),
+    def guard(self,*,identity,signer,operation_handlers=None,effect_port=None,validity_check=None):
+        """Local adapters are possible; governed deployments pin their port at installation."""
+        if (operation_handlers is None) == (effect_port is None):
+            raise IntegrationError("exactly one explicit effect port is required")
+        port = EffectPort(operation_handlers) if effect_port is None else effect_port
+        return Guard(self.journal,identity,signer,port,
                      validity_check=validity_check)
 
     def close(self):

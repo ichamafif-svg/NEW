@@ -52,7 +52,7 @@ class CapabilityRegistry:
     agents may call. VERIFIED only means recorded assessment within validity;
     evidence authenticity and physical separation must be checked externally.
     """
-    def __init__(self, capabilities, *, required=CONTRACTS):
+    def __init__(self, capabilities, *, required=()):
         cap=list(capabilities)
         if not isinstance(required,(tuple,list,set,frozenset)) or not set(required)<=CONTRACTS:
             raise ContractError("CONTRACT.REQUIRED")
@@ -66,10 +66,12 @@ class CapabilityRegistry:
         self._slots=slots
         self.required=frozenset(required)
 
-    def validate(self, now:int):
+    def validate(self, now:int, *, required=None):
         if type(now) is not int or now<0:raise ContractError("CONTRACT.CLOCK")
+        roles=self.required if required is None else frozenset(required)
+        if not roles<=CONTRACTS:raise ContractError("CONTRACT.REQUIRED")
         problems=[]
-        for name in sorted(self.required):
+        for name in sorted(roles):
             c=self._slots.get(name)
             if c is None:problems.append((name,"ABSENT"))
             elif c.status is not Status.VERIFIED:problems.append((name,c.status.value))
@@ -103,3 +105,11 @@ class ClockPort(Protocol):
 
 class IndependentJudgePort(Protocol):
     def check(self,state:Mapping[str,Any],entry:Mapping[str,Any],decision:Mapping[str,Any]):...
+
+class TrustBoundary(Protocol):
+    """Installation-owned contract; the Python protocol itself is not isolation."""
+    def check(self, *, required:frozenset[str], release_digest:str,
+              genesis_pin:str, ledger_path:str, now:int|None)->None:...
+
+class DeliveryPort(Protocol):
+    def deliver_due(self, health:Mapping[str,Any])->Any:...

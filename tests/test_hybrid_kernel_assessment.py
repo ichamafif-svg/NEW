@@ -38,7 +38,8 @@ class AssessmentTests(unittest.TestCase):
 
     def verify(self, bundle, **kwargs):
         args = dict(pinned_assessors=self.keys, release_digest=self.release,
-                    genesis_pin=self.genesis, ledger_path="/tmp/ledger", now=150)
+                    genesis_pin=self.genesis, ledger_path="/tmp/ledger", now=150,
+                    required={f"T{i:02}" for i in range(1, 10)})
         return verify_assessment(bundle, **{**args, **kwargs})
 
     def test_signed_nine_contracts_are_bound_to_installation(self):
@@ -63,11 +64,21 @@ class AssessmentTests(unittest.TestCase):
         payload["capabilities"].pop()
         with self.assertRaises(AttestationError): self.verify(self.bundle(payload))
 
+    def test_partial_assessment_serves_only_its_route(self):
+        payload = copy.deepcopy(self.payload)
+        payload["capabilities"] = [c for c in payload["capabilities"] if c["contract_id"] != "T09"]
+        partial = CapabilityRegistry([Capability(**{**c, "status": Status(c["status"])})
+                                      for c in payload["capabilities"]], required=())
+        payload["attestation"]["registry_digest"] = registry_fingerprint(partial)
+        self.assertTrue(self.verify(self.bundle(payload), required={"T01", "T02"}))
+        with self.assertRaises(AttestationError):
+            self.verify(self.bundle(payload), required={"T09"})
+
     def test_plain_objects_cannot_open_deployment(self):
         with self.assertRaises(ProductionBlocked):
             GovernedDeployment(ledger_path="/tmp/ledger", pin_store=object(),
-                               genesis_pin=self.genesis, attested_now=150,
-                               registry=CapabilityRegistry([]), trusted_now=lambda: 150)
+                               genesis_pin=self.genesis, trust_boundary=None,
+                               trusted_now=lambda: 150)
 
 
 if __name__ == "__main__": unittest.main()
