@@ -59,6 +59,8 @@ Le noyau ne connaît pas les notions particulières d'un fournisseur, dépôt, s
 
 Le noyau doit rester **minimal en mécanismes, complet dans son domaine constitutionnel et invisible dans les opérations ordinaires**. Une capacité limitée et contrôlée permet de travailler sans faire remonter chaque calcul, lecture, scan ou proposition technique dans K ; tout élargissement de pouvoir, mutation constitutionnelle ou effet sensible reste soumis au jugement adéquat.
 
+**Surface AI-native :** les agents reçoivent automatiquement, pour la tâche et le sujet courants, une lecture textuelle de la loi effective signée, de la dette, des sources de preuve et de la route T. Ils peuvent demander le détail pertinent à partir de cette entrée unique ; ils ne doivent pas parcourir des fichiers de documentation ni interpréter la sérialisation du journal. Les règles propres au client s'écrivent hors des floors dans un fichier déclaratif borné ; sa présence dans un dépôt n'en fait pas la loi active. Seule la genèse ou une activation gouvernée donne autorité à son contenu. Toute projection porte le digest et le préfixe de cette loi et refuse une discordance.
+
 ## Protocole de bout en bout
 
 `proposer → authentifier / qualifier → juger → vérifier lorsque requis → committer atomiquement → réserver / contrôler l'effet → exécuter ou marquer UNKNOWN → réconcilier → auditer / maintenir les obligations`.

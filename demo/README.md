@@ -10,9 +10,9 @@ Les branches `standard-journal` et `standard-pins` transportent l'état et le do
 
 Sur la branche du noyau hybride, `tcb.Kernel` est un import de compatibilité du seul
 `hybrid_kernel.core.Kernel` : le cycle ci-dessus passe déjà par son jugement unique.
-Le rapport produit aussi `report/constitution.json`, qui lie la loi **effective**
+Le rapport produit aussi `report/constitution.md`, qui lie la loi **effective**
 (floors + loi client), les obligations et les écarts de qualification T au même
-préfixe. L'agent reçoit cette vue en lecture seule pour une réparation préparée
+préfixe. L'agent reçoit une projection textuelle contextualisée en lecture seule pour une réparation préparée
 par modèle. Les sondes M2 connues lisent les cibles effectives, y compris les
 resserrements clients ; les nouvelles cibles métier n'ont pas encore d'instrument
 ni de route M2 générique. Le scanner refuse un fichier de mesures lié à une autre

@@ -50,7 +50,8 @@ class ProductGatewayTests(unittest.TestCase):
                                         status="complete", level="real")
                 candidate = entry["envelope"]
                 worker = Worker("probe", (sys.executable, "-c",
-                    "import json,sys; json.load(sys.stdin); print(json.dumps({'envelope':" + repr(candidate) + "}))"), tmp)
+                    "import json,sys; text=sys.stdin.read(); assert text.startswith('# Standard · contexte'); "
+                    "assert 'Loi applicable' in text; print(json.dumps({'envelope':" + repr(candidate) + "}))"), tmp)
                 result = run_once(engine, [worker], mode="RUN", now=1)
                 self.assertEqual(result["status"], "SUBMITTED")
                 self.assertFalse(result["obligation_closed"])

@@ -151,13 +151,15 @@ class StandardService:
                             state = "TRUST_BLOCKED"
                     choices.append({"id": route.id, "state": state, "required_t": sorted(required)})
                 tasks.append({"id": f"{obligation['obligation']}:{need}",
-                              "obligation": obligation["obligation"], "resource": resource,
+                              "obligation": obligation["obligation"], "target": obligation.get("target"),
+                              "resource": resource,
                               "due": obligation["due"], "need": need, "routes": choices,
                               "state": "READY" if any(c["state"] == "AVAILABLE" for c in choices)
                               else ("TRUST_BLOCKED" if choices else "NO_ROUTE")})
             if obligation.get("next") == "human_review" and not needs:
                 tasks.append({"id": f"{obligation['obligation']}:review",
-                              "obligation": obligation["obligation"], "resource": resource,
+                              "obligation": obligation["obligation"], "target": obligation.get("target"),
+                              "resource": resource,
                               "due": obligation["due"], "need": "review", "routes": [],
                               "state": "HUMAN_REVIEW"})
         tasks.sort(key=lambda t: (t["due"], t["id"]))

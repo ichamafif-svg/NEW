@@ -15,6 +15,7 @@ from maintenance.constitution import ViewError, agent_view
 from ops.agent import craft
 from ops.cycle import effective_targets
 from tcb.canon import digest
+from standard.surface import render_m2
 
 
 class AgentConstitutionTests(unittest.TestCase):
@@ -64,11 +65,12 @@ class AgentConstitutionTests(unittest.TestCase):
             captured = []
             with patch("ops.agent.claude", side_effect=lambda prompt, key:
                        captured.append(prompt) or {"title": "repair", "files": {"requirements.txt": "example==2.0\n"}}):
-                result = craft(repo, "vulns", "found:1", "unused", constitution=self.view())
+                result = craft(repo, "vulns", "found:1", "unused",
+                               constitution=render_m2(self.view(), "vulns"))
             self.assertEqual(result["files"], {"requirements.txt": "example==2.0\n"})
             self.assertIn(self.health["head"], captured[0])
             self.assertIn("remediate-autonomous", captured[0])
-            self.assertIn("not physical proof", captured[0])
+            self.assertIn("qualification physique", captured[0])
 
     def test_detected_secret_is_not_in_model_context(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -81,7 +83,8 @@ class AgentConstitutionTests(unittest.TestCase):
             captured = []
             with patch("ops.agent.claude", side_effect=lambda prompt, key:
                        captured.append(prompt) or {"files": {"requirements.txt": "example==2.0\n"}}):
-                craft(repo, "vulns", "found:1", "unused", constitution=self.view())
+                craft(repo, "vulns", "found:1", "unused",
+                      constitution=render_m2(self.view(), "vulns"))
             self.assertNotIn(secret, captured[0])
             self.assertIn("example==1.0", captured[0])
 

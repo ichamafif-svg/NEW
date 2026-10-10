@@ -18,8 +18,9 @@ Cette projection générique est présente, mais le cycle opérationnel M2 utili
 `maintenance.constitution.agent_view` expose séparément la loi effective
 authentifiée par le noyau au préfixe exact du rapport, les propositions de
 travail et les contrats T encore non qualifiés dans le manifeste de release.
-Le rapport du demo l'écrit dans `constitution.json` ; le modèle de préparation
-des réparations non déterministes reçoit la même vue. Ces écarts T sont des
+Le rapport du demo écrit une vue lisible dans `constitution.md` ; le modèle de préparation
+des réparations non déterministes reçoit une vue ciblée de sa seule exigence.
+La structure interne reste disponible au service de projection. Ces écarts T sont des
 indices de qualification de release, sans statut d'obligation constitutionnelle
 ou de mesure du fournisseur en direct. `trust_work` propose l'implémentation et
 la collecte de preuves, dont la clôture exige une qualification indépendante ;

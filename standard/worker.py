@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 from .client import GatewayClient
 from .service import WorkError
+from .surface import render_task
 
 
 @dataclass(frozen=True)
@@ -44,10 +45,9 @@ def run_once(engine, workers, *, mode, now, backoff_ms=60_000):
     status = "NO_WORKER"
     try:
         if selected is not None:
-            payload = json.dumps({"task": task, "basis": lease["basis"], "law": cycle["law"]},
-                                 ensure_ascii=False)
-            # The worker receives only law and a work proposal. Its own
-            # unprivileged signing identity may be available in its OS domain.
+            payload = render_task(cycle, task["id"])
+            # The worker reads contextual law as text, never the full raw law.
+            # Its own unprivileged signing identity may live in its OS domain.
             env = {key: os.environ[key] for key in ("PATH", "LANG") if key in os.environ}
             process = subprocess.run(selected.command, input=payload, text=True,
                                      capture_output=True, cwd=selected.cwd, env=env,

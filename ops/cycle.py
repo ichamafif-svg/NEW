@@ -112,7 +112,12 @@ def cmd_init(node: Node, a):
     if node.genesis:
         raise SystemExit("this state directory already has a genesis")
     publics = json.loads(Path(a.publics).read_text())
-    node.add("genesis", "icham", HUMANS, root=root_of(publics), law=law(), code=node.kernel.code_pin,
+    if getattr(a, "law_source", None):
+        from standard.authoring import load_source
+        client_law, _, _ = load_source(a.law_source)
+    else:
+        client_law = law()  # historical demo default
+    node.add("genesis", "icham", HUMANS, root=root_of(publics), law=client_law, code=node.kernel.code_pin,
              at=int(time.time() * 1000))
     pin = node.state["domain"]
     (node.dir / "genesis.json").write_text(json.dumps({"pin": pin}))
@@ -338,9 +343,10 @@ def propose(node: Node, a, world, craft, *, skip_targets=()):
             if recipe:
                 files = recipe(tree, recipe_data(tree, world)(tid))
             elif craft is agent.craft:
+                from standard.surface import render_m2
                 files = craft(Path(a.checkout), tid, seen["status"],
                               os.environ.get("ANTHROPIC_API_KEY", ""),
-                              constitution=constitutional_context(node))["files"]
+                              constitution=render_m2(constitutional_context(node), tid))["files"]
             else:
                 files = craft(Path(a.checkout), tid, seen["status"],
                               os.environ.get("ANTHROPIC_API_KEY", ""))["files"]
@@ -395,7 +401,8 @@ def cmd_report(node: Node, a):
     health = node.journal.health(required_at=int(time.time() * 1000))
     (out / "health.json").write_text(json.dumps(health, indent=1))
     (out / "plan.json").write_text(json.dumps(plan(health), indent=1))
-    (out / "constitution.json").write_text(json.dumps(constitutional_context(node, health), indent=1))
+    from standard.surface import render_m2_overview
+    (out / "constitution.md").write_text(render_m2_overview(constitutional_context(node, health)))
     s = node.state
     dossier = build(rows_of(node.journal.path), genesis_pin=node.genesis, checkpoints=node.pins.load(),
                     required_at=health["evaluated_at"])
@@ -420,6 +427,7 @@ def main(argv=None):
     ap.add_argument("--state", required=True)
     ap.add_argument("--keys", help="JSON key file; default: STANDARD_KEYS")
     ap.add_argument("--publics")
+    ap.add_argument("--law-source", help="bounded client law in TOML for a new genesis")
     ap.add_argument("--days", type=int, default=90)
     ap.add_argument("--repo")
     ap.add_argument("--checkout", default=".")

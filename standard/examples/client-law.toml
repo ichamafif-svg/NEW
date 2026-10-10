@@ -1,0 +1,44 @@
+# Exemple de source de loi client. À placer dans le dépôt maintenu sous
+# .standard/law.toml, puis à proposer par la gouvernance de la constitution.
+# Ce fichier seul n'active rien : le journal signé reste la source de vérité.
+format = "standard-client/1"
+floors = "sha256:78f56b582e01916bef9228fdeabd0c3ebcda40a868a012bfb02c1394590ae3a8"
+
+[bindings]
+owner = "alice"
+inventory_source = "ci"
+scanner = "ci"
+compliance_officer = "carol"
+
+[ops.restore]
+args = { service = "segment" }
+resource = "service:{service}:uptime"
+profile = "human_quorum"
+trusted = ["T06", "T09"]
+
+[[targets]]
+id = "service-inventory"
+kind = "coverage"
+resource = "service:api:inventory"
+property = "coverage"
+expect = "complete"
+min_level = "real"
+fresh_ms = 86400000
+due_ms = 86400000
+owner = "alice"
+sources = ["ci"]
+human = true
+
+[[targets]]
+id = "service-uptime"
+kind = "property"
+coverage = "service-inventory"
+resource = "service:api:uptime"
+property = "status"
+expect = "healthy"
+min_level = "real"
+fresh_ms = 3600000
+due_ms = 3600000
+owner = "alice"
+sources = ["ci"]
+repair = "restore"

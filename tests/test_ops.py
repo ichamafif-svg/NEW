@@ -74,12 +74,11 @@ def test_demo_report_exposes_current_law_and_unverified_t_without_a_grant():
         n = sim.node()
         try:
             cmd_report(n, SimpleNamespace(out=tmp))
-            view = json.loads((Path(tmp) / "constitution.json").read_text())
-            assert view["basis"]["head"] == n.state["head"]
-            assert view["basis"]["law_digest"] == n.state["law"]["digest"]
-            assert "remediate-autonomous" in view["law"]["conditions"]
-            assert {x["contract"] for x in view["trust_gaps"]} == {f"T{i:02}" for i in range(1, 10)}
-            assert view["read_only"] and "allowed" not in view
+            surface = (Path(tmp) / "constitution.md").read_text()
+            assert n.state["head"] in surface
+            assert n.state["law"]["digest"] in surface
+            assert "vulns" in surface and "T06" in surface
+            assert "Lecture seule" in surface and "allowed" not in surface
         finally:
             n.close()
 

@@ -27,3 +27,4 @@ test:
 	python3 -m unittest discover -s tests -p "test_hybrid_kernel*.py" -v
 	python3 -m unittest tests/test_standard_service.py -v
 	python3 -m unittest tests/test_standard_product.py -v
+	python3 -m unittest tests/test_standard_surface.py -v

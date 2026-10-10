@@ -9,7 +9,7 @@ from pathlib import Path
 SOURCES = {
     "ci": (".github/workflows/*", ".gitlab-ci.yml", "Jenkinsfile", "azure-pipelines.yml"),
     "dependencies": ("requirements*.txt", "pyproject.toml", "poetry.lock", "package-lock.json", "pnpm-lock.yaml", "Cargo.lock"),
-    "policy": ("policy/*", "policies/*", "**/*.rego", "**/*.cedar"),
+    "policy": (".standard/law.toml", "policy/*", "policies/*", "**/*.rego", "**/*.cedar"),
     "owners": ("CODEOWNERS", ".github/CODEOWNERS", "docs/adr/*"),
     "infrastructure": ("Dockerfile", "docker-compose*.yml", "**/*.tf", "k8s/*", "helm/*"),
     "observability": ("otel-collector*.yml", "prometheus*.yml", "grafana/*", "datadog.yaml"),

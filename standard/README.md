@@ -1,5 +1,21 @@
 # Surface commune BUILD/RUN
 
+L'entrée des agents est `python -m standard context --config CONFIG --mode RUN`
+pour voir le travail courant, puis `--task ID` pour ne recevoir que la loi,
+la dette, les preuves et les T pertinents pour cette tâche. Le contexte est
+du texte lisible, lié au préfixe et au digest de la loi signée. L'agent n'a
+pas à parcourir des README ni une sérialisation de la constitution. Le même
+surfaçage ciblé est transmis à l'agent M2. Une erreur de digest refuse la vue.
+
+Dans un dépôt maintenu, les règles **propres au client**, hors des floors,
+s'écrivent dans `.standard/law.toml` suivant les champs bornés du noyau.
+[`examples/client-law.toml`](examples/client-law.toml) montre les identités,
+une opération et des exigences supplémentaires. `python -m standard law-source
+--source .standard/law.toml` en montre la proposition et vérifie sa composition
+avec les floors ; ce fichier ne modifie jamais la loi active. La genèse ou le
+changement de loi signé et activé reste nécessaire. TOML n'est ni CSL, ni un
+second interpréteur ; il est lu comme les mêmes déclarations typées que K juge.
+
 `StandardService` projette les obligations du noyau sur des tâches stables à partir
 d'un `GatewayClient` relié à un `GovernedDeployment` installé dans **un autre
 processus** et de routes déclarées par l'opérateur. Une
@@ -63,11 +79,13 @@ L'installation ne génère pas de genèse de secours et ne substitue aucun T loc
 des prérequis physiques à vérifier sur l'hôte, non une propriété du protocole.
 
 L'interface U propose `python -m standard discover --repo REPO`, puis
-`status`, `dashboard`, `claim`, `submit`, `attempt`, `run` et `watch` avec `--config`.
+`context`, `status`, `dashboard`, `claim`, `submit`, `attempt`, `run` et `watch` avec `--config`.
 Le fichier de configuration U contient `socket`, `work_db`, `routes` et
 éventuellement `workers` (route, commande en tableau, répertoire et timeout).
-Un travailleur externe lit `{task,basis,law}` sur stdin et renvoie
-`{"envelope": ...}` sur stdout : une proposition signée par son identité U.
+Un travailleur externe lit la vue constitutionnelle contextualisée en texte
+sur stdin. Il renvoie une enveloppe signée par son identité U sur stdout ;
+la sérialisation de cette enveloppe reste un protocole interne, pas une loi à
+lire ou écrire par l'agent.
 `run` lui transmet une tâche louée, puis la renvoie à K/T pour jugement ;
 `watch` répète les passages sous un superviseur U. Aucun
 retour de travailleur ne ferme la dette ou ne déclenche directement un effet.

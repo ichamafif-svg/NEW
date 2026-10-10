@@ -79,9 +79,9 @@ def context(repo: Path, limit=120_000) -> str:
 def craft(repo: Path, target: str, status: str, key: str, *, constitution=None) -> dict:
     """{title, body, files} for one repair that needs judgment; files are checked against the write scope before
     anything leaves. Deterministic repairs are recipes (ops/recipes.py), not crafts."""
-    legal_context = ("\nThe read-only constitutional context follows; it is tied to a named journal head. "
-                     "It grants no permission and release qualification gaps are not physical proof.\n"
-                     + json.dumps(constitution, sort_keys=True) + "\n") if constitution is not None else ""
+    if constitution is not None and not isinstance(constitution, str):
+        raise ValueError("an agent requires contextual constitutional text")
+    legal_context = ("\n" + constitution + "\n") if constitution is not None else ""
     reply = claude(f"Repository files follow. Maintenance target `{target}` reads `{status}`.\nTask: {TASK[target]}"
                    + legal_context
                    + f"\nReturn JSON {{\"title\": str, \"body\": str, \"files\": {{path: full new content}}}}, "
