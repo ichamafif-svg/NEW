@@ -12,7 +12,7 @@ from . import GatewayClient, Route, StandardService, WorkEngine
 from .dashboard import render, render_fault
 from .discovery import discover_repository
 from .worker import Worker, run_once
-from .surface import render_entry, render_overview, render_task, render_uninstalled
+from .surface import render_entry, render_law, render_overview, render_task, render_uninstalled
 from .authoring import proposal_text
 from hybrid_kernel.deployment import ProductionBlocked
 
@@ -72,6 +72,7 @@ def main(argv=None):
     parser.add_argument("--repo", help="repository path for read-only discovery")
     parser.add_argument("--source", help="bounded client law source (.toml)")
     parser.add_argument("--task", help="exact task ID for contextual constitutional guidance")
+    parser.add_argument("--law", help="active declaration as SECTION/ID, floor or client")
     parser.add_argument("--input", help="JSON with the claim, signed envelope and selected route")
     parser.add_argument("--output", help="dashboard HTML path")
     parser.add_argument("--interval", type=int, default=60, help="watch interval in seconds")
@@ -86,6 +87,8 @@ def main(argv=None):
         if not args.source: parser.error("law-source requires --source")
         result = proposal_text(args.source)
     else:
+        if args.command == "context" and not args.config:
+            args.config = str(agent_config(Path(args.repo or ".").resolve(), None))
         if not args.config: parser.error("this command requires --config")
         service, work_db, workers = load_service(args.config)
         engine = WorkEngine(work_db, service)
@@ -97,7 +100,9 @@ def main(argv=None):
                     result = fault_status(service)
             elif args.command == "context":
                 cycle = service.inspect(mode=args.mode)
-                result = render_task(cycle, args.task) if args.task else render_overview(cycle)
+                if args.task and args.law: parser.error("choose --task or --law")
+                result = (render_task(cycle, args.task) if args.task else
+                          render_law(cycle, args.law) if args.law else render_overview(cycle))
             elif args.command == "claim":
                 cycle = engine.sync(mode=args.mode)
                 claim = engine.claim(mode=args.mode, now=int(time.time() * 1000))

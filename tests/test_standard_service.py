@@ -108,6 +108,22 @@ class StandardServiceTests(unittest.TestCase):
         finally:
             world.journal.close()
 
+    def test_floor_and_client_project_physical_work_without_routes_or_self_attestation(self):
+        world = World(law=make_law(tighten={"ops": {"merge": {"trusted": ["T09"]}}}))
+        try:
+            service = StandardService(Installed(world))
+            cycle = service.inspect(mode="BUILD")
+            self.assertEqual(cycle["law"], world.kernel.law_of(world.state).release)
+            by_target = {(r["target"], r["need"]): r for r in cycle["law_requirements"]}
+            self.assertIn(("inventory", "cover"), by_target)
+            self.assertIn(("pr42-ci", "build"), by_target)
+            self.assertEqual(by_target[("pr42-ci", "build")]["required_t"], ["T07", "T08", "T09"])
+            self.assertTrue(any(p["target"] == "pr42-ci" and p["need"] == "build"
+                                for p in cycle["provisioning_work"]))
+            self.assertFalse(any(t["state"] == "READY" for t in cycle["tasks"]))
+        finally:
+            world.journal.close()
+
     def test_task_cannot_be_satisfied_by_a_signed_unrelated_statement(self):
         cycle = self.service.inspect()
         task = next(t for t in cycle["tasks"] if t["state"] == "READY")

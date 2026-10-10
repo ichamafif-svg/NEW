@@ -65,6 +65,24 @@ def _law_trust(law, resource, need):
     return required
 
 
+def _law_requirements(law, mode):
+    """Project every effective target, floor and client, into physical needs.
+
+    This is planning only. It never asserts that a T exists or that a target
+    is in debt; the independent auditor remains the source of live gaps.
+    """
+    requirements = []
+    for target in law["targets"]:
+        resource = target["resource"]
+        needs = ["cover" if target["kind"] == "coverage" else "observe"]
+        if target.get("repair"):
+            needs += ["build" if mode == "BUILD" else "repair", "prove"]
+        for need in needs:
+            requirements.append({"target": target["id"], "resource": resource,
+                                 "need": need, "required_t": sorted(_law_trust(law, resource, need))})
+    return requirements
+
+
 def _fits_task(law, task, envelope):
     try:
         kind, body, _, _ = open_envelope(envelope)
@@ -124,6 +142,13 @@ class StandardService:
                               "needs": sorted(route.needs), "required_t": sorted(route.required_t),
                               "state": state})
         by_route = {row["id"]: row for row in inventory}
+        requirements = _law_requirements(view["law"], mode)
+        provisioning = []
+        for requirement in requirements:
+            if not any(_matches(route, mode, requirement["resource"], requirement["need"])
+                       for route in self._routes):
+                provisioning.append({**requirement, "state": "NO_ROUTE",
+                                     "closure": "operator_install_then_independent_qualification"})
         tasks = []
         for obligation in work["work"] + work["human"]:
             subject = obligation.get("subject")
@@ -154,6 +179,7 @@ class StandardService:
                               "obligation": obligation["obligation"], "target": obligation.get("target"),
                               "resource": resource,
                               "due": obligation["due"], "need": need, "routes": choices,
+                              "required_t": sorted(_law_trust(view["law"], resource, need)),
                               "state": "READY" if any(c["state"] == "AVAILABLE" for c in choices)
                               else ("TRUST_BLOCKED" if choices else "NO_ROUTE")})
             if obligation.get("next") == "human_review" and not needs:
@@ -163,6 +189,15 @@ class StandardService:
                               "due": obligation["due"], "need": "review", "routes": [],
                               "state": "HUMAN_REVIEW"})
         tasks.sort(key=lambda t: (t["due"], t["id"]))
+        planned = {(p["target"], p["resource"], p["need"]) for p in provisioning}
+        for task in tasks:
+            key = (task["target"], task["resource"], task["need"])
+            if task["state"] == "NO_ROUTE" and key not in planned:
+                provisioning.append({"target": task["target"], "resource": task["resource"],
+                                     "need": task["need"], "required_t": task["required_t"],
+                                     "state": "NO_ROUTE",
+                                     "closure": "operator_install_then_independent_qualification"})
+                planned.add(key)
         qualification = [{"id": "qualify:" + r["id"], "route": r["id"],
                           "required_t": r["required_t"],
                           "closure": "independent_live_qualification"}
@@ -176,7 +211,8 @@ class StandardService:
                           and by_route[choice["id"]]["state"] == "AVAILABLE"]
         return {"format": "standard-cycle/1", "mode": mode, "read_only": True,
                 "basis": basis, "law": copy.deepcopy(view["law"]), "tasks": tasks,
-                "routes": inventory,
+                "routes": inventory, "law_requirements": requirements,
+                "provisioning_work": provisioning,
                 "qualification_work": qualification,
                 "audit_state": work["status"]}
 

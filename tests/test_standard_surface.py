@@ -9,7 +9,7 @@ from fixture import World
 from maintenance.constitution import agent_view
 from standard.authoring import AuthoringError, load_source, proposal_text
 from standard.service import Route, StandardService
-from standard.surface import (SurfaceError, render_entry, render_m2,
+from standard.surface import (SurfaceError, render_entry, render_law, render_m2,
                               render_overview, render_task, render_uninstalled)
 from standard.__main__ import load_service
 
@@ -48,6 +48,14 @@ class Surface(unittest.TestCase):
             self.assertIn("standard context --task", render_overview(cycle))
             entry = render_entry(cycle, {"categories": [{"kind": "ci", "paths": [".github/workflows/check.yml"]}]})
             self.assertIn(task["resource"], entry)
+            self.assertIn("pr42-ci", entry)
+            self.assertIn("loi client", entry)
+            self.assertIn("Installer une route", entry)
+            client_law = render_law(cycle, "targets/pr42-ci")
+            self.assertIn("loi client", client_law)
+            self.assertIn("repo:pr:42", client_law)
+            self.assertIn(cycle["basis"]["law_digest"], client_law)
+            self.assertIn("floor commun", render_law(cycle, "targets/inventory"))
             self.assertIn("non qualifiés", entry)
             self.assertIn("K/T", render_uninstalled({"categories": []}))
             stale = dict(cycle, basis=dict(cycle["basis"], law_digest="sha256:" + "0" * 64))
@@ -55,6 +63,8 @@ class Surface(unittest.TestCase):
                 render_task(stale, task["id"])
             with self.assertRaises(SurfaceError):
                 render_entry(stale)
+            with self.assertRaises(SurfaceError):
+                render_law(stale, "targets/pr42-ci")
             m2 = render_m2(Installed().constitutional_view(), "vulns")
             self.assertIn("remediate-autonomous", m2)
             self.assertNotIn("service-uptime", m2)

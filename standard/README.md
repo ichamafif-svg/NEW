@@ -13,6 +13,13 @@ la dette, les preuves et les T pertinents pour cette tâche. Le contexte est
 du texte lisible, lié au préfixe et au digest de la loi signée. L'agent n'a
 pas à parcourir des README ni une sérialisation de la constitution. Le même
 surfaçage ciblé est transmis à l'agent M2. Une erreur de digest refuse la vue.
+`python -m standard context --law SECTION/ID` montre la déclaration active
+complète, qu'elle vienne des floors ou du client, depuis le même préfixe.
+La vue générale les inventorie ensemble. Toute exigence active produit des
+besoins de routes et de T, même en l'absence de route installée ou d'écart
+déjà attesté ; cette projection est du travail d'installation, pas une preuve
+que le fournisseur ou les T existent physiquement. Leur qualification reste
+indépendante.
 
 Dans un dépôt maintenu, les règles **propres au client**, hors des floors,
 s'écrivent dans `.standard/law.toml` suivant les champs bornés du noyau.
