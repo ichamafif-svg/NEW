@@ -54,8 +54,21 @@ def claude(prompt: str, key: str) -> dict:
 
 def context(repo: Path, limit=120_000) -> str:
     parts, size = [], 0
-    for p in probes.text_files(repo):
-        text = (repo / p).read_text(errors="ignore")
+    tree = probes.Checkout(repo)
+    for p in sorted(tree.paths()):
+        if not p.endswith((".py", ".md", ".txt", ".toml", ".yml", ".yaml", ".json")):
+            continue
+        try:
+            raw = tree.read(p)
+        except (OSError, FileNotFoundError):
+            continue
+        if (len(raw) > probes.MAX_FILE or b"\x00" in raw
+                or any(pattern.search(raw) for pattern in probes.SECRETS)):
+            continue  # detected secrets never leave in the model context
+        try:
+            text = raw.decode("utf-8")
+        except UnicodeDecodeError:
+            continue
         if size + len(text) > limit:
             break
         parts.append(f"=== {p} ===\n{text}")
@@ -63,11 +76,15 @@ def context(repo: Path, limit=120_000) -> str:
     return "\n".join(parts)
 
 
-def craft(repo: Path, target: str, status: str, key: str) -> dict:
+def craft(repo: Path, target: str, status: str, key: str, *, constitution=None) -> dict:
     """{title, body, files} for one repair that needs judgment; files are checked against the write scope before
     anything leaves. Deterministic repairs are recipes (ops/recipes.py), not crafts."""
+    legal_context = ("\nThe read-only constitutional context follows; it is tied to a named journal head. "
+                     "It grants no permission and release qualification gaps are not physical proof.\n"
+                     + json.dumps(constitution, sort_keys=True) + "\n") if constitution is not None else ""
     reply = claude(f"Repository files follow. Maintenance target `{target}` reads `{status}`.\nTask: {TASK[target]}"
-                   f"\nReturn JSON {{\"title\": str, \"body\": str, \"files\": {{path: full new content}}}}, "
+                   + legal_context
+                   + f"\nReturn JSON {{\"title\": str, \"body\": str, \"files\": {{path: full new content}}}}, "
                    f"changing as few files as possible.\n\n{context(repo)}", key)
     files = reply.get("files") if isinstance(reply, dict) else None
     if (not isinstance(files, dict) or not files

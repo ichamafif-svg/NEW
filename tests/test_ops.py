@@ -64,6 +64,51 @@ def test_the_adapter_fast_forwards_only_from_the_judged_base():
     assert attempt(B, 422)[0] == "failed" and attempt(B, 502)[0] == "unknown"
 
 
+def test_demo_report_exposes_current_law_and_unverified_t_without_a_grant():
+    import tempfile
+    from types import SimpleNamespace
+    from ops.cycle import cmd_report
+    with Sim() as sim, tempfile.TemporaryDirectory() as tmp:
+        n = sim.node()
+        try:
+            cmd_report(n, SimpleNamespace(out=tmp))
+            view = json.loads((Path(tmp) / "constitution.json").read_text())
+            assert view["basis"]["head"] == n.state["head"]
+            assert view["basis"]["law_digest"] == n.state["law"]["digest"]
+            assert "remediate-autonomous" in view["law"]["conditions"]
+            assert {x["contract"] for x in view["trust_gaps"]} == {f"T{i:02}" for i in range(1, 10)}
+            assert view["read_only"] and "allowed" not in view
+        finally:
+            n.close()
+
+
+def test_demo_scanner_rejects_measurement_under_another_law():
+    with Sim() as sim:
+        sim.run("witness")
+        sim.run("measure")
+        sim.run("test")
+        before = sim.node()
+        try:
+            head = before.state["head"]
+        finally:
+            before.close()
+        path = sim.tmp / "measured.json"
+        measured = json.loads(path.read_text())
+        measured["law_digest"] = "sha256:" + "0" * 64
+        path.write_text(json.dumps(measured))
+        try:
+            sim.run("scan")
+        except ValueError as exc:
+            assert "another constitutional law" in str(exc)
+        else:
+            raise AssertionError("the scanner accepted observations under another law")
+        after = sim.node()
+        try:
+            assert after.state["head"] == head
+        finally:
+            after.close()
+
+
 def test_unknown_identities_in_key_material_are_refused():
     import tempfile
     p = Path(tempfile.mkdtemp()) / "k.json"

@@ -4,6 +4,9 @@ on:
     branches: [prototype/hybrid-kernel-v1]
     paths:
       - 'hybrid_kernel/**'
+      - 'maintenance/**'
+      - 'ops/**'
+      - 'demo/**'
       - 'tcb/**'
       - 'bootstrap.py'
       - 'tools/check_tcb.py'

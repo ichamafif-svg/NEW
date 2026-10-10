@@ -14,3 +14,13 @@ python3 -m maintenance < health.json > work-plan.json
 L'identifiant d'obligation et l'échéance sont conservés. Le plan nomme la tête et l'horizon de l'audit ; il ne reste pas automatiquement actuel après une écriture. Il ne transmet aucune permission, n'envoie aucune notification, n'exécute aucun agent et ne signe aucune entrée. Une étape « réparer » est une proposition à préparer sous la loi en vigueur, pas un appel de fournisseur. Les besoins inconnus restent bloqués plutôt qu'interprétés.
 
 Cette projection générique est présente, mais le cycle opérationnel M2 utilise encore `ops/lifecycle.py` et ses cibles de floors statiques. L'unification de leurs obligations/routes et des cibles client effectives reste une cible de [COEUR-STABLE.md](../docs/COEUR-STABLE.md), pas une propriété implémentée.
+
+`maintenance.constitution.agent_view` expose séparément la loi effective
+authentifiée par le noyau au préfixe exact du rapport, les propositions de
+travail et les contrats T encore non qualifiés dans le manifeste de release.
+Le rapport du demo l'écrit dans `constitution.json` ; le modèle de préparation
+des réparations non déterministes reçoit la même vue. Ces écarts T sont des
+indices de qualification de release, sans statut d'obligation constitutionnelle
+ou de mesure du fournisseur en direct. `trust_work` propose l'implémentation et
+la collecte de preuves, dont la clôture exige une qualification indépendante ;
+le cycle M2 ne l'ordonnance pas encore. La vue ne contient aucun grant exécutable.

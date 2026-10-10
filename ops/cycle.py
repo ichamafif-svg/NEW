@@ -31,6 +31,15 @@ from tcb.floors import FLOORS, floors_digest  # noqa: E402
 from ops import agent, lifecycle, probes, recipes  # noqa: E402
 from ops.node import HUMANS, Node, load_keys, root_of  # noqa: E402
 
+
+def constitutional_context(node, health=None):
+    """One read-only view of the effective law and release qualification gaps."""
+    from hybrid_kernel.release_gate import ROOT
+    from maintenance.constitution import agent_view
+    health = health if health is not None else node.journal.health(required_at=node.now())
+    readiness = json.loads((ROOT / "release_readiness.json").read_text())
+    return agent_view(node.kernel, node.state, health, readiness=readiness)
+
 DAY = 86_400_000
 TARGETS = {t["id"]: t for t in FLOORS["targets"]}
 BY_RESOURCE = {tuple(t["resource"].split(":")[1:]): t["id"] for t in FLOORS["targets"] if t.get("repair") == "remediate"}
@@ -38,6 +47,12 @@ REMEDIATE = ["repo:deps:*", "repo:code:*", "repo:ci:*", "repo:supply:*"]
 REVIEWERS = ("icham",)
 REFRESH_MS = 6 * 3_600_000
 ATTEMPT_BACKOFF_MS = DAY
+
+
+def effective_targets(node):
+    """Use the pinned law, including client tightening, for supported M2 probes."""
+    targets = {t["id"]: t for t in node.kernel.law_of(node.state).release["targets"]}
+    return {name: targets[name] for name in TARGETS}
 
 
 def law() -> dict:
@@ -180,14 +195,15 @@ def cmd_measure(node: Node, a, world=None, tree=None):
     main = world.main_head()
     ctx = {"world": world, "main": main, "anchor": anchor(s) or main, "judged": judged(s),
            "audit": lambda: probes.audit(tree)}
-    statuses = probes.measure_all(tree, ctx, TARGETS)
+    statuses = probes.measure_all(tree, ctx, effective_targets(node))
     try:
         data = recipe_data(tree, world)
     except Exception:  # noqa: BLE001 - without trusted data nothing is reproducible
         def data(target):
             return None
     subjects = {x.resource: transition_facts(world, x, tree, data) for x in to_measure(node)}
-    out = {"main": main, "anchor": anchor(s) or main, "targets": statuses, "subjects": subjects}
+    out = {"main": main, "anchor": anchor(s) or main, "law_digest": s["law"]["digest"],
+           "targets": statuses, "subjects": subjects}
     Path(a.measured).write_text(json.dumps(out, indent=1))
     print(json.dumps(out))
 
@@ -239,13 +255,16 @@ def cmd_scan(node: Node, a, world=None):
     from ops.world import GitHub
     world = world or GitHub(a.repo, os.environ["GITHUB_TOKEN"])
     measured, tested = json.loads(Path(a.measured).read_text()), json.loads(Path(a.tested).read_text())
+    if measured.get("law_digest") != node.state["law"]["digest"]:
+        raise ValueError("measurement belongs to another constitutional law; measure again")
     statuses = dict(measured["targets"], ci=tested.get("main", "uncovered:missing"))
+    targets = effective_targets(node)
     written = 0
     if anchor(node.state) is None:
         written += observe(node, "scanner", "repo:main:anchor", "sha", measured["anchor"])
     written += observe(node, "scanner", "repo:main:measured", "sha", measured["main"])
     for t, st in statuses.items():
-        written += observe(node, "scanner", TARGETS[t]["resource"], TARGETS[t]["property"], st)
+        written += observe(node, "scanner", targets[t]["resource"], targets[t]["property"], st)
     covered = not any(st.startswith("uncovered") for st in statuses.values())
     written += observe(node, "scanner", "repo:inventory:all", "coverage", "complete" if covered else "partial")
     for resource, f in measured["subjects"].items():
@@ -276,6 +295,7 @@ def cmd_agent(node: Node, a, world=None, craft=agent.craft):
     from ops.world import GitHub
     world = world or GitHub(a.repo, os.environ["AGENT_GITHUB_TOKEN"])
     done = {"asked": [], "withdrawn": [], "proposed": None}
+    withdrawn_targets = set()
     for act in lifecycle.plan(node.state, node.now(), REVIEWERS):
         if act.role != "agent":
             continue
@@ -288,32 +308,42 @@ def cmd_agent(node: Node, a, world=None, craft=agent.craft):
             elif act.verb == "withdraw":
                 observe(node, "agent", act.subject.resource, "proposed", "withdrawn", level="unknown", force=True)
                 done["withdrawn"].append(act.subject.head)
+                withdrawn_targets.add((act.subject.area, act.subject.item))
         except Refused as r:
             print(f"{act.subject.head[:12]}: {r.code} {r.detail}")
     node.retain()
-    done["proposed"] = propose(node, a, world, craft)
+    done["proposed"] = propose(node, a, world, craft, skip_targets=withdrawn_targets)
     node.retain()
     print(json.dumps(done))
 
 
-def propose(node: Node, a, world, craft):
+def propose(node: Node, a, world, craft, *, skip_targets=()):
     """At most one new repair: the most urgent repairable gap no live transition addresses and that did not fail to be
     built recently. Write-ahead: the commit is created, then declared, then made reachable."""
     s, now = node.state, node.now()
+    targets = effective_targets(node)
     busy = {(x.area, x.item) for x in lifecycle.live(s, now, REVIEWERS)}
-    for _, tid in sorted((TARGETS[t]["due_ms"], t) for t in agent.WRITE_SCOPE):
-        t = TARGETS[tid]
+    for _, tid in sorted((targets[t]["due_ms"], t) for t in agent.WRITE_SCOPE):
+        t = targets[tid]
         _, area, item = t["resource"].split(":")
         seen = s["observations"].get(f"{t['resource']}|{t['property']}|scanner")
         tried = s["observations"].get(f"{t['resource']}|attempt|agent")
         if (not seen or not probes.repairable(seen["status"]) or (area, item) in busy
+                or (area, item) in skip_targets
                 or (tried and tried["status"] == "failed" and now - tried["at"] < ATTEMPT_BACKOFF_MS)):
             continue
         try:
             tree = probes.Checkout(a.checkout)
             recipe = recipes.RECIPES.get(tid)
-            files = (recipe(tree, recipe_data(tree, world)(tid)) if recipe else
-                     craft(Path(a.checkout), tid, seen["status"], os.environ.get("ANTHROPIC_API_KEY", ""))["files"])
+            if recipe:
+                files = recipe(tree, recipe_data(tree, world)(tid))
+            elif craft is agent.craft:
+                files = craft(Path(a.checkout), tid, seen["status"],
+                              os.environ.get("ANTHROPIC_API_KEY", ""),
+                              constitution=constitutional_context(node))["files"]
+            else:
+                files = craft(Path(a.checkout), tid, seen["status"],
+                              os.environ.get("ANTHROPIC_API_KEY", ""))["files"]
             files = {p: c if isinstance(c, bytes) else c.encode() for p, c in (files or {}).items()}
             if not all(agent.in_scope(tid, p) for p in files):
                 raise ValueError("a repair outside its write scope")
@@ -365,6 +395,7 @@ def cmd_report(node: Node, a):
     health = node.journal.health(required_at=int(time.time() * 1000))
     (out / "health.json").write_text(json.dumps(health, indent=1))
     (out / "plan.json").write_text(json.dumps(plan(health), indent=1))
+    (out / "constitution.json").write_text(json.dumps(constitutional_context(node, health), indent=1))
     s = node.state
     dossier = build(rows_of(node.journal.path), genesis_pin=node.genesis, checkpoints=node.pins.load(),
                     required_at=health["evaluated_at"])
