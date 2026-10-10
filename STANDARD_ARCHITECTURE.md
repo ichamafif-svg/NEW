@@ -14,6 +14,19 @@ L'agent peut proposer, diagnostiquer, tester et corriger ; **seule la décision 
 
 La maintenance autonome continue est le cœur du produit : écart entre exigences et réel → obligation durable → planification et exécution par agents → vérification indépendante → clôture ou escalade. Le travail peut prendre la forme de WorkItems, mais une obligation constitutionnelle ne se confond pas avec un ticket, un essai ou un agent.
 
+## Parcours complet du produit
+
+Standard doit pouvoir être installé sur un dépôt presque vide, un dépôt mêlant des contrôles partiels ou une plateforme déjà dotée de CI, IAM, SRE, politiques et observabilité. La présence d'un outil n'est ni une preuve de sa couverture ni une raison de le remplacer. L'installation découvre les capacités existantes, les confronte à la loi et choisit pour chaque responsabilité une route vérifiable : réutiliser, envelopper, compléter, créer ou signaler une impossibilité. Les déclarations de l'agent sur ce qu'il a découvert ne qualifient pas elles-mêmes la réalité physique.
+
+1. **Constituer.** Épingler la release, la genèse, FLOOR-0 et les floors, composer la loi client sans affaiblissement, établir les identités et les procédures de décision. Même en partant de zéro, BUILD n'obtient aucune exception souveraine. Le provisionnement initial des T a une provenance et un contrôle indépendants de l'agent.
+2. **Découvrir et qualifier.** Inventorier code, environnements, fournisseurs, instruments et contrôles existants ; nommer les sujets, les méthodes, la couverture et les routes possibles. Tester réellement les frontières T nécessaires à ces routes. Une responsabilité non qualifiée reste visible et bloque uniquement les opérations qui en dépendent.
+3. **Projeter la loi sur le réel.** Transformer les exigences effectives en observations demandées. L'absence de mesure, la couverture inconnue, l'instrument indisponible, le risque constaté et l'effet incertain sont des situations distinctes. Le noyau conserve les obligations qui découlent des faits admissibles ; l'autonomie transforme les écarts en travail sans inventer de permission.
+4. **Travailler en BUILD ou RUN.** Les agents conçoivent, codent, investiguent, testent et préparent des propositions, à l'intérieur de capacités bornées. BUILD peut créer une application depuis presque rien ; RUN observe activement dépôt et production, reprend les dettes, répond aux incidents et assure la conformité continue. Les WorkItems, retries et workflows restent remplaçables ; les obligations et leurs échéances survivent à ces changements.
+5. **Décider et effectuer.** Une proposition d'effet est attachée au sujet, à la destination, aux octets et aux préconditions exacts. T authentifie et qualifie les prémisses ; K juge au préfixe authentique et produit le delta exhaustif ; la vérification indépendante intervient quand requise. Après commit durable, T garde les credentials, réserve, recontrôle au départ et exécute seulement l'effet autorisé. Une panne ou une réponse ambiguë devient `UNKNOWN`, puis travail de réconciliation, jamais succès présumé.
+6. **Vérifier et poursuivre.** Une observation qualifiée du résultat et de la propriété exigée peut clore l'obligation ; un reçu d'exécution seul ne suffit pas. Sinon Standard reprend, restaure une route, renouvelle la preuve, réconcilie ou escalade. La surface humaine montre ce qui est maintenu, ce qui échappe à la couverture et les décisions réellement attendues ; l'audit conserve la trace détaillée.
+
+Ce parcours est un **contrat du produit**, pas la description du niveau atteint par la démonstration actuelle. Aucune boucle de démo ne permet de sauter la qualification des T ou de convertir une sortie d'agent en fait indépendant.
+
 ## Architecture en quatre niveaux
 
 1. **Surface produit** : état de santé, couverture, autonomie, risques, obligations, escalades et décisions humaines. Les empreintes et protocoles restent accessibles pour l'audit, non comme UX principale.
@@ -22,6 +35,10 @@ La maintenance autonome continue est le cœur du produit : écart entre exigence
 4. **Trusted External (T)** : capacités indispensables dans le monde réel : identité/clé, horloge, ancrage durable, qualification des preuves, indépendance des vérificateurs, protection des secrets et des effets, réconciliation et progression vérifiable. Les T font partie de la **TCB effective** bien qu'ils soient hors du noyau pur.
 
 K et T forment une frontière de confiance cohérente ; U n'est jamais un substitut à cette frontière. Les entreprises peuvent réutiliser IAM, CI/CD, cloud, catalogues, scanners, monitoring, gestion d'incidents et plateformes existantes **si leurs contrats vérifiables sont suffisants** ; Standard évite leur remplacement systématique.
+
+Les garanties physiques **naissent de l'association K + T** : K spécifie et juge ce qu'il faut garantir, T établit hors de portée de l'agent les prémisses et le contrôle des effets, et les deux sont confrontés par des essais réels. Une interface Python ou une déclaration signée d'un fournisseur ne suffit pas à démontrer l'isolation des clés, la durabilité d'une ancre ou l'indépendance de deux personnes. Les neuf contrats T décrivent les responsabilités nécessaires selon la route, et non neuf composants à installer systématiquement.
+
+Les adaptateurs appartiennent à deux positions possibles, selon leur pouvoir réel. La traduction, l'inventaire et la préparation d'une requête restent dans U. Un composant qui atteste une observation utilisée par K, conserve un secret privilégié ou fait partir un effet participe à la frontière T et doit être qualifié comme tel, même s'il se nomme « adaptateur ». Un outil déjà présent dans l'entreprise est traité selon le même critère. Le noyau ne code aucune API de fournisseur et ne laisse aucun adaptateur décider `allowed`.
 
 ## Constitution et autonomie
 
@@ -65,3 +82,5 @@ Les objets canoniques sont : constitution, principal, ressource, capacité, preu
 ## Critères de validation avant production
 
 Une release ne devient exploitable que lorsque les invariants et les responsabilités K/T/U sont vérifiés, que les tests adversariaux et de concurrence passent, que les hypothèses physiques des T sont prouvées pour le déploiement réel, que la performance est bornée et que les limites de couverture sont explicitement visibles aux utilisateurs. **Aucune déclaration de production-ready n'est implicite dans cette spécification.**
+
+**Règle de réalisation :** toute intégration doit se rattacher à une étape du parcours, à un propriétaire K/T/U, à un contrat de preuve et à un scénario d'échec. Une fonctionnalité de démonstration ne devient une capacité de Standard que lorsqu'elle fonctionne sous la loi effective, emprunte la frontière physique requise, conserve la dette et expose honnêtement sa couverture. Les contrats et les tests de réception sont dans [IMPLEMENTATION_CONTRACTS.md](IMPLEMENTATION_CONTRACTS.md).

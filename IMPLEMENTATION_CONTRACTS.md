@@ -98,6 +98,23 @@ Le Work Engine peut absorber une complexité opérationnelle importante sans gro
 
 Un scénario passant dans un simulateur ne prouve pas sa protection réelle ; préciser dans le rapport le **domaine observé**, la propriété affirmée, l'instrument de mesure et les hypothèses non vérifiées.
 
+### Réception du parcours Standard entier
+
+Les scénarios ci-dessus s'appliquent au [parcours complet](STANDARD_ARCHITECTURE.md#parcours-complet-du-produit), pas seulement à l'API du noyau. Une livraison intégrée doit permettre de suivre **un même sujet et une même obligation** à travers la constitution, la découverte, la mesure, le WorkItem, la proposition, l'effet, le readback et la nouvelle mesure. Les identités, préfixes, digests de loi et périmètres de preuve doivent rester liés à chaque passage.
+
+| Porte | Résultat démontrable | Refus ou écart explicite |
+|---|---|---|
+| Constitution | Release et genèse épinglées ; loi client composée ; gouvernance active dès BUILD | Bootstrap local ou agent capable d'élargir son propre pouvoir |
+| Réutilisation | Inventaire des outils existants, couverture, capacité et trust domain de chaque route | Présence d'un IAM, scanner ou CI interprétée comme garantie qualifiée |
+| Obligation | Écart sous la loi effective, identité et échéance stables à travers BUILD/RUN et retries | Ticket fermé, cible renommée ou délai repoussé sans preuve |
+| Travail | Work Engine et agents reprennent la dette ; route et capacités bornées ; egress gouverné | Modèle recevant un secret ou créant un commit par voie privilégiée parallèle |
+| Frontière | Pour chaque opération, T requis qualifiés sur l'installation ; K juge une seule fois la sémantique constitutionnelle | Attestation statique, simulation ou signature de l'agent traitée comme fait physique |
+| Effet | Réservation durable, contrôle exclusif, préconditions fournisseur exactes, reçu et réconciliation | GET puis PUT non atomique présenté comme CAS ; ACK perdu traité comme échec définitif |
+| Résultat | Preuve de la propriété exigée au bon sujet et au bon horizon ; couverture et dette visibles | Reçu d'effet ou scan vert interprété seul comme clôture |
+| Surface | Vue humaine BUILD/RUN des maintenances, trous de couverture et décisions à prendre | Rapport `IDLE` présenté comme certification ou fault masqué |
+
+Une route sans T physiquement qualifié demeure inactive pour les opérations qui en dépendent ; elle peut néanmoins produire du travail de qualification et permettre les restrictions immédiates dont les autres contrats sont disponibles. La qualification est attachée à une release, une genèse, une installation et une route, avec tests de falsification et dépendances communes documentés. Le catalogue T est une liste de responsabilités, non un inventaire automatiquement vérifié de services.
+
 ## VI. Définition de terminé, par incrément et par release
 
 **Pour un composant :** contrat de types/version défini, invariant testable, schéma d'erreur fail-closed, contre-exemple négatif, preuve de non-contournement, métrique de ressources, propriétaire d'intégration, absence de raccourci `allow` ou chemin privilégié secondaire.

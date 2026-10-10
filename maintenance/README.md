@@ -13,7 +13,7 @@ python3 -m maintenance < health.json > work-plan.json
 
 L'identifiant d'obligation et l'échéance sont conservés. Le plan nomme la tête et l'horizon de l'audit ; il ne reste pas automatiquement actuel après une écriture. Il ne transmet aucune permission, n'envoie aucune notification, n'exécute aucun agent et ne signe aucune entrée. Une étape « réparer » est une proposition à préparer sous la loi en vigueur, pas un appel de fournisseur. Les besoins inconnus restent bloqués plutôt qu'interprétés.
 
-Cette projection générique est présente, mais le cycle opérationnel M2 utilise encore `ops/lifecycle.py` et ses cibles de floors statiques. L'unification de leurs obligations/routes et des cibles client effectives reste une cible de [COEUR-STABLE.md](../docs/COEUR-STABLE.md), pas une propriété implémentée.
+Cette projection générique est présente, mais le cycle opérationnel M2 utilise encore `ops/lifecycle.py`. Les sondes M2 connues lisent désormais les cibles effectives, y compris les resserrements clients ; les obligations, routes et nouvelles cibles métier ne sont pas encore unifiées dans un moteur de travail commun. Ce reste à faire est décrit dans [COEUR-STABLE.md](../docs/COEUR-STABLE.md).
 
 `maintenance.constitution.agent_view` expose séparément la loi effective
 authentifiée par le noyau au préfixe exact du rapport, les propositions de
