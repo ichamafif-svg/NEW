@@ -79,6 +79,20 @@ class GovernedDeployment:
         now = self._check(TIMED)
         return self._runtime.health(required_at=max(now, required_at or now))
 
+    def constitutional_view(self):
+        """Read-only law and obligations at one checked prefix; no authority token."""
+        from maintenance.constitution import agent_view
+        now = self._check(TIMED)
+        snapshot = self._runtime.snapshot()
+        health = self._runtime.health(required_at=now)
+        return agent_view(self._runtime.kernel, snapshot, health)
+
+    def qualify_route(self, required):
+        """Check the installed T boundary for a route, without issuing a grant."""
+        if not isinstance(required, (tuple, list, set, frozenset)) or not set(required) <= {f"T{i:02}" for i in range(1, 10)}:
+            raise ProductionBlocked("TRUST.UNKNOWN_ROLE")
+        self._check(TIMED | set(required))
+
     def guard(self, *, identity, signer):
         self._check(EFFECT)
         if self._effect is None:

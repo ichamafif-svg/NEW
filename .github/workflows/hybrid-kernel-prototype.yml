@@ -5,6 +5,7 @@ on:
     paths:
       - 'hybrid_kernel/**'
       - 'maintenance/**'
+      - 'standard/**'
       - 'ops/**'
       - 'demo/**'
       - 'tcb/**'
@@ -13,6 +14,7 @@ on:
       - 'tcb-budget.json'
       - 'Makefile'
       - 'tests/test_hybrid_kernel*.py'
+      - 'tests/test_standard_service.py'
       - '.github/workflows/hybrid-kernel-prototype.yml'
   workflow_dispatch:
 permissions:
