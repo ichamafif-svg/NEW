@@ -157,3 +157,10 @@ class EscalationOutbox:
             row = db.execute("SELECT status, receipt FROM deliveries WHERE key=?", (key,)).fetchone()
         if row is None: raise DeliveryError("DELIVERY.UNKNOWN_KEY")
         return {"state": row[0], "receipt": parse(row[1]) if row[1] is not None else None}
+
+    def deliver_due(self, health):
+        """Operator route: enqueue current escalations before attempting delivery."""
+        if (not isinstance(health, dict) or health.get("current") is False
+                or health.get("head") != self.health_reader().get("head")):
+            raise DeliveryError("DELIVERY.STALE_VIEW")
+        return {key: self.deliver(key) for key in self.enqueue()}

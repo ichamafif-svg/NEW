@@ -5,6 +5,8 @@ _NAMES = {
     "Kernel": "core", "Refused": "core", "Decision": "model",
     "ConstitutionalRuntime": "runtime", "IntegrationError": "runtime",
     "GovernedDeployment": "deployment", "ProductionBlocked": "deployment",
+    "AdmissionGateway": "gateway", "TrustedController": "controller",
+    "install": "install",
     "Capability": "externals", "CapabilityRegistry": "externals",
     "ContractError": "externals", "Status": "externals",
 }

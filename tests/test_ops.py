@@ -37,11 +37,10 @@ def test_a_vulnerable_lock_is_repaired_by_its_recipe_and_proven():
 
 
 def test_the_adapter_fast_forwards_only_from_the_judged_base():
-    import urllib.error
     from adapters.github import GitHub
     B, H, X = "b" * 40, "c" * 40, "d" * 40
 
-    def attempt(main, patch_status=200):
+    def attempt(main, graphql_ok=True):
         sent = []
 
         def reply(body):
@@ -51,17 +50,20 @@ def test_the_adapter_fast_forwards_only_from_the_judged_base():
         def opener(req, timeout):
             sent.append((req.get_method(), json.loads(req.data) if req.data else None))
             if req.get_method() == "GET":
-                return reply(json.dumps({"object": {"sha": main}}).encode())
-            if patch_status == 200:
-                return reply(b"{}")
-            raise urllib.error.HTTPError(req.full_url, patch_status, "x", {}, None)
+                return reply(json.dumps({"node_id": "REPO"} if req.full_url.endswith("/demo")
+                                        else {"object": {"sha": main}}).encode())
+            return reply(b'{"data":{"updateRefs":{"clientMutationId":"k"}}}' if graphql_ok
+                         else b'{"errors":[{"message":"conflict"}]}')
         result = GitHub("o/demo", "t", opener=opener).remediate("r", {"area": "deps", "item": "vulns", "base": B,
                                                                       "head": H}, "k")
         return result, sent
-    assert attempt(B) == ("ok", [("GET", None), ("PATCH", {"sha": H, "force": False})])
+    result, sent = attempt(B)
+    assert result == "ok" and [method for method, _ in sent] == ["GET", "GET", "POST"]
+    assert sent[-1][1]["variables"]["input"]["refUpdates"] == [
+        {"name": "refs/heads/main", "beforeOid": B, "afterOid": H, "force": False}]
     assert attempt(H) == ("ok", [("GET", None)])                       # already there: nothing sent
     assert attempt(X) == ("failed", [("GET", None)])                   # main moved: the judged transition is gone
-    assert attempt(B, 422)[0] == "failed" and attempt(B, 502)[0] == "unknown"
+    assert attempt(B, False)[0] == "unknown"
 
 
 def test_demo_report_exposes_current_law_and_unverified_t_without_a_grant():

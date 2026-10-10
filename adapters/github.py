@@ -1,12 +1,12 @@
-"""Trusted GitHub adapter for `remediate`: move main from the judged base to the judged head, fast-forward only.
+"""Trusted GitHub adapter for `remediate`: atomic beforeOid on the exact base.
 
 Inside the TCB budget: a bug here can send a wrong effect. It takes nothing but the judged arguments and sends one
-ref update with force=false, so main ends exactly on the judged commit or does not move. Only the guard may update
-main (repository ruleset), so main cannot change between the read and the write but through this adapter.
+GraphQL updateRefs supplies beforeOid and afterOid with force=false. The
+repository must independently enforce guard-only writes and exact credentials.
 Outcomes:
   ok       main is the judged head (now, or already by an earlier attempt)
-  failed   nothing was sent, main is not the judged base, or GitHub refused the fast-forward: nothing moved
-  unknown  anything else: the line requires an independent reconciliation."""
+  failed   nothing was sent because main is not the judged base
+  unknown  a request was attempted but its result is not proven: readback required."""
 import json
 import re
 import urllib.error
@@ -19,7 +19,7 @@ class GitHub:
     def __init__(self, repo: str, token: str, api: str = "https://api.github.com", opener=None):
         if not re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", repo) or not token:
             raise ValueError("an owner/name repository and a token are required")
-        self.base, self.token = f"{api}/repos/{repo}", token
+        self.base, self.api, self.token = f"{api}/repos/{repo}", api, token
         self.open = opener or (lambda *a, **k: urllib.request.urlopen(*a, **k))
 
     def _call(self, method, path, body=None):
@@ -46,12 +46,26 @@ class GitHub:
             return "ok"                                 # an earlier attempt already moved main to this commit
         if main != base:
             return "failed"                             # the transition judged is no longer the one available
-        status, _ = self._call("PATCH", "/git/refs/heads/main", {"sha": head, "force": False})
-        if status == 200:
+        status, repository = self._call("GET", "")
+        if status != 200 or not isinstance(repository.get("node_id"), str):
+            return "failed"                             # no update was attempted
+        query = "mutation($input:UpdateRefsInput!){updateRefs(input:$input){clientMutationId}}"
+        body = {"query": query, "variables": {"input": {
+            "repositoryId": repository["node_id"], "clientMutationId": reservation_key,
+            "refUpdates": [{"name": "refs/heads/main", "beforeOid": base,
+                            "afterOid": head, "force": False}]}}}
+        req = urllib.request.Request(self.api + "/graphql", method="POST", data=json.dumps(body).encode(),
+                                     headers={"Authorization": f"Bearer {self.token}",
+                                              "Accept": "application/vnd.github+json",
+                                              "Content-Type": "application/json"})
+        try:
+            with self.open(req, timeout=30) as response:
+                reply = json.loads(response.read() or b"{}")
+            if reply.get("errors") or not reply.get("data", {}).get("updateRefs"):
+                return "unknown"                         # may have reached the provider
             return "ok"
-        if status in (409, 422):                        # not a fast-forward, or refused by a rule: nothing moved
-            return "failed"
-        return "unknown"
+        except Exception:
+            return "unknown"                             # never infer definitive non-application
 
     def ports(self) -> dict:
         return {"remediate": self.remediate}

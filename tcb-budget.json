@@ -2,7 +2,7 @@
   "scope": "All tcb/*.py, hybrid_kernel/*.py, trusted bootstrap.py and adapters/*.py; compatibility shims and reused primitives count, each line once.",
   "budgets": {
     "safety": {
-      "max_physical_lines": 3700,
+      "max_physical_lines": 3900,
       "modules": "every module not listed in another budget, plus bootstrap.py and adapters/*.py",
       "guarantee": "no forbidden effect, no forbidden widening, no rewritten history: a bug here can let something through"
     },
@@ -89,6 +89,9 @@
       "hybrid_kernel.store",
       "hybrid_kernel.trusted",
       "hybrid_kernel.deployment",
+      "hybrid_kernel.gateway",
+      "hybrid_kernel.controller",
+      "hybrid_kernel.install",
       "hybrid_kernel.release_gate"
     ],
     "package": [
@@ -146,6 +149,13 @@
       "from": 3400,
       "to": 3700,
       "why": "The separate T09 effect boundary adds a persistent one-send outbox and signed delivery readback; the signed T01–T09 assessment verifier also enters the effective TCB. K remains under its original 1800–3200 budget."
+    },
+    {
+      "date": "2026-10-10",
+      "budget": "safety",
+      "from": 3700,
+      "to": 3900,
+      "why": "A narrow operator-owned Unix admission gateway and effect/reconciliation progress loop enter the effective TCB. They never issue constitutional permission; the gateway exposes no guard or provider credentials. This additional trusted surface is counted explicitly; K remains within 1800–3200 lines."
     }
   ],
   "constitutional_kernel": {

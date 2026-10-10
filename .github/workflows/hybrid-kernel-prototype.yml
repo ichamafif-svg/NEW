@@ -12,6 +12,7 @@ on:
       - 'bootstrap.py'
       - 'tools/check_tcb.py'
       - 'tcb-budget.json'
+      - 'tests/test_standard*.py'
       - 'Makefile'
       - 'tests/test_hybrid_kernel*.py'
       - 'tests/test_standard_service.py'

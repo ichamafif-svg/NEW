@@ -1,14 +1,15 @@
 # Surface commune BUILD/RUN
 
 `StandardService` projette les obligations du noyau sur des tâches stables à partir
-d'un `GovernedDeployment` installé et de routes déclarées par l'opérateur. Une
+d'un `GatewayClient` relié à un `GovernedDeployment` installé dans **un autre
+processus** et de routes déclarées par l'opérateur. Une
 route décrit le mode, le sujet, le besoin et les contrats T nécessaires. Le
 service contrôle leur disponibilité en direct et conserve les trous visibles.
 
 ```python
-from standard import Route, StandardService
+from standard import GatewayClient, Route, StandardService
 
-service = StandardService(deployment, [
+service = StandardService(GatewayClient("/run/standard/admission.sock"), [
     Route("repo-observe", "BOTH", "repo:*",
           frozenset({"cover", "observe"}), frozenset({"T06"})),
     Route("repo-build", "BUILD", "repo:*",
@@ -32,12 +33,36 @@ qualification en direct a échoué, sans supposer quel contrat T est en faute ni
 fermer une obligation constitutionnelle. Une tâche et une signature ne sont pas un droit :
 `submit(mode=..., task_id=..., route_id=..., basis=..., envelope=...)` recontrôle
 la route et le préfixe puis confie l'enveloppe signée au seul chemin d'admission
-du déploiement ; `guard(identity=..., signer=...)` utilise exclusivement son port
-d'effet installé. L'agent ne reçoit jamais ces credentials.
+du déploiement. La socket n'expose ni guard, ni clés, ni ports fournisseur.
+L'agent ne reçoit jamais ces credentials.
 
-Cette couche couvre la projection et le passage à K/T, pas le provisionnement
-des personnes, clés, ancrages et fournisseurs physiques. L'opérateur doit encore
-isoler l'agent du processus de confiance, installer des producteurs de preuves
-indépendants, la garde d'effet exclusive, des travailleurs BUILD/RUN et leurs
-méthodes, la livraison des escalades et une surface humaine. Le cycle M2 reste une autre
-implémentation de démonstration ; aucune équivalence de production n'est établie.
+Le processus opérateur est assemblé par `hybrid_kernel.install.install` avec
+un pin externe de genèse, des pins durables, une évaluation signée et des clés
+d'évaluateur épinglées hors agent, une horloge, un port d'effet, un readback
+indépendant, le signataire guard et, le cas échéant, la livraison d'escalades.
+`TrustedController.serve()` traite les propositions et effectue ses propres
+passes de départ/réconciliation/livraison. Le démarrage doit vérifier le
+manifeste du code **avant import et avant accès aux secrets** via
+`python bootstrap.py CODE_PIN --control adapters.production CONFIG` ; le module
+`adapters.production` doit être inclus dans le manifeste de release épinglé et
+exposer `serve(config)`. Le fichier CONFIG est propriétaire uniquement.
+L'installation ne génère pas de genèse de secours et ne substitue aucun T local
+à un T absent. La permission Unix de la socket et les comptes OS distincts sont
+des prérequis physiques à vérifier sur l'hôte, non une propriété du protocole.
+
+L'interface U propose `python -m standard discover --repo REPO`, puis
+`status`, `dashboard`, `claim`, `submit`, `attempt`, `run` et `watch` avec `--config`.
+Le fichier de configuration U contient `socket`, `work_db`, `routes` et
+éventuellement `workers` (route, commande en tableau, répertoire et timeout).
+Un travailleur externe lit `{task,basis,law}` sur stdin et renvoie
+`{"envelope": ...}` sur stdout : une proposition signée par son identité U.
+`run` lui transmet une tâche louée, puis la renvoie à K/T pour jugement ;
+`watch` répète les passages sous un superviseur U. Aucun
+retour de travailleur ne ferme la dette ou ne déclenche directement un effet.
+
+Le tableau HTML est une surface de lecture. Les catégories de découverte sont
+`PRESENT_UNQUALIFIED` ou `NOT_FOUND` ; les routes qui échouent aux T produisent
+du travail de qualification distinct de la dette constitutionnelle. L'opérateur
+doit encore fournir et qualifier les personnes, clés, ancrages, fournisseurs,
+workers et instruments réels. Le cycle M2 reste une autre implémentation de
+démonstration ; aucune équivalence de production n'est établie.

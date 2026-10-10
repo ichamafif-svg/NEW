@@ -5,6 +5,9 @@ import importlib.machinery
 import importlib.metadata
 import json
 import platform
+import re
+import os
+import stat
 import sys
 from pathlib import Path
 
@@ -75,8 +78,23 @@ def main():
         with Journal(cfg["journal"], kernel, genesis_pin=cfg["genesis_pin"],
                      checkpoints=SQLitePins(cfg["pins"]), accountability=Auditor()) as journal:
             print(canon(journal.health(required_at=cfg.get("required_at"))).decode())
+    elif sys.argv[2] == "--control":
+        # Deployment-specific operator code must be part of this exact release
+        # manifest and loaded only after source verification, before secrets.
+        name, config = sys.argv[3:5]
+        if not re.fullmatch(r"adapters\.[a-z][a-z0-9_]*", name):
+            raise ValueError("operator module must be a pinned adapter")
+        path = name.replace(".", "/") + ".py"
+        if path not in release["files"]:
+            raise ValueError("operator module absent from the release")
+        meta = os.stat(config, follow_symlinks=False)
+        if not stat.S_ISREG(meta.st_mode) or meta.st_uid != os.getuid() or meta.st_mode & 0o077:
+            raise ValueError("operator configuration must be owner-only")
+        import importlib
+        module = importlib.import_module(name)
+        module.serve(json.loads(Path(config).read_text()))
     else:
-        raise ValueError("expected --verify, --worker MODE, or --health CONFIG")
+        raise ValueError("expected --verify, --worker MODE, --health CONFIG or --control ADAPTER CONFIG")
 
 
 if __name__ == "__main__":

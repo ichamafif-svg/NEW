@@ -54,7 +54,7 @@ class StandardService:
 
     def __init__(self, deployment, routes=()):
         if any(not callable(getattr(deployment, name, None)) for name in
-               ("constitutional_view", "qualify_route", "admit", "guard")):
+               ("constitutional_view", "qualify_route", "admit")):
             raise WorkError("a governed K/T deployment is required")
         routes = tuple(routes)
         if any(not isinstance(r, Route) for r in routes) or len({r.id for r in routes}) != len(routes):
@@ -131,7 +131,3 @@ class StandardService:
         if not isinstance(envelope, dict):
             raise WorkError("an independently signed statement is required")
         return self._deployment.admit(envelope)
-
-    def guard(self, *, identity, signer):
-        """Obtain the already provisioned guard; no caller-supplied effect port."""
-        return self._deployment.guard(identity=identity, signer=signer)

@@ -26,11 +26,11 @@ class GovernedDeployment:
     """Contract boundary. The installation must provision trusted implementations."""
 
     def __init__(self, *, ledger_path, pin_store, genesis_pin, trust_boundary,
-                 trusted_now, effect_port=None, delivery_port=None):
+                 trusted_now, effect_port=None, delivery_port=None, reconciliation_port=None):
         if not callable(trusted_now) or not callable(getattr(trust_boundary, "check", None)):
             raise ProductionBlocked("TRUST.BOUNDARY_REQUIRED")
         self._boundary, self._trusted_now = trust_boundary, trusted_now
-        self._effect, self._delivery = effect_port, delivery_port
+        self._effect, self._delivery, self._reconciliation = effect_port, delivery_port, reconciliation_port
         self._release, self._genesis, self._ledger_path = code_digest(), genesis_pin, str(ledger_path)
         self._last_at = -1
         self._check(BASE)
@@ -75,6 +75,21 @@ class GovernedDeployment:
         self._check(BASE)
         return self._runtime.snapshot()
 
+    def status(self):
+        """Fault-safe operator visibility, even when timed routes are unavailable."""
+        try:
+            self._check(BASE)
+            state = self._runtime.snapshot()
+            basis = {"head": state["head"], "size": state["size"], "genesis": state["domain"]}
+            try:
+                health = self.health()
+                return {"state": health.get("state", "FAULT"), "basis": basis,
+                        "open": len(health.get("open", [])), "escalated": len(health.get("escalated", []))}
+            except Exception:
+                return {"state": "FAULT", "basis": basis, "reason": "TIMED_AUDIT_UNAVAILABLE"}
+        except Exception:
+            return {"state": "FAULT", "basis": None, "reason": "TRUSTED_PREFIX_UNAVAILABLE"}
+
     def health(self, *, required_at=None):
         now = self._check(TIMED)
         return self._runtime.health(required_at=max(now, required_at or now))
@@ -105,6 +120,45 @@ class GovernedDeployment:
         if not callable(getattr(self._delivery, "deliver_due", None)):
             raise ProductionBlocked("TRUST.DELIVERY_PORT_MISSING")
         return self._delivery.deliver_due(self.health())
+
+    def dispatch_due(self, *, identity, signer):
+        """Trusted-side progress of already admitted effects, never an agent API."""
+        from tcb.floor0 import line_state
+        now = self._check(EFFECT)
+        guard = self.guard(identity=identity, signer=signer)
+        results = {}
+        state = self.snapshot()
+        for intent_id in sorted(state["intents"]):
+            phase = line_state(state["line"], intent_id, now)
+            if phase not in ("intended", "tokened"):
+                continue
+            try:
+                at = max(self._check(EFFECT), self.snapshot()["last_at"] + 1)
+                if phase == "intended":
+                    guard.issue(intent_id, at)
+                token = self.snapshot()["token_of"][intent_id]
+                results[intent_id] = guard.redeem(token, max(self._check(EFFECT), self.snapshot()["last_at"] + 1))
+            except Exception as exc:
+                results[intent_id] = {"blocked": type(exc).__name__}
+        return results
+
+    def reconcile_due(self):
+        """Ask an installed independent T08 instrument for signed readback."""
+        from tcb.floor0 import line_state
+        now = self._check(TIMED | {"T08"})
+        if not callable(getattr(self._reconciliation, "readback", None)):
+            raise ProductionBlocked("TRUST.RECONCILIATION_PORT_MISSING")
+        state = self.snapshot()
+        results = {}
+        for intent_id in sorted(state["intents"]):
+            if line_state(state["line"], intent_id, now) not in ("uncertain", "expired"):
+                continue
+            try:
+                envelope = self._reconciliation.readback(intent_id, state)
+                results[intent_id] = self.admit(envelope) if envelope is not None else "UNKNOWN"
+            except Exception as exc:
+                results[intent_id] = {"blocked": type(exc).__name__}
+        return results
 
     def close(self): return self._runtime.close()
     def __enter__(self): return self
