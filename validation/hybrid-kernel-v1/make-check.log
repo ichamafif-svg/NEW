@@ -1,0 +1,326 @@
+python3 tools/check_tcb.py
+safety          3212 /  3400  ok
+restrict_only    757 /   800  ok
+visibility       538 /   600  ok
+  layer 0-kernel          2175
+  layer 1-integrity       1334
+  layer 2-effect           116
+  layer 3-accountability   538
+  layer 4-integration      168
+  layer package             36
+TCB: 4507 physical lines in total, every one counted once
+Constitutional K: 2442 physical lines / [1800, 3200] (including reused primitives)
+python3 tests/test_kernel.py
+PASS test_root_needs_a_human_beyond_the_quorum
+PASS test_a_proposal_never_activates_by_itself
+PASS test_activation_waits_for_witnessed_delay
+PASS test_a_single_witness_cannot_move_time
+PASS test_activation_cannot_borrow_the_ahead_window
+PASS test_root_cannot_remove_the_time_quorum
+PASS test_rotated_key_is_dead_from_the_activation_entry_on
+PASS test_a_proposal_from_an_older_root_is_stale
+PASS test_veto_and_its_exit_by_a_higher_quorum
+PASS test_override_with_k_plus_one_humans
+PASS test_lifting_a_freeze_is_a_widening
+PASS test_patterns_end_on_a_separator
+PASS test_removed_holder_loses_every_chain
+PASS test_effect_arguments_are_closed_and_derive_the_resource
+PASS test_negation_is_not_part_of_the_law
+PASS test_conditions_read_only_independent_fresh_observations
+python3 tests/test_effects.py
+PASS test_two_guards_and_restart_run_only_once
+PASS test_revoke_before_reservation_prevents_execution
+PASS test_freeze_after_token_blocks_reservation
+PASS test_crash_after_reservation_requires_independent_reconciliation
+PASS test_proof_names_its_intent_and_exact_resource
+PASS test_budget_counts_tokens_along_the_chain
+PASS test_time_lapses_unused_authority
+PASS test_silent_sentinel_requires_a_human_cosignature
+python3 tests/test_accountability.py
+PASS test_every_target_starts_open_and_coverage_gates_property
+PASS test_repeated_bad_observations_never_postpone_the_deadline
+PASS test_only_an_independent_declared_source_closes_a_target
+PASS test_overdue_gap_escalates_and_expiry_opens_at_expiry
+PASS test_a_silent_witness_cannot_hold_the_verdict
+PASS test_silent_witness_expires_previously_proven_targets_without_moving_ledger
+PASS test_lapsing_stages_never_escalate_but_reconcile_does
+PASS test_a_fault_in_accountability_never_blocks_admission
+PASS test_external_audit_replays_and_checks_pins
+python3 tests/test_robustness.py
+PASS test_malformed_entries_are_refusals
+PASS test_condition_work_is_bounded
+     write ~1.4 ms at 1205 entries; full replay 0.44s
+PASS test_write_cost_is_flat_in_journal_length
+PASS test_tampered_tip_forces_full_replay_and_rollback_is_detected
+PASS test_accountability_and_external_reader_cannot_mutate_kernel_state
+PASS test_release_snapshot_does_not_follow_caller_mutation
+PASS test_retained_reservation_blocks_rollback_and_failed_pin_blocks_effect
+PASS test_same_journal_serializes_concurrent_writers
+python3 tests/test_isolation.py
+PASS test_health_confinement_blocks_credentials_network_processes_and_parent_memory
+PASS test_live_health_worker_receives_no_provider_environment
+PASS test_durable_pins_reopen_and_reject_fork_domain_and_silent_recreation
+python3 tests/test_review.py
+PASS test_every_acknowledged_write_pins_and_restored_restrictions_cannot_disappear
+PASS test_pin_failure_before_durability_rolls_back_without_consuming_a_token
+PASS test_pin_durable_then_interrupted_commit_blocks_until_exact_tail_repair
+PASS test_real_process_exit_after_pin_commit_preserves_the_restriction_for_recovery
+PASS test_an_unretained_append_is_never_silently_promoted
+PASS test_restriction_between_reservation_and_dispatch_is_rejudged_and_known_failed
+PASS test_a_deferred_provider_wait_never_delays_a_restriction
+PASS test_dispatch_gate_orders_writes_from_a_separate_process
+PASS test_missing_adapter_fails_but_an_adapter_exception_stays_unknown
+PASS test_provider_receives_a_stable_genesis_bound_reservation_key
+PASS test_long_health_is_incremental_restarts_and_matches_full_audit
+PASS test_slow_accountability_does_not_hold_the_admission_lock
+PASS test_transport_reply_larger_than_a_statement_keeps_its_own_limit
+PASS test_genesis_and_kernel_refuse_a_different_code_pin
+PASS test_first_write_must_match_an_explicit_external_genesis_pin
+PASS test_bootstrap_rejects_tampered_code_before_importing_it
+PASS test_bootstrap_ignores_forged_bytecode_for_verified_source
+python3 tests/test_floor.py
+PASS test_restoring_a_journal_backup_cannot_erase_a_revocation
+PASS test_the_genesis_pins_the_tcb_code
+PASS test_kernel_bug_is_caught_by_the_invariants_and_halts
+PASS test_kernel_bug_on_delay_is_caught
+PASS test_double_reservation_is_refused_by_the_store_when_both_checks_fail
+PASS test_invariant_checker_crash_halts
+PASS test_provider_gets_a_stable_key_per_reservation
+     health on 2001 entries: 1.31s
+PASS test_health_answers_on_a_long_journal
+python3 tests/test_language.py
+PASS test_the_same_gate_refuses_escalates_or_measures
+PASS test_one_instance_per_key_and_deadline_escalates
+PASS test_negation_is_rejected_at_every_level
+PASS test_fresh_independent_closures_authorize_at_refuse
+PASS test_prefix_in_conditions
+PASS test_invariants_catch_a_kernel_that_skips_a_law_gate
+python3 tests/test_merge_regressions.py
+PASS test_a_kernel_signature_fault_does_not_admit_a_forgery
+PASS test_a_kernel_head_fault_does_not_change_history
+PASS test_a_kernel_grant_fault_does_not_widen_activated_rights
+PASS test_adversarial_glob_cannot_enter_the_language
+python3 tests/test_v0.py
+PASS test_sensitive_profile_requires_quorum_and_cannot_be_selected_by_the_actor
+PASS test_old_quorum_cannot_authorize_after_root_rotation
+PASS test_single_profile_bug_is_detected_by_the_second_checker
+PASS test_single_policy_evaluator_bug_is_detected
+PASS test_dispatch_checker_detects_a_judge_bug_after_a_revocation
+PASS test_self_certified_closures_do_not_earn_autonomy
+PASS test_actor_cannot_override_a_sealed_effect_profile
+PASS test_expired_independent_closures_stop_authorizing
+python3 tests/test_floors.py
+PASS test_floors_apply_to_every_client_without_being_asked
+PASS test_a_client_never_redefines_or_weakens_a_floor
+PASS test_every_target_needs_an_autonomous_repair_route_or_a_human_declaration
+PASS test_the_client_law_changes_by_widening_and_history_still_replays
+PASS test_invariants_catch_a_kernel_that_changes_the_law_without_activation
+PASS test_one_departure_per_reservation
+python3 tests/test_v6.py
+PASS test_a_proof_never_moves_to_a_different_resource
+PASS test_target_owner_and_source_changes_invalidate_cached_proofs
+PASS test_law_change_does_not_postpone_an_existing_gap
+PASS test_every_pending_proposal_is_bound_to_its_law
+PASS test_independent_checker_catches_stale_activation_when_kernel_forgets
+PASS test_invalid_targets_are_refused_before_law_admission
+PASS test_malformed_composition_maps_never_crash_admission
+PASS test_changed_operation_contract_invalidates_old_intents_and_tokens
+PASS test_changed_condition_does_not_reinterpret_an_old_capability
+PASS test_one_corrupted_kernel_profile_does_not_corrupt_both_judges
+PASS test_dispatch_payload_is_compared_between_both_judges
+PASS test_an_independent_dispatch_checker_crash_halts
+PASS test_deferred_completion_is_outside_the_gate_and_exceptions_are_unknown
+PASS test_a_client_can_tighten_a_floor_operation_to_human_quorum
+PASS test_request_op_means_the_same_for_both_evaluators
+PASS test_an_explicit_prefix_audit_never_claims_to_be_current_after_a_write
+PASS test_activation_is_accounted_under_its_old_law_not_the_new_one
+PASS test_a_repair_route_must_have_compatible_typed_arguments
+PASS test_a_repair_route_respects_repeated_argument_values
+PASS test_a_changed_obligation_cannot_close_an_old_contract
+PASS test_old_closures_do_not_earn_rights_under_a_changed_obligation
+PASS test_an_obligation_contract_fault_in_the_kernel_halts
+python3 tests/test_maintenance.py
+PASS test_work_does_not_mutate_audit_or_confer_permission
+PASS test_fault_and_historical_audits_produce_no_agent_work
+PASS test_escalated_work_remains_a_human_decision
+PASS test_uncertain_protocol_effects_do_not_become_repair_requests
+PASS test_inconsistent_and_duplicate_obligations_block_projection
+PASS test_real_audit_becomes_work_without_a_journal_write
+python3 tests/test_budget_classification.py
+PASS test_a_second_judge_that_accepts_everything_admits_nothing_the_kernel_refuses
+PASS test_a_second_judge_that_fails_halts_and_sends_nothing
+PASS test_accountability_has_no_path_to_admission_or_effects
+python3 tests/test_root_causes.py
+PASS test_no_law_can_gate_a_restriction_a_witness_or_the_widening_protocol
+PASS test_where_clauses_hold_one_representation_only
+PASS test_a_client_never_proves_more_cheaply_than_the_floors
+PASS test_a_restriction_shares_the_last_instant_when_the_ceiling_is_taken
+PASS test_unnamed_facts_cannot_crowd_out_a_condition
+PASS test_a_reservation_is_reconciled_only_once_it_can_no_longer_leave
+PASS test_an_interrupted_commit_is_repaired_from_the_kept_tail_alone
+PASS test_one_passkey_is_one_key
+PASS test_an_envelope_has_one_form
+PASS test_a_renamed_target_keeps_its_debt
+PASS test_an_actor_never_opens_its_own_window_or_gate
+PASS test_an_evidence_kind_named_like_a_handler_cannot_halt_the_second_judge
+PASS test_the_two_judges_never_diverge_on_a_random_walk
+python3 tests/test_m2.py
+PASS test_every_technical_floor_is_repairable_by_a_commit_under_it
+PASS test_transition_needs_green_tests_and_reproduction_on_exact_base_and_head
+PASS test_code_changes_need_an_independent_review
+PASS test_the_agent_cannot_observe_its_own_commit
+PASS test_an_attestation_closes_an_organisational_gap_only_from_the_officer
+PASS test_a_client_cannot_give_an_organisational_target_an_automatic_repair
+python3 tests/test_compliance.py
+PASS test_catalog_covers_the_three_frameworks
+PASS test_statuses_follow_signed_evidence
+PASS test_a_dossier_is_genuine_only_if_the_journal_rebuilds_it
+python3 tests/test_ops.py
+{"genesis": "sha256:c821053097e03affb1a16b93ba3bafdd115a656231ad9756be64e880f05b0106", "proposals": 6}
+{"activated": ["grant-258814bc8b1344c1", "grant-a73980c0891f41c2", "grant-b1cc7a3789f2492d", "grant-b43f7d0154474e66", "grant-6a7259faa6f2402a", "grant-6d33a0867586479a"]}
+{"main": "f7b200bedc08347a9457883b468366531bb22318", "anchor": "f7b200bedc08347a9457883b468366531bb22318", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {}}
+{"main": "green", "subjects": {}}
+{"written": 13}
+{"asked": [], "withdrawn": [], "proposed": "repo:deps:vulns/f7b200bedc08347a9457883b468366531bb22318/ba975a070e7f1f0955250e2c5247f14aedd549ec"}
+{}
+{"main": "f7b200bedc08347a9457883b468366531bb22318", "anchor": "f7b200bedc08347a9457883b468366531bb22318", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {"repo:deps:vulns/f7b200bedc08347a9457883b468366531bb22318/ba975a070e7f1f0955250e2c5247f14aedd549ec": {"state": "open", "reproduced": "yes"}}}
+{"main": "green", "subjects": {"repo:deps:vulns/f7b200bedc08347a9457883b468366531bb22318/ba975a070e7f1f0955250e2c5247f14aedd549ec": "green"}}
+{"written": 3}
+{"asked": ["ba975a070e7f1f0955250e2c5247f14aedd549ec"], "withdrawn": [], "proposed": null}
+{"intent-747f8b4a11ed4dd4": "ok"}
+{"main": "ba975a070e7f1f0955250e2c5247f14aedd549ec", "anchor": "f7b200bedc08347a9457883b468366531bb22318", "targets": {"vulns": "none", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {}}
+{"main": "green", "subjects": {}}
+{"written": 3}
+{"asked": [], "withdrawn": [], "proposed": null}
+{}
+PASS test_a_vulnerable_lock_is_repaired_by_its_recipe_and_proven
+PASS test_the_adapter_fast_forwards_only_from_the_judged_base
+PASS test_unknown_identities_in_key_material_are_refused
+python3 tests/test_m2_review.py
+{"genesis": "sha256:dc7f392a1357ce13e456e3289c18cf1c432b35fc4eecffa5691738e0c9cb8c42", "proposals": 6}
+{"activated": ["grant-f2a22d9a8ae2421f", "grant-7c20e586e75a4ded", "grant-6a1e24e3798b478c", "grant-3682f711d7294a49", "grant-d0b457740c9744b6", "grant-571674a1878c436d"]}
+{"main": "591686f3c70d47c8d763d1b9b4f5ba463c677527", "anchor": "591686f3c70d47c8d763d1b9b4f5ba463c677527", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {}}
+{"main": "green", "subjects": {}}
+{"written": 13}
+{"asked": [], "withdrawn": [], "proposed": "repo:deps:vulns/591686f3c70d47c8d763d1b9b4f5ba463c677527/1cd54482b7e1ef67fd9d5b6fb7448be9727d7345"}
+{}
+{"main": "591686f3c70d47c8d763d1b9b4f5ba463c677527", "anchor": "591686f3c70d47c8d763d1b9b4f5ba463c677527", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {"repo:deps:vulns/591686f3c70d47c8d763d1b9b4f5ba463c677527/1cd54482b7e1ef67fd9d5b6fb7448be9727d7345": {"state": "open", "reproduced": "yes"}}}
+{"main": "green", "subjects": {"repo:deps:vulns/591686f3c70d47c8d763d1b9b4f5ba463c677527/1cd54482b7e1ef67fd9d5b6fb7448be9727d7345": "green"}}
+{"written": 3}
+{"asked": ["1cd54482b7e1ef67fd9d5b6fb7448be9727d7345"], "withdrawn": [], "proposed": null}
+{"intent-ab62e18596834a3a": "ok"}
+{"main": "1cd54482b7e1ef67fd9d5b6fb7448be9727d7345", "anchor": "591686f3c70d47c8d763d1b9b4f5ba463c677527", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {}}
+{"main": "green", "subjects": {}}
+{"written": 2}
+vulns: ValueError no change repairs this gap
+{"asked": [], "withdrawn": [], "proposed": null}
+{}
+PASS test_rule1_commits_nobody_declared_are_never_asked_about
+{"genesis": "sha256:79b4c69b5c16106f62ef083dc3aefbf7f39b1561ef3464801cd364067405d9cb", "proposals": 6}
+{"activated": ["grant-958f955a697c4c31", "grant-68928dd213ad49c5", "grant-6f472bfa5cb74e47", "grant-b6dba518a74b4744", "grant-3c61d4e1b32c4466", "grant-087ef24f45e14b75"]}
+{"main": "4269f0b745688ff9eb36585f403159fc4d4b461d", "anchor": "4269f0b745688ff9eb36585f403159fc4d4b461d", "targets": {"vulns": "none", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "found:1", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {}}
+{"main": "green", "subjects": {}}
+{"written": 13}
+{"asked": [], "withdrawn": [], "proposed": "repo:code:sast/4269f0b745688ff9eb36585f403159fc4d4b461d/7cb9f487587e7a8d1371d894a6f1ff5ddd366376"}
+{}
+{"main": "4269f0b745688ff9eb36585f403159fc4d4b461d", "anchor": "4269f0b745688ff9eb36585f403159fc4d4b461d", "targets": {"vulns": "none", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "found:1", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {"repo:code:sast/4269f0b745688ff9eb36585f403159fc4d4b461d/7cb9f487587e7a8d1371d894a6f1ff5ddd366376": {"state": "open", "reproduced": "no:recipe"}}}
+{"main": "green", "subjects": {"repo:code:sast/4269f0b745688ff9eb36585f403159fc4d4b461d/7cb9f487587e7a8d1371d894a6f1ff5ddd366376": "green"}}
+{"written": 3}
+{"asked": [], "withdrawn": [], "proposed": null}
+{}
+{"main": "4269f0b745688ff9eb36585f403159fc4d4b461d", "anchor": "4269f0b745688ff9eb36585f403159fc4d4b461d", "targets": {"vulns": "none", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "found:1", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {}}
+{"main": "green", "subjects": {}}
+{"written": 0}
+{"asked": ["7cb9f487587e7a8d1371d894a6f1ff5ddd366376"], "withdrawn": [], "proposed": null}
+{"intent-9cb729a647c2485f": "ok"}
+PASS test_rule1_a_review_names_the_head_a_human_read
+PASS test_rule2_only_full_coverage_without_findings_passes
+{"genesis": "sha256:19f4270b9ee42978552361e00378023ca96da012aa18fb6411f66de9c1872c7e", "proposals": 6}
+{"activated": ["grant-d361f4f6cac64c57", "grant-b98e34384af2474e", "grant-f27138dc52bf416f", "grant-721dff479c7d4757", "grant-2a8abed8e520431c", "grant-bc04824e9bb74717"]}
+PASS test_rule3_hostile_data_stays_inside_its_scope_and_state_needs_the_pin
+PASS test_rule4_every_phase_has_one_next_step
+{"genesis": "sha256:14d7292243eec00ce00d6af83e95510c03db694616e2c9269ac9b5a04f61cc97", "proposals": 6}
+{"activated": ["grant-59fd5d58f5ae480b", "grant-d93cebb01936402a", "grant-2887cfec95314917", "grant-e69a519d7ac14711", "grant-628ceeafaeb04327", "grant-942f5bcc05b64c6a"]}
+{"main": "8e05862ec87d2c6499f152bd521932776c9d3151", "anchor": "8e05862ec87d2c6499f152bd521932776c9d3151", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {"repo:deps:vulns/8e05862ec87d2c6499f152bd521932776c9d3151/b4eb9f20594a3e4d189ba28942fc384085b1f92e": {"state": "open", "reproduced": "no:paths"}}}
+{"main": "green", "subjects": {"repo:deps:vulns/8e05862ec87d2c6499f152bd521932776c9d3151/b4eb9f20594a3e4d189ba28942fc384085b1f92e": "green"}}
+{"written": 16}
+{"asked": [], "withdrawn": [], "proposed": null}
+{}
+PASS test_rule5_a_recipe_commit_with_anything_more_is_not_reproduced
+{"genesis": "sha256:a7d263a339b43dcf4cb6b833e2fcffdfecfa5075a7fdb6f8c141abb9fe0e5f3b", "proposals": 6}
+{"activated": ["grant-2f2031a94ecb4b4c", "grant-3c9383a4723b493a", "grant-ad4b6f547bb34448", "grant-5ff6dc08748849ac", "grant-5732b2100a81474d", "grant-facd3dd17a964eba"]}
+{"main": "8f6a591a579a2f82e69580578654a6baec209a8d", "anchor": "8f6a591a579a2f82e69580578654a6baec209a8d", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {}}
+{"main": "green", "subjects": {}}
+{"written": 13}
+{"asked": [], "withdrawn": [], "proposed": "repo:deps:vulns/8f6a591a579a2f82e69580578654a6baec209a8d/30a43308b0de6c01b0d74e47ff6104a874932650"}
+{}
+{"main": "8f6a591a579a2f82e69580578654a6baec209a8d", "anchor": "8f6a591a579a2f82e69580578654a6baec209a8d", "targets": {"vulns": "found:2", "deps-age": "none", "licenses": "compliant", "secrets": "none", "sast": "none", "actions": "all", "sbom": "current", "branch": "guard-only", "lineage": "none"}, "subjects": {"repo:deps:vulns/8f6a591a579a2f82e69580578654a6baec209a8d/30a43308b0de6c01b0d74e47ff6104a874932650": {"state": "open", "reproduced": "yes"}}}
+{"main": "green", "subjects": {"repo:deps:vulns/8f6a591a579a2f82e69580578654a6baec209a8d/30a43308b0de6c01b0d74e47ff6104a874932650": "found:1"}}
+{"written": 3}
+vulns: ValueError this exact transition was withdrawn; a new proposal is required
+{"asked": [], "withdrawn": ["30a43308b0de6c01b0d74e47ff6104a874932650"], "proposed": null}
+{}
+PASS test_rule6_red_tests_withdraw_and_free_the_target
+python3 -m unittest discover -s tests -p "test_hybrid_kernel*.py" -v
+test_compatibility_is_the_same_class (test_hybrid_kernel.CoreTests.test_compatibility_is_the_same_class) ... ok
+test_exhaustive_transition_and_pure_judgment (test_hybrid_kernel.CoreTests.test_exhaustive_transition_and_pure_judgment) ... ok
+test_forged_decision_and_stale_commit_refused (test_hybrid_kernel.CoreTests.test_forged_decision_and_stale_commit_refused) ... ok
+test_freeze_immediately_blocks_transition (test_hybrid_kernel.CoreTests.test_freeze_immediately_blocks_transition) ... ok
+test_identical_input_produces_identical_complete_judgment (test_hybrid_kernel.CoreTests.test_identical_input_produces_identical_complete_judgment) ... ok
+test_law_pin_cannot_be_replaced (test_hybrid_kernel.CoreTests.test_law_pin_cannot_be_replaced) ... ok
+test_missing_or_additional_delta_writes_refused (test_hybrid_kernel.CoreTests.test_missing_or_additional_delta_writes_refused) ... ok
+test_native_transitions_obey_all_capability_budgets (test_hybrid_kernel.CoreTests.test_native_transitions_obey_all_capability_budgets) ... ok
+test_restrictions_share_last_time_even_with_unfulfilled_law (test_hybrid_kernel.CoreTests.test_restrictions_share_last_time_even_with_unfulfilled_law) ... ok
+test_revocation_blocks_even_valid_relational_constraints (test_hybrid_kernel.CoreTests.test_revocation_blocks_even_valid_relational_constraints) ... ok
+test_second_check_rejects_incomplete_or_forged_consequence (test_hybrid_kernel.CoreTests.test_second_check_rejects_incomplete_or_forged_consequence) ... ok
+test_stable_relational_model (test_hybrid_kernel.CoreTests.test_stable_relational_model) ... ok
+test_stale_resource_and_duplicate_registration (test_hybrid_kernel.CoreTests.test_stale_resource_and_duplicate_registration) ... ok
+test_unsealed_resource_type_is_refused (test_hybrid_kernel.CoreTests.test_unsealed_resource_type_is_refused) ... ok
+test_wrong_scalar_type_refused (test_hybrid_kernel.CoreTests.test_wrong_scalar_type_refused) ... ok
+test_boolean_cannot_bypass (test_hybrid_kernel_attestation.DeploymentAttestationTests.test_boolean_cannot_bypass) ... ok
+test_exact_binding (test_hybrid_kernel_attestation.DeploymentAttestationTests.test_exact_binding) ... ok
+test_expired (test_hybrid_kernel_attestation.DeploymentAttestationTests.test_expired) ... ok
+test_future (test_hybrid_kernel_attestation.DeploymentAttestationTests.test_future) ... ok
+test_wrong_genesis (test_hybrid_kernel_attestation.DeploymentAttestationTests.test_wrong_genesis) ... ok
+test_wrong_ledger (test_hybrid_kernel_attestation.DeploymentAttestationTests.test_wrong_ledger) ... ok
+test_wrong_registry (test_hybrid_kernel_attestation.DeploymentAttestationTests.test_wrong_registry) ... ok
+test_eight_attempts_cannot_move_deadline (test_hybrid_kernel_debt.DebtTests.test_eight_attempts_cannot_move_deadline) ... ok
+test_renamed_target_with_longer_due_keeps_original_deadline (test_hybrid_kernel_debt.DebtTests.test_renamed_target_with_longer_due_keeps_original_deadline) ... ok
+test_retirement_is_visible_and_reintroduction_keeps_debt (test_hybrid_kernel_debt.DebtTests.test_retirement_is_visible_and_reintroduction_keeps_debt) ... ok
+test_same_alias_retargeted_does_not_erase_old_subject (test_hybrid_kernel_debt.DebtTests.test_same_alias_retargeted_does_not_erase_old_subject) ... ok
+test_all_nine_assessments_required (test_hybrid_kernel_externals.ExternalContractTests.test_all_nine_assessments_required) ... ok
+test_complete_registry_still_requires_physical_validation (test_hybrid_kernel_externals.ExternalContractTests.test_complete_registry_still_requires_physical_validation) ... ok
+test_duplicate_contract_rejected (test_hybrid_kernel_externals.ExternalContractTests.test_duplicate_contract_rejected) ... ok
+test_expiry_fails_closed (test_hybrid_kernel_externals.ExternalContractTests.test_expiry_fails_closed) ... ok
+test_invalid_time_rejected (test_hybrid_kernel_externals.ExternalContractTests.test_invalid_time_rejected) ... ok
+test_no_trust_catalog_denied (test_hybrid_kernel_externals.ExternalContractTests.test_no_trust_catalog_denied) ... ok
+test_self_report_unverified_fails_closed (test_hybrid_kernel_externals.ExternalContractTests.test_self_report_unverified_fails_closed) ... ok
+test_expiry_exposes_debt_at_exact_measurement_expiry (test_hybrid_kernel_measurement.MeasurementTests.test_expiry_exposes_debt_at_exact_measurement_expiry) ... ok
+test_instrument_cannot_invalidate_another_instrument (test_hybrid_kernel_measurement.MeasurementTests.test_instrument_cannot_invalidate_another_instrument) ... ok
+test_invalidated_measurement_cannot_permit_an_effect (test_hybrid_kernel_measurement.MeasurementTests.test_invalidated_measurement_cannot_permit_an_effect) ... ok
+test_invalidation_immediately_removes_proof (test_hybrid_kernel_measurement.MeasurementTests.test_invalidation_immediately_removes_proof) ... ok
+test_measurement_can_prove_target_after_coverage (test_hybrid_kernel_measurement.MeasurementTests.test_measurement_can_prove_target_after_coverage) ... ok
+test_no_coverage_does_not_close_target (test_hybrid_kernel_measurement.MeasurementTests.test_no_coverage_does_not_close_target) ... ok
+test_plain_observation_cannot_bypass_required_instrument (test_hybrid_kernel_measurement.MeasurementTests.test_plain_observation_cannot_bypass_required_instrument) ... ok
+test_second_check_rejects_forged_measurement (test_hybrid_kernel_measurement.MeasurementTests.test_second_check_rejects_forged_measurement) ... ok
+test_stale_or_future_measurement_refused (test_hybrid_kernel_measurement.MeasurementTests.test_stale_or_future_measurement_refused) ... ok
+test_wrong_method_coverage_or_source_refused (test_hybrid_kernel_measurement.MeasurementTests.test_wrong_method_coverage_or_source_refused) ... ok
+test_genesis_pin_required (test_hybrid_kernel_runtime.RuntimeContract.test_genesis_pin_required) ... ok
+test_no_unsigned_admission_method (test_hybrid_kernel_runtime.RuntimeContract.test_no_unsigned_admission_method) ... ok
+test_pin_store_required (test_hybrid_kernel_runtime.RuntimeContract.test_pin_store_required) ... ok
+test_same_file_rejected (test_hybrid_kernel_runtime.RuntimeContract.test_same_file_rejected) ... ok
+test_missing_independent_pin_refused (test_hybrid_kernel_store.StoreTests.test_missing_independent_pin_refused) ... ok
+test_recovery_restores_only_exact_pinned_tail (test_hybrid_kernel_store.StoreTests.test_recovery_restores_only_exact_pinned_tail) ... ok
+test_rollback_against_retained_pin_detected (test_hybrid_kernel_store.StoreTests.test_rollback_against_retained_pin_detected) ... ok
+test_signed_genesis_once_and_reopen (test_hybrid_kernel_store.StoreTests.test_signed_genesis_once_and_reopen) ... ok
+test_one_human_cannot_grant (test_hybrid_kernel_trusted.TrustedAdmission.test_one_human_cannot_grant) ... ok
+test_signed_allowed_receipt_is_not_authority (test_hybrid_kernel_trusted.TrustedAdmission.test_signed_allowed_receipt_is_not_authority) ... ok
+test_signed_foreign_domain_refused (test_hybrid_kernel_trusted.TrustedAdmission.test_signed_foreign_domain_refused) ... ok
+test_signed_restriction_admitted (test_hybrid_kernel_trusted.TrustedAdmission.test_signed_restriction_admitted) ... ok
+test_unsigned_metadata_refused (test_hybrid_kernel_trusted.TrustedAdmission.test_unsigned_metadata_refused) ... ok
+test_untrusted_object_cannot_replace_kernel (test_hybrid_kernel_trusted.TrustedAdmission.test_untrusted_object_cannot_replace_kernel) ... ok
+
+----------------------------------------------------------------------
+Ran 57 tests in 1.966s
+
+OK

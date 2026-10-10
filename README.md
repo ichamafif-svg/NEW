@@ -16,3 +16,11 @@
 2. **[IMPLEMENTATION_CONTRACTS.md](IMPLEMENTATION_CONTRACTS.md)** — spécification opérationnelle de chaque composant K/T/U, garanties G01–G16 et critères de réception.
 
 Ces deux documents sont autonomes et définissent la cible de conception. **Leur existence ne prouve pas que l'implémentation est prête pour la production.**
+
+## Implémentation du noyau
+
+Un seul interpréteur constitutionnel : `hybrid_kernel.Kernel`. Relations typées, contraintes positives bornées et transitions à delta exhaustif partagent le même jugement. Constitution, quorum, révocation, qualification des preuves, obligations et effets restent gouvernés par ce chemin. Les ressources et instruments sont déclarés dans la loi ; aucun adaptateur ne fournit un `allowed` souverain.
+
+`make check` vérifie les budgets et exécute les régressions constitutionnelles, les tests d'intégration, les transitions relationnelles et les scénarios de dette/preuve. Le budget K inclut les primitives réutilisées ; les composants de confiance physiques et le contrôle indépendant restent comptés séparément dans la TCB effective.
+
+Les Trusted Externals restent à qualifier indépendamment pour chaque déploiement. Le manifeste conserve une release **BLOCKED** tant que leurs critères ne sont pas vérifiés. Les pins d'une autre release ne sont jamais migrés ou réinitialisés silencieusement.

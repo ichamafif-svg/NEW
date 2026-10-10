@@ -24,3 +24,4 @@ test:
 	python3 tests/test_compliance.py
 	python3 tests/test_ops.py
 	python3 tests/test_m2_review.py
+	python3 -m unittest discover -s tests -p "test_hybrid_kernel*.py" -v

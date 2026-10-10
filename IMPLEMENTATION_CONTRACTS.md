@@ -117,3 +117,17 @@ Un scénario passant dans un simulateur ne prouve pas sa protection réelle ; pr
 5. Confronter G01–G16 à des tests réels contradictoires ; qualifier les Trusted External par installation ; optimiser uniquement après équivalence prouvée.
 
 Ce plan fixe une **direction d'implémentation** ; il ne transforme pas une décision de conception en résultat de test.
+
+## VIII. Contrat exécutable du noyau hybride
+
+L'implémentation constitutionnelle unique réside dans `hybrid_kernel`. `Kernel.decide(snapshot, signed_entry)` produit le record et le delta requis ; `Kernel.judgment` sérialise le même résultat avec les empreintes avant/après. `Kernel.commit` rejoue les octets signés et refuse toute divergence du résultat, tout delta incomplet et tout préfixe périmé. Seul le journal réalise le commit durable après contrôle indépendant et rétention du pin. Les imports de compatibilité référencent cette même implémentation.
+
+La loi peut déclarer `resources` : types avec champs scalaires fermés, états, état initial et table de transitions. Chaque transition déclare ses états de départ, son état d'arrivée, ses contraintes et la liste exacte des champs à écrire. Les déclarations ne peuvent écrire ni racines, ni droits, ni constitution, ni preuves, ni obligations. L'enregistrement exige `register:<type>` ; une transition exige `transition:<type>:<operation>`, le digest exact de la ressource, une chaîne active, ses conditions, ses budgets et l'absence de gel. Toutes les dettes déclarées par la loi restent dérivées dans le même delta.
+
+Le prédicat positif `related: [relation, gauche, droite]` interroge exclusivement les relations constitutionnelles `role`, `holds`, `parent`, `owns`, `type`, `state`. Les paramètres peuvent être liés à `$author`, `$resource`, `$under`. Ces relations proviennent de l'état authentifié ; elles ne remplacent jamais la vérification de la chaîne d'autorité. Chaque interrogation est bornée et directe, sans exécution de code ni recherche non bornée.
+
+La loi peut déclarer `instruments` : méthode, couverture exacte, sources, niveau minimal et fraîcheur. Pour une propriété instrumentée, une `observation` simple est refusée ; une `measurement` doit correspondre au contrat, dater une mesure récente et lier un artefact. Une restriction `invalidate` par un humain habilité ou la source de la mesure retire immédiatement sa recevabilité. Une mesure qualifiée n'affirme pas que K a observé lui-même le monde physique : T06 reste responsable de sa vérité.
+
+Une dette de cible conserve son ouverture et son échéance à travers les tentatives et les changements d'alias ; une nouvelle déclaration ne peut repousser une échéance déjà ouverte. Le retrait d'une exigence est exposé comme `REQUIREMENT_RETIRED_WITHOUT_REPAIR_PROOF` ; sa réintroduction retrouve la dette. L'expiration d'une preuve instrumentée utilise la plus courte fraîcheur applicable. `debt.py` est une projection déterministe de responsabilité, jamais un second chemin d'autorisation.
+
+Le bootstrap épingle tous les modules constitutionnels et les composants de confiance importables. Le budget K compte les primitives communes, les floors, les schémas et la dette, même lorsqu'ils sont réutilisés. Journal, pins, garde et contrôles AND restent dans le décompte distinct de la TCB effective. Les tests ne peuvent attribuer une qualification physique aux Trusted Externals : le manifeste de release conserve leurs critères non vérifiés.

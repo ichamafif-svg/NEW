@@ -47,13 +47,14 @@ POLARITY = {
     "veto": "restrict", "revoke": "restrict", "freeze": "restrict", "flag": "restrict", "heartbeat": "restrict",
     "checkpoint": "witness",
     "intent": "act", "token": "act", "reservation": "act", "execution": "act",
-    "reconciliation": "attest", "observation": "attest",
+    "reconciliation": "attest", "observation": "attest", "measurement": "attest",
+    "resource": "act", "transition": "act", "invalidate": "restrict",
 }
 
 # Who may restrict on their own. "revoke" is also open to any holder along the revoked chain.
 RESTRICT_BY = {
     "veto": ("human",), "revoke": ("human",), "freeze": ("human", "sentinel"),
-    "flag": ("human", "sentinel"), "heartbeat": ("sentinel",),
+    "flag": ("human", "sentinel"), "heartbeat": ("sentinel",), "invalidate": ("human", "oracle"),
 }
 
 # The effect line: one automaton, read by both judges. (kind, result) -> (states it may leave, state it enters).

@@ -4,6 +4,11 @@ on:
     branches: [prototype/hybrid-kernel-v1]
     paths:
       - 'hybrid_kernel/**'
+      - 'tcb/**'
+      - 'bootstrap.py'
+      - 'tools/check_tcb.py'
+      - 'tcb-budget.json'
+      - 'Makefile'
       - 'tests/test_hybrid_kernel*.py'
       - '.github/workflows/hybrid-kernel-prototype.yml'
   workflow_dispatch:
@@ -20,9 +25,7 @@ jobs:
           python-version: '3.12'
       - name: Setup project dependencies
         run: python -m pip install -r requirements.txt
-      - name: Run hybrid and trusted-runtime integration tests
-        run: python -m unittest discover -s tests -p 'test_hybrid_kernel*.py' -v
-      - name: Run legacy constitutional regressions
-        run: python -m unittest discover -s tests -p 'test_kernel*.py' -v
+      - name: Check effective trust budgets and all constitutional regressions
+        run: make check
       - name: Check release-readiness inventory (blocked until independently verified)
         run: python -m hybrid_kernel.release_gate

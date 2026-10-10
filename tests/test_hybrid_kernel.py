@@ -1,66 +1,171 @@
-"""Hybrid prototype structural and adversarial tests (no claim of physical safety)."""
+"""One judgment: relational constraints, finite transitions, exhaustive deltas."""
+import copy
+import sys
 import unittest
-from hybrid_kernel.core import compile_constitution,genesis,judge,commit,Invalid
+from dataclasses import replace
+from pathlib import Path
 
-LAW={"release":"v1","max_due_ms":604800000,"rules":[
-    {"id":"repair","operation":"repair","requires":{"all":[{"eq":["subject","agent"]}]},
-     "opens":[{"kind":"vulnerability","key_field":"resource"}],"closes":[],"effect":False},
-    {"id":"deploy","operation":"deploy","requires":{"all":[{"eq":["subject","agent"]}]},
-     "opens":[],"closes":[],"effect":True},
-    {"id":"resolve","operation":"resolve","requires":{"all":[{"eq":["subject","agent"]}]},
-     "opens":[],"closes":[{"kind":"vulnerability","key_field":"resource"}],"effect":False}]}
-def req(ident="i1",op="repair",changes=None,effect=False):
-    return {"id":ident,"operation":op,"subject":"agent","resource":"repo:a",
-            "changes":[] if changes is None else changes,"effect":effect}
-def ctx(t=1000,allowed=True):
-    return {"receipt":"verified:fixture-only","subject":"agent",
-            "allowed":allowed,"now":t,"observations":[]}
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from fixture import World, T0, DAY, Refused, make_law, digest
+from hybrid_kernel.core import Kernel, empty
+from hybrid_kernel.model import detached, Relation
+from tcb import Kernel as CompatibilityKernel
+from tcb.invariants import Invariants, Disagreement
+
+RESOURCE = {
+    "fields": {"revision": "int", "label": "str"},
+    "states": ["open", "ready"], "initial": "open",
+    "transitions": {"prepare": {"from": ["open"], "to": "ready", "writes": ["revision"],
+        "requires": {"all": [{"related": ["owns", "$author", "$resource"]},
+                                {"related": ["state", "$resource", "open"]}]}}},
+}
+
+
+def world():
+    return World(law=make_law(resources={"artifact": copy.deepcopy(RESOURCE)}))
+
+
+def registered(w):
+    gid, at = w.grant("agent", ["register:artifact", "transition:artifact:prepare"], ["asset:*"], T0 + 1)
+    w.add("resource", "agent", at, under=gid, resource="asset:a", type="artifact", fields={"revision": 0, "label": "A"})
+    return gid, at + 1
+
 
 class CoreTests(unittest.TestCase):
-    def setUp(self):
-        self.law=compile_constitution(LAW)
-        self.s=genesis(self.law)
-    def test_stable_debt_under_retries(self):
-        a=judge(self.s,self.law,req(),ctx())
-        self.assertEqual(a.verdict,"ACCEPT")
-        s1=commit(self.s,a)
-        debt=list(s1["obligations"].values())[0]
-        s2=commit(s1,judge(s1,self.law,req("i2"),ctx(5000)))
-        self.assertEqual(list(s2["obligations"].values())[0],debt)
-        self.assertNotEqual(self.s,s1)
-    def test_closure_not_auto_authorized(self):
-        s1=commit(self.s,judge(self.s,self.law,req(),ctx()))
-        v=judge(s1,self.law,req("i2","resolve"),ctx(10000))
-        self.assertEqual(v.verdict,"PENDING_EXTERNAL")
-        self.assertEqual(v.delta,())
-    def test_no_implicit_operation(self):
-        self.assertEqual(judge(self.s,self.law,req(op="alien"),ctx()).code,"LAW.NO_RULE")
-    def test_permission_denied(self):
-        self.assertEqual(judge(self.s,self.law,req(),ctx(allowed=False)).code,"AUTH.DENIED")
-    def test_effect_does_not_dispatch(self):
-        d=judge(self.s,self.law,req(op="deploy",effect=True),ctx())
-        self.assertEqual(d.verdict,"ACCEPT")
-        self.assertIsNotNone(d.authorization)
-        self.assertIn("state_head",d.authorization)
-    def test_stale_commit(self):
-        d=judge(self.s,self.law,req(),ctx())
-        s1=commit(self.s,d)
-        with self.assertRaises(Invalid):commit(s1,d)
-    def test_delta_conflict(self):
-        changes=[{"key":"x","old":"not-present","new":"value"}]
-        self.assertEqual(judge(self.s,self.law,req(changes=changes),ctx()).code,"DELTA.CONFLICT")
-    def test_law_pin(self):
-        other=compile_constitution({**LAW,"release":"v2"})
-        with self.assertRaises(Invalid):judge(self.s,other,req(),ctx())
-    def test_ambiguous_operation_denied(self):
-        multi={**LAW,"rules":LAW["rules"]+[dict(LAW["rules"][0],id="another")]}
-        c=compile_constitution(multi)
-        s=genesis(c)
-        self.assertEqual(judge(s,c,req(),ctx()).code,"LAW.AMBIGUOUS")
-    def test_foreign_receipt_subject_rejected(self):
-        bad={**ctx(),"subject":"other"}
-        with self.assertRaises(Invalid):judge(self.s,self.law,req(),bad)
-    def test_nondeterministic_input_rejected(self):
-        bad=req(changes=[{"key":"x","old":None,"new":1.25}])
-        with self.assertRaises(Invalid):judge(self.s,self.law,bad,ctx())
-if __name__=="__main__":unittest.main()
+    def test_compatibility_is_the_same_class(self):
+        self.assertIs(Kernel, CompatibilityKernel)
+        self.assertEqual(Kernel.__module__, "hybrid_kernel.core")
+
+    def test_stable_relational_model(self):
+        w = world()
+        gid, at = registered(w)
+        graph = w.kernel.graph(w.state)
+        self.assertIn(Relation("owns", "agent", "asset:a"), graph)
+        self.assertIn(Relation("state", "asset:a", "open"), graph)
+        self.assertIn(Relation("holds", "agent", gid), graph)
+        self.assertEqual(graph, tuple(sorted(graph)))
+
+    def test_exhaustive_transition_and_pure_judgment(self):
+        w = world()
+        gid, at = registered(w)
+        state = detached(w.state)
+        candidate, _ = w.signed("transition", "agent", at, under=gid, resource="asset:a", operation="prepare",
+                                 expected=digest(state["entities"]["asset:a"]), changes={"revision": 1})
+        original = copy.deepcopy(state)
+        d = w.kernel.judgment(state, candidate)
+        self.assertEqual(state, original)
+        self.assertEqual(d.verdict, "ACCEPT")
+        result = w.kernel.commit(state, d)
+        self.assertEqual(result["entities"]["asset:a"]["state"], "ready")
+        self.assertEqual(result["entities"]["asset:a"]["version"], 2)
+        self.assertEqual(result["entities"]["asset:a"]["fields"], {"revision": 1, "label": "A"})
+        w.journal.append(candidate)
+        self.assertEqual(detached(w.state), detached(result))
+
+    def test_missing_or_additional_delta_writes_refused(self):
+        for changes in ({}, {"revision": 1, "label": "B"}, {"revision": 1, "owner": "agent"}):
+            w = world()
+            gid, at = registered(w)
+            w.refuse("DELTA.EXHAUSTIVE", "transition", "agent", at, under=gid, resource="asset:a",
+                     operation="prepare", expected=digest(detached(w.state["entities"]["asset:a"])), changes=changes)
+
+    def test_wrong_scalar_type_refused(self):
+        w = world()
+        gid, at = registered(w)
+        w.refuse("TYPE.FIELDS", "transition", "agent", at, under=gid, resource="asset:a", operation="prepare",
+                 expected=digest(detached(w.state["entities"]["asset:a"])), changes={"revision": True})
+
+    def test_stale_resource_and_duplicate_registration(self):
+        w = world()
+        gid, at = registered(w)
+        w.refuse("STATE.CONFLICT", "transition", "agent", at, under=gid, resource="asset:a", operation="prepare",
+                 expected=digest({"fake": "prefix"}), changes={"revision": 1})
+        w.refuse("STATE.EXISTS", "resource", "agent", at, under=gid, resource="asset:a", type="artifact",
+                 fields={"revision": 0, "label": "alias"})
+
+    def test_freeze_immediately_blocks_transition(self):
+        w = world()
+        gid, at = registered(w)
+        w.add("freeze", "sentinel", at, scope="asset:*")
+        w.refuse("FREEZE.ACTIVE", "transition", "agent", at + 1, under=gid, resource="asset:a", operation="prepare",
+                 expected=digest(detached(w.state["entities"]["asset:a"])), changes={"revision": 1})
+
+    def test_revocation_blocks_even_valid_relational_constraints(self):
+        w = world()
+        gid, at = registered(w)
+        w.add("revoke", "carol", at, grant=gid)
+        w.refuse("CAP.WITHDRAWN", "transition", "agent", at + 1, under=gid, resource="asset:a", operation="prepare",
+                 expected=digest(detached(w.state["entities"]["asset:a"])), changes={"revision": 1})
+
+    def test_forged_decision_and_stale_commit_refused(self):
+        from tcb.canon import canon
+        w = world()
+        gid, at = registered(w)
+        state = detached(w.state)
+        candidate, _ = w.signed("transition", "agent", at, under=gid, resource="asset:a", operation="prepare",
+                                 expected=digest(state["entities"]["asset:a"]), changes={"revision": 1})
+        d = w.kernel.judgment(state, candidate)
+        forged = replace(d, delta_bytes=canon(d.delta[:-1]))
+        with self.assertRaises(Refused):
+            w.kernel.commit(state, forged)
+        after = w.kernel.commit(state, d)
+        with self.assertRaises(Refused):
+            w.kernel.commit(after, d)
+        mutated = d.delta
+        next(row for row in mutated if row[:2] == ["put", "entities"])[-1]["owner"] = "carol"
+        self.assertEqual(w.kernel.commit(state, d)["entities"]["asset:a"]["owner"], "agent")
+
+    def test_second_check_rejects_incomplete_or_forged_consequence(self):
+        w = world()
+        gid, at = registered(w)
+        candidate, _ = w.signed("transition", "agent", at, under=gid, resource="asset:a", operation="prepare",
+                                 expected=digest(detached(w.state["entities"]["asset:a"])), changes={"revision": 1})
+        record, delta = w.kernel.decide(w.state, candidate)
+        checker = Invariants()
+        checker.check(w.state, record, delta, candidate, w.kernel.law_of(w.state))
+        native = next(row for row in delta if row[:2] == ("put", "entities"))
+        forged = [(*row[:3], {**row[3], "owner": "carol"}) if row is native else row for row in delta]
+        for corrupted in ([row for row in delta if row is not native], forged, delta[1:]):
+            with self.assertRaises(Disagreement):
+                checker.check(w.state, record, corrupted, candidate, w.kernel.law_of(w.state))
+
+    def test_unsealed_resource_type_is_refused(self):
+        w = World()
+        gid, at = w.grant("agent", ["register:artifact"], ["asset:*"], T0 + 1)
+        w.refuse("TYPE.RESOURCE", "resource", "agent", at, under=gid, resource="asset:a", type="artifact",
+                 fields={"revision": 0, "label": "A"})
+
+    def test_restrictions_share_last_time_even_with_unfulfilled_law(self):
+        w = world()
+        gid, at = registered(w)
+        w.add("freeze", "sentinel", at, scope="asset:*")
+        w.add("revoke", "carol", at, grant=gid)
+        self.assertIn(gid, w.state["revoked"])
+
+    def test_native_transitions_obey_all_capability_budgets(self):
+        w = world()
+        gid, at = w.grant("agent", ["register:artifact", "transition:artifact:prepare"], ["asset:*"], T0 + 1,
+                           budget={"count": 1, "window": DAY})
+        w.add("resource", "agent", at, under=gid, resource="asset:a", type="artifact", fields={"revision": 0, "label": "A"})
+        w.refuse("OBL.BUDGET", "transition", "agent", at + 1, under=gid, resource="asset:a", operation="prepare",
+                 expected=digest(detached(w.state["entities"]["asset:a"])), changes={"revision": 1})
+
+    def test_law_pin_cannot_be_replaced(self):
+        w = World()
+        state = detached(w.state)
+        state["law"]["digest"] = digest("foreign-law")
+        candidate, _ = w.signed("freeze", "carol", T0 + 1, scope="*")
+        self.assertEqual(w.kernel.judgment(state, candidate).code, "LAW.PIN")
+
+    def test_identical_input_produces_identical_complete_judgment(self):
+        w = world()
+        gid, at = registered(w)
+        candidate, _ = w.signed("transition", "agent", at, under=gid, resource="asset:a", operation="prepare",
+                                 expected=digest(detached(w.state["entities"]["asset:a"])), changes={"revision": 1})
+        self.assertEqual(w.kernel.judgment(w.state, candidate), w.kernel.judgment(w.state, candidate))
+        record, delta = w.kernel.decide(w.state, candidate)
+        self.assertEqual(detached(delta), w.kernel.judgment(w.state, candidate).delta)
+
+
+if __name__ == "__main__":
+    unittest.main()

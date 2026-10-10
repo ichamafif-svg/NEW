@@ -2,7 +2,6 @@
   "schema": "standard.hybrid.release-readiness/v1",
   "release_candidate": "prototype/hybrid-kernel-v1",
   "code_path": "hybrid_kernel",
-  "legacy_admission": "tcb.Kernel -> tcb.Journal -> tcb.Invariants",
   "no_dual_authority": true,
   "policy": "ALL_CRITICAL_GATES_REQUIRED",
   "criteria": [
@@ -10,11 +9,16 @@
       "id": "K01",
       "name": "Full root, authority, quorum and revocation",
       "owner": "K",
-      "status": "INTEGRATED_LEGACY",
+      "status": "IMPLEMENTED_LOCAL_VALIDATION_PENDING_INDEPENDENT_REVIEW",
       "evidence": [
-        "tcb/kernel.py",
-        "tcb/floor0.py",
-        "tcb/law.py"
+        "hybrid_kernel/core.py",
+        "hybrid_kernel/constitution.py",
+        "hybrid_kernel/model.py",
+        "hybrid_kernel/obligations.py",
+        "hybrid_kernel/debt.py",
+        "tests/test_hybrid_kernel.py",
+        "tests/test_hybrid_kernel_measurement.py",
+        "tests/test_hybrid_kernel_debt.py"
       ],
       "verified": false
     },
@@ -22,9 +26,16 @@
       "id": "K02",
       "name": "Canonical model without hard business mapping",
       "owner": "K",
-      "status": "PARTIAL",
+      "status": "IMPLEMENTED_LOCAL_VALIDATION_PENDING_INDEPENDENT_REVIEW",
       "evidence": [
-        "hybrid_kernel/core.py"
+        "hybrid_kernel/core.py",
+        "hybrid_kernel/constitution.py",
+        "hybrid_kernel/model.py",
+        "hybrid_kernel/obligations.py",
+        "hybrid_kernel/debt.py",
+        "tests/test_hybrid_kernel.py",
+        "tests/test_hybrid_kernel_measurement.py",
+        "tests/test_hybrid_kernel_debt.py"
       ],
       "verified": false
     },
@@ -32,10 +43,16 @@
       "id": "K03",
       "name": "Independent proof qualification",
       "owner": "K+T06",
-      "status": "PARTIAL",
+      "status": "IMPLEMENTED_LOCAL_VALIDATION_PENDING_INDEPENDENT_REVIEW",
       "evidence": [
-        "tcb/kernel.py",
-        "tcb/accountability.py"
+        "hybrid_kernel/core.py",
+        "hybrid_kernel/constitution.py",
+        "hybrid_kernel/model.py",
+        "hybrid_kernel/obligations.py",
+        "hybrid_kernel/debt.py",
+        "tests/test_hybrid_kernel.py",
+        "tests/test_hybrid_kernel_measurement.py",
+        "tests/test_hybrid_kernel_debt.py"
       ],
       "verified": false
     },
@@ -43,10 +60,16 @@
       "id": "K04",
       "name": "Stable debts, closure and escalation",
       "owner": "K+T09",
-      "status": "PARTIAL",
+      "status": "IMPLEMENTED_LOCAL_VALIDATION_PENDING_INDEPENDENT_REVIEW",
       "evidence": [
-        "tcb/obligations.py",
-        "tcb/accountability.py"
+        "hybrid_kernel/core.py",
+        "hybrid_kernel/constitution.py",
+        "hybrid_kernel/model.py",
+        "hybrid_kernel/obligations.py",
+        "hybrid_kernel/debt.py",
+        "tests/test_hybrid_kernel.py",
+        "tests/test_hybrid_kernel_measurement.py",
+        "tests/test_hybrid_kernel_debt.py"
       ],
       "verified": false
     },
@@ -54,10 +77,16 @@
       "id": "K05",
       "name": "Deterministic exhaustive transitions",
       "owner": "K",
-      "status": "INTEGRATED_LEGACY",
+      "status": "IMPLEMENTED_LOCAL_VALIDATION_PENDING_INDEPENDENT_REVIEW",
       "evidence": [
-        "tcb/kernel.py",
-        "tcb/invariants.py"
+        "hybrid_kernel/core.py",
+        "hybrid_kernel/constitution.py",
+        "hybrid_kernel/model.py",
+        "hybrid_kernel/obligations.py",
+        "hybrid_kernel/debt.py",
+        "tests/test_hybrid_kernel.py",
+        "tests/test_hybrid_kernel_measurement.py",
+        "tests/test_hybrid_kernel_debt.py"
       ],
       "verified": false
     },
@@ -65,10 +94,16 @@
       "id": "K06",
       "name": "Exact effect grant and unknown reconciliation",
       "owner": "K+T07+T08",
-      "status": "INTEGRATED_LEGACY",
+      "status": "IMPLEMENTED_LOCAL_VALIDATION_PENDING_INDEPENDENT_REVIEW",
       "evidence": [
-        "tcb/guard.py",
-        "tcb/effects.py"
+        "hybrid_kernel/core.py",
+        "hybrid_kernel/constitution.py",
+        "hybrid_kernel/model.py",
+        "hybrid_kernel/obligations.py",
+        "hybrid_kernel/debt.py",
+        "tests/test_hybrid_kernel.py",
+        "tests/test_hybrid_kernel_measurement.py",
+        "tests/test_hybrid_kernel_debt.py"
       ],
       "verified": false
     },
@@ -211,5 +246,7 @@
       ],
       "verified": false
     }
-  ]
+  ],
+  "admission": "hybrid_kernel.Kernel -> tcb.Journal -> tcb.Invariants + hybrid_kernel.checker",
+  "kernel_budget": "tcb-budget.json:constitutional_kernel (1800\u20133200 physical lines, reused primitives included)"
 }

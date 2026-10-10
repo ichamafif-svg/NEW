@@ -1,0 +1,301 @@
+{
+  "schema": "standard-hybrid-local-validation/1",
+  "date_utc": "2026-10-10",
+  "base_commit": "982dc3f236f161122ff588a19bc276a14367e186",
+  "branch": "prototype/hybrid-kernel-v1",
+  "constitutional_kernel": {
+    "physical_lines": 2442,
+    "requested_range": [
+      1800,
+      3200
+    ],
+    "includes": "single interpreter, law, relations, model, obligations, debt, reused canonical/crypto/shapes/floors/release primitives and compatibility shims"
+  },
+  "effective_tcb": {
+    "physical_lines": 4507,
+    "note": "Includes T storage, pins, guards, integration, AND-only checking and visibility; separate from the pure K budget."
+  },
+  "tests": {
+    "command": "make check",
+    "status": "PASS",
+    "function_tests": 156,
+    "unittest_tests": 57,
+    "total": 213
+  },
+  "differential": {
+    "reference_commit": "982dc3f236f161122ff588a19bc276a14367e186",
+    "scope": "Differential signed transition engine with shared release-law/crypto primitives; native extensions are separately tested. Frozen interpreter is test-only and never installed into runtime.",
+    "suites": [
+      "test_kernel",
+      "test_effects",
+      "test_language",
+      "test_root_causes",
+      "test_v6",
+      "test_review"
+    ],
+    "accepted_identical": 4994,
+    "refused_identical": 353,
+    "new_stricter": [],
+    "mismatch": [],
+    "fault_injection_checks": 5,
+    "suite_failures": []
+  },
+  "laboratory": {
+    "suite_count": 26,
+    "case_count": 169,
+    "exit_codes_all_zero": true,
+    "statuses": {
+      "observed": 4,
+      "REFUTED_UNDER_ASSUMPTIONS": 69,
+      "OBSERVED": 96
+    },
+    "suites": [
+      {
+        "suite": "g1_decision_probes",
+        "exit": 0,
+        "cases": 4,
+        "statuses": {
+          "observed": 4
+        },
+        "seconds": 0.17
+      },
+      {
+        "suite": "p3_signed_core",
+        "exit": 0,
+        "cases": 8,
+        "statuses": {
+          "REFUTED_UNDER_ASSUMPTIONS": 8
+        },
+        "seconds": 0.25
+      },
+      {
+        "suite": "p3_effect_line",
+        "exit": 0,
+        "cases": 4,
+        "statuses": {
+          "REFUTED_UNDER_ASSUMPTIONS": 4
+        },
+        "seconds": 0.29
+      },
+      {
+        "suite": "p3_mutation_fuzz",
+        "exit": 0,
+        "cases": 30,
+        "statuses": {
+          "REFUTED_UNDER_ASSUMPTIONS": 30
+        },
+        "seconds": 0.55
+      },
+      {
+        "suite": "p3_autonomy",
+        "exit": 0,
+        "cases": 10,
+        "statuses": {
+          "REFUTED_UNDER_ASSUMPTIONS": 10
+        },
+        "seconds": 0.34
+      },
+      {
+        "suite": "p3_compositions",
+        "exit": 0,
+        "cases": 7,
+        "statuses": {
+          "REFUTED_UNDER_ASSUMPTIONS": 7
+        },
+        "seconds": 0.31
+      },
+      {
+        "suite": "p3_counterexperiments",
+        "exit": 0,
+        "cases": 5,
+        "statuses": {
+          "REFUTED_UNDER_ASSUMPTIONS": 5
+        },
+        "seconds": 0.27
+      },
+      {
+        "suite": "p3_long_horizon",
+        "exit": 0,
+        "cases": 5,
+        "statuses": {
+          "REFUTED_UNDER_ASSUMPTIONS": 5
+        },
+        "seconds": 2.01
+      },
+      {
+        "suite": "p3_priority_o1",
+        "exit": 0,
+        "cases": 4,
+        "statuses": {
+          "OBSERVED": 4
+        },
+        "seconds": 3.18
+      },
+      {
+        "suite": "p3_priority_e1",
+        "exit": 0,
+        "cases": 4,
+        "statuses": {
+          "OBSERVED": 4
+        },
+        "seconds": 0.24
+      },
+      {
+        "suite": "p3_priority_p1",
+        "exit": 0,
+        "cases": 3,
+        "statuses": {
+          "OBSERVED": 3
+        },
+        "seconds": 0.26
+      },
+      {
+        "suite": "p3_depth_proof",
+        "exit": 0,
+        "cases": 7,
+        "statuses": {
+          "OBSERVED": 7
+        },
+        "seconds": 0.37
+      },
+      {
+        "suite": "p3_depth_effect",
+        "exit": 0,
+        "cases": 8,
+        "statuses": {
+          "OBSERVED": 8
+        },
+        "seconds": 0.43
+      },
+      {
+        "suite": "p3_depth_autonomy",
+        "exit": 0,
+        "cases": 16,
+        "statuses": {
+          "OBSERVED": 16
+        },
+        "seconds": 13.06
+      },
+      {
+        "suite": "p3_iii_effect_clock",
+        "exit": 0,
+        "cases": 8,
+        "statuses": {
+          "OBSERVED": 8
+        },
+        "seconds": 0.4
+      },
+      {
+        "suite": "p3_iii_autonomy_subjects",
+        "exit": 0,
+        "cases": 18,
+        "statuses": {
+          "OBSERVED": 18
+        },
+        "seconds": 21.44
+      },
+      {
+        "suite": "p3_iii_proof_epistemic",
+        "exit": 0,
+        "cases": 6,
+        "statuses": {
+          "OBSERVED": 6
+        },
+        "seconds": 0.28
+      },
+      {
+        "suite": "p3_iv_boundary_probes",
+        "exit": 0,
+        "cases": 3,
+        "statuses": {
+          "OBSERVED": 3
+        },
+        "seconds": 0.21
+      },
+      {
+        "suite": "p3_ivb_boundary_pairs",
+        "exit": 0,
+        "cases": 4,
+        "statuses": {
+          "OBSERVED": 4
+        },
+        "seconds": 0.2
+      },
+      {
+        "suite": "p3_ivc_same_target",
+        "exit": 0,
+        "cases": 2,
+        "statuses": {
+          "OBSERVED": 2
+        },
+        "seconds": 10.89
+      },
+      {
+        "suite": "p3_ivd_g08_g16",
+        "exit": 0,
+        "cases": 4,
+        "statuses": {
+          "OBSERVED": 4
+        },
+        "seconds": 39.15
+      },
+      {
+        "suite": "p3_ive_g08_g16_plan",
+        "exit": 0,
+        "cases": 2,
+        "statuses": {
+          "OBSERVED": 2
+        },
+        "seconds": 7.62
+      },
+      {
+        "suite": "p3_ivf_backoff",
+        "exit": 0,
+        "cases": 2,
+        "statuses": {
+          "OBSERVED": 2
+        },
+        "seconds": 5.08
+      },
+      {
+        "suite": "p3_ivg_health_escalation",
+        "exit": 0,
+        "cases": 2,
+        "statuses": {
+          "OBSERVED": 2
+        },
+        "seconds": 7.54
+      },
+      {
+        "suite": "p3_ivh_canonical_vulns",
+        "exit": 0,
+        "cases": 1,
+        "statuses": {
+          "OBSERVED": 1
+        },
+        "seconds": 4.64
+      },
+      {
+        "suite": "p3_ivi_g16_deadline",
+        "exit": 0,
+        "cases": 2,
+        "statuses": {
+          "OBSERVED": 2
+        },
+        "seconds": 2.15
+      }
+    ]
+  },
+  "qualification": {
+    "readiness": "BLOCKED",
+    "physical_T_contracts": "NOT_INDEPENDENTLY_VERIFIED",
+    "limits": [
+      "Local signatures do not prove physical independence or measurement truth.",
+      "SQLite and separate files do not establish independent restore domains or multi-host fencing.",
+      "AND checks do not establish deployed failure-domain independence.",
+      "Recorded escalation does not prove delivery or convergence."
+    ],
+    "migration": "No silent acceptance of another code/floor release or uncontrolled re-genesis."
+  },
+  "release_digest": "sha256:455ab9d57fb20ccdad1398d64ef7ab4369c1505b07c74f2ae501460eefb1e1c8"
+}

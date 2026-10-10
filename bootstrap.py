@@ -16,7 +16,8 @@ def encoded(value):
 def manifest(root):
     root = Path(root).resolve()
     paths = [root / "bootstrap.py", *sorted((root / "tcb").rglob("*.py")),
-             *sorted((root / "adapters").rglob("*.py"))]
+             *sorted((root / "adapters").rglob("*.py")),
+             *sorted((root / "hybrid_kernel").rglob("*.py"))]
     return {"format": "tcb-code/1", "files": {
         p.relative_to(root).as_posix(): "sha256:" + hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
         "runtime": {"python": sys.version, "implementation": sys.implementation.name,
@@ -41,7 +42,7 @@ class SourceFinder(importlib.abc.MetaPathFinder):
         self.root, self.files = root, files
 
     def find_spec(self, fullname, path=None, target=None):
-        if fullname.split(".")[0] not in ("tcb", "adapters"):
+        if fullname.split(".")[0] not in ("tcb", "adapters", "hybrid_kernel"):
             return None
         spec = importlib.machinery.PathFinder.find_spec(fullname, path)
         if spec is None or not spec.origin or not spec.origin.endswith(".py"):

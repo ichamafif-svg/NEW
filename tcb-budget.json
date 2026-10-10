@@ -1,38 +1,43 @@
 {
-  "scope": "all tcb/*.py plus trusted bootstrap.py and deployment adapters/*.py; every line is counted in exactly one budget",
+  "scope": "All tcb/*.py, hybrid_kernel/*.py, trusted bootstrap.py and adapters/*.py; compatibility shims and reused primitives count, each line once.",
   "budgets": {
     "safety": {
-      "max_physical_lines": 2942,
+      "max_physical_lines": 3400,
       "modules": "every module not listed in another budget, plus bootstrap.py and adapters/*.py",
       "guarantee": "no forbidden effect, no forbidden widening, no rewritten history: a bug here can let something through"
     },
     "restrict_only": {
-      "max_physical_lines": 537,
+      "max_physical_lines": 800,
       "modules": [
-        "invariants"
+        "invariants",
+        "hybrid_kernel.checker"
       ],
       "importers": [
         "ledger",
         "guard",
         "worker",
-        "__init__"
+        "__init__",
+        "invariants"
       ],
       "guarantee": "second judge, joined by AND: it runs only after the kernel admitted, and its disagreement or failure halts. A bug here can stop the journal, never admit what the kernel refuses (tests/test_budget_classification.py)"
     },
     "visibility": {
-      "max_physical_lines": 500,
+      "max_physical_lines": 600,
       "modules": [
         "accountability",
         "health",
         "worker",
-        "sandbox"
+        "sandbox",
+        "hybrid_kernel.debt"
       ],
       "importers": [
         "accountability",
         "health",
         "worker",
         "sandbox",
-        "__init__"
+        "__init__",
+        "bootstrap",
+        "hybrid_kernel.runtime"
       ],
       "guarantee": "gaps stay visible: a bug here can hide or invent a gap in health, never admit an entry or send an effect; no safety module imports it"
     }
@@ -49,12 +54,20 @@
       "law",
       "kernel",
       "release",
-      "targets"
+      "targets",
+      "hybrid_kernel.core",
+      "hybrid_kernel.constitution",
+      "hybrid_kernel.model",
+      "hybrid_kernel.relations",
+      "hybrid_kernel.obligations"
     ],
     "1-integrity": [
       "invariants",
       "ledger",
-      "pins"
+      "pins",
+      "hybrid_kernel.checker",
+      "hybrid_kernel.externals",
+      "hybrid_kernel.attestation"
     ],
     "2-effect": [
       "guard",
@@ -65,10 +78,19 @@
       "accountability",
       "health",
       "worker",
-      "sandbox"
+      "sandbox",
+      "hybrid_kernel.debt"
+    ],
+    "4-integration": [
+      "hybrid_kernel.runtime",
+      "hybrid_kernel.store",
+      "hybrid_kernel.trusted",
+      "hybrid_kernel.deployment",
+      "hybrid_kernel.release_gate"
     ],
     "package": [
-      "__init__"
+      "__init__",
+      "hybrid_kernel.__init__"
     ]
   },
   "independent": {
@@ -77,7 +99,21 @@
       "policy",
       "obligations",
       "law",
-      "shapes"
+      "shapes",
+      "hybrid_kernel.core",
+      "hybrid_kernel.constitution",
+      "hybrid_kernel.relations",
+      "hybrid_kernel.model",
+      "hybrid_kernel.obligations",
+      "hybrid_kernel.debt"
+    ],
+    "hybrid_kernel.checker": [
+      "hybrid_kernel.core",
+      "hybrid_kernel.constitution",
+      "hybrid_kernel.relations",
+      "hybrid_kernel.model",
+      "hybrid_kernel.obligations",
+      "hybrid_kernel.debt"
     ]
   },
   "review": "The safety ceiling is the historical 2,942 lines. The two others only move by a decision recorded here, never to pass the check by compaction. Moving code between budgets is such a decision too: a module belongs to restrict_only or visibility only while its importers guard and its test hold.",
@@ -95,6 +131,35 @@
       "from": 495,
       "to": 500,
       "why": "a debt follows the (resource, property) it measures, not the target's name (docs/REVUE-V6.md, finding 6)"
+    },
+    {
+      "date": "2026-10-10",
+      "budget": "all",
+      "why": "User-authorized unification with K in 1800\u20133200 lines. Count both namespaces; move semantic implementations without copies; include native typed transitions, measurement qualification and independent consequence checker. Effective TCB ceilings include trusted integration and unchanged physical contracts; no line is hidden by relocation."
     }
-  ]
+  ],
+  "constitutional_kernel": {
+    "min_physical_lines": 1800,
+    "max_physical_lines": 3200,
+    "modules": [
+      "canon",
+      "crypto",
+      "shapes",
+      "policy",
+      "obligations",
+      "floor0",
+      "floors",
+      "law",
+      "kernel",
+      "release",
+      "targets",
+      "hybrid_kernel.core",
+      "hybrid_kernel.constitution",
+      "hybrid_kernel.model",
+      "hybrid_kernel.relations",
+      "hybrid_kernel.obligations",
+      "hybrid_kernel.debt"
+    ],
+    "scope": "Pure constitutional mechanisms, including shared crypto/canonical/type/floors and deterministic debt semantics. T journal, pins, guards and AND-only checker are counted separately in effective TCB."
+  }
 }

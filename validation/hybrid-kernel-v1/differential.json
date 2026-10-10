@@ -1,0 +1,18 @@
+{
+  "reference_commit": "982dc3f236f161122ff588a19bc276a14367e186",
+  "scope": "Differential signed transition engine with shared release-law/crypto primitives; native extensions are separately tested. Frozen interpreter is test-only and never installed into runtime.",
+  "suites": [
+    "test_kernel",
+    "test_effects",
+    "test_language",
+    "test_root_causes",
+    "test_v6",
+    "test_review"
+  ],
+  "accepted_identical": 4994,
+  "refused_identical": 353,
+  "new_stricter": [],
+  "mismatch": [],
+  "fault_injection_checks": 5,
+  "suite_failures": []
+}

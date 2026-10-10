@@ -1,17 +1,17 @@
-"""Production-path integration for the inherited constitutional kernel.
+"""Anchored integration of the single hybrid constitutional interpreter.
 
-Unlike the exploratory hybrid core, this facade DOES NOT accept allowed=True.
-Signed entries are judged by the existing full admission kernel, checked by the
-second verifier and journaled with separately retained pins. The deployment
-must independently establish physical pin/egress/key custody separation.
+Only signed statements enter this boundary. Journal commits after the independent
+consequence check and retains the exact prefix before acknowledgment. Physical
+pin restoration domains, key custody and egress exclusivity remain T contracts.
 """
 from __future__ import annotations
 from pathlib import Path
-from tcb import Kernel, Journal, Accountability, SQLitePins, Guard, EffectPort
+from tcb import Journal, Auditor, SQLitePins, Guard, EffectPort
+from .core import Kernel
 from tcb.release import code_digest
-from tcb.kernel import Refused
+from .core import Refused
 from tcb.ledger import entry
-from tcb.canon import digest
+from tcb.shapes import DIGEST
 
 class IntegrationError(ValueError):
     pass
@@ -22,14 +22,14 @@ class ConstitutionalRuntime:
     def __init__(self, *, ledger_path, pin_store, genesis_pin):
         if not isinstance(pin_store,SQLitePins):
             raise IntegrationError("An independently retained pin store is mandatory")
-        if not isinstance(genesis_pin,str) or not genesis_pin.startswith("sha256:"):
+        if not isinstance(genesis_pin,str) or not DIGEST.fullmatch(genesis_pin):
             raise IntegrationError("An externally supplied genesis digest is mandatory")
         lp=Path(ledger_path).resolve()
         if lp==pin_store.path:
             raise IntegrationError("Journal and pins must be on distinct paths")
         pin_store.bind(genesis_pin)
         self.kernel=Kernel(code_pin=code_digest())
-        self.accountability=Accountability(self.kernel)
+        self.accountability=Auditor()
         self.journal=Journal(lp,self.kernel,genesis_pin=genesis_pin,
                              checkpoints=pin_store,accountability=self.accountability)
 

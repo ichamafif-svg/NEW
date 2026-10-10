@@ -1,15 +1,18 @@
-"""Standard hybrid constitutional boundary.
+"""Standard's single constitutional judgment and explicit trusted boundaries."""
+from importlib import import_module
 
-Only explicit signed/admission pathways are exported at package root.
-Experimental pure functions remain importable from hybrid_kernel.core for
-research, but must not be wired to privileged production execution.
-"""
-from .runtime import ConstitutionalRuntime, IntegrationError
-from .deployment import GovernedDeployment, ProductionBlocked
-from .externals import Capability, CapabilityRegistry, ContractError, Status
+_NAMES = {
+    "Kernel": "core", "Refused": "core", "Decision": "model",
+    "ConstitutionalRuntime": "runtime", "IntegrationError": "runtime",
+    "GovernedDeployment": "deployment", "ProductionBlocked": "deployment",
+    "Capability": "externals", "CapabilityRegistry": "externals",
+    "ContractError": "externals", "Status": "externals",
+}
+__all__ = list(_NAMES)
 
-__all__ = [
-    "ConstitutionalRuntime", "IntegrationError",
-    "GovernedDeployment", "ProductionBlocked",
-    "Capability", "CapabilityRegistry", "ContractError", "Status",
-]
+def __getattr__(name):
+    if name not in _NAMES:
+        raise AttributeError(name)
+    value = getattr(import_module("." + _NAMES[name], __name__), name)
+    globals()[name] = value
+    return value

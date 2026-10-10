@@ -22,6 +22,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from .canon import canon, digest, parse
 from .floor0 import LINE, line_state
 from .floors import floors_digest
+from hybrid_kernel.checker import check, eligible, relationship
 
 
 class Disagreement(Exception):
@@ -47,9 +48,11 @@ TOUCH = {
     "execution": {("put", "executed"), ("drop", "obligations"), ("put", "obligations"), ("put", "line")},
     "reconciliation": {("drop", "obligations"), ("put", "obligations"), ("put", "line")},
     "observation": {("put", "observations")},
+    "measurement": {("put", "observations")}, "resource": {("put", "entities"), ("push", "uses")},
+    "transition": {("put", "entities"), ("push", "uses")}, "invalidate": {("put", "invalidated")},
 }
 EVIDENCE = {("drop", "obligations")}
-RESTRICT_KINDS = {"veto", "revoke", "freeze", "flag", "heartbeat"}       # restated apart from floor0.POLARITY
+RESTRICT_KINDS = {"veto", "revoke", "freeze", "flag", "heartbeat", "invalidate"}       # restated apart from floor0.POLARITY
 
 
 HANDLERS = {"genesis": "_genesis", "rotate": "_rotate", "grant": "_grant", "unfreeze": "_unfreeze", "law": "_law_entry",
@@ -107,6 +110,7 @@ class Invariants:
             _no("the law snapshot differs from its pin")
         self.witness_quorum, self.evidence = raw["witnesses"]["quorum"], set(raw["evidence"])
         self.delay, self.ops, self.fresh = raw["delays"], raw["ops"], raw["ttl"]["observation"]
+        self.raw = raw
         self.raw_conditions = raw["conditions"]
         self.conditions = {n: [(next(iter(a)), next(iter(a.values()))) for a in d["all"]]
                            for n, d in self.raw_conditions.items()}
@@ -156,6 +160,9 @@ class Invariants:
         handler = HANDLERS.get(kind) if kind not in self.evidence else None
         if handler is not None:
             getattr(self, handler)(pre, record, delta, root, signers)
+        if kind in ("resource", "transition", "measurement", "invalidate"):
+            from hybrid_kernel.checker import check
+            check(pre, record, delta, self.raw, _no)
         self._obligations(pre, record, delta)
         self._line(pre, record, delta)
         self._law(pre, record, law_ops)
@@ -352,7 +359,7 @@ class Invariants:
             _no("effect resource frozen")
         labels = {it["author"], *(g["holder"] for g in chain)}
         observations = {(o["resource"], o["property"], o["status"], o["level"]) for o in pre["observations"].values()
-                        if o["at"] + self.fresh >= at and not labels.intersection(o["label"])}
+                        if self._eligible(pre, o, at) and not labels.intersection(o["label"])}
         closed = {(c["type"], c["key"]) for c in pre["closed"].values()
                   if c["at"] + self.fresh >= at and not labels.intersection(c["label"])
                   and c["contract"] == self.contracts.get(c["type"])}
@@ -375,10 +382,18 @@ class Invariants:
                         ok = len({key for kind, key in closed if kind == args[0]}) >= args[1]
                     elif op == "open":
                         ok = (args[0], value) in opened
+                    elif op == "related":
+                        from hybrid_kernel.checker import relationship
+                        resolve = lambda x: it["stmt"].get(x[1:]) if x.startswith("$") else x
+                        ok = relationship(pre, args[0], resolve(args[1]), resolve(args[2]))
                     else:
                         ok = False
                     if not ok:
                         _no("effect policy does not hold")
+
+    def _eligible(self, pre, observation, at):
+        from hybrid_kernel.checker import eligible
+        return eligible(pre, observation, at, self.raw)
 
     def _intent(self, pre, record, delta, root, signers):
         body = record["body"]
